@@ -135,7 +135,7 @@ def main():
     print("Read precipitation data...")
     precFileName = dataPath + "precipitation.txt"
     # TIME LENGHT 
-    # change it if your observed data are different (for example: hourly)
+    # change it if your observed data are different (ex: hourly)
     timeLength = 15 * 60         # [s]
     C3DParameters.deltaT_max = timeLength
     print("Time lenght [s]:", timeLength)
@@ -147,7 +147,7 @@ def main():
     nrObsPrec = len(prec)
     print("Total simulation time [s]:", nrObsPrec * timeLength)
     
-    visual3D.initialize(1200)
+    visual3D.initialize(1024)
     visual3D.isPause = True
     
     # main cycle
