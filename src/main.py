@@ -9,14 +9,15 @@ import PSP_visual3D as visual3D
 from PSP_fileUtilities import loadState
 
  
-def main():     
+def main():
+    dataPath = "../data/"
     print ("Load TIN...")
-    vertexList, isFileOk = readDataFile("data/vertices.csv", 0, ",", False)
+    vertexList, isFileOk = readDataFile(dataPath + "vertices.csv", 0, ",", False)
     if (not isFileOk): return 
-    triangleList, isFileOk = readDataFile("data/triangles.csv", 0, ",", False) 
+    triangleList, isFileOk = readDataFile(dataPath + "triangles.csv", 0, ",", False) 
     if (not isFileOk): return 
     nrTriangles = len(triangleList)
-    neighbourList, isFileOk = readDataFile("data/neighbours.csv", 0, ",", False) 
+    neighbourList, isFileOk = readDataFile(dataPath + "neighbours.csv", 0, ",", False) 
     if (not isFileOk): return 
     print ("Nr. of triangles:", nrTriangles)
     
@@ -39,7 +40,7 @@ def main():
     
     # SOIL
     print ("Load soil...")
-    soil.C3DSoil = soil.readHorizon("data/soil.txt", 1)
+    soil.C3DSoil = soil.readHorizon(dataPath + "soil.txt", 1)
     if (C3DParameters.computeOnlySurface):
         totalDepth = 0
     else:
@@ -126,13 +127,13 @@ def main():
     # LOAD INITIAL STATE - comment if you dont't have one
     if (not C3DParameters.computeOnlySurface): 
         print ("Load initial state...")
-        loadState("data/state_0.csv")
+        loadState(dataPath + "state_0.csv")
     
     balance.initializeBalance()
     print("Initial water storage [m^3]:", format(balance.currentStep.waterStorage, ".3f"))
         
     print("Read precipitation data...")
-    precFileName = "data/precipitation.txt"
+    precFileName = dataPath + "precipitation.txt"
     # TIME LENGHT 
     # change it if your observed data are different (for example: hourly)
     timeLength = 15 * 60         # [s]
