@@ -28,7 +28,6 @@ class Ccell:
         self.x = NODATA                   # [m]
         self.y = NODATA                   # [m]            
         self.z = NODATA                   # [m]
-        self.area = NODATA                # [m^2] triangle area
         self.volume = NODATA              # [m^3] volume
         self.isSurface = False            # true if the cell is on surface
         self.Se = NODATA                  # [-] degree of saturation
