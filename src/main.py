@@ -153,10 +153,10 @@ def main():
     visual3D.isPause = True
     
     # main cycle
-    for i in range(nrObsPrec):
+    for i in range(int(nrObsPrec)):
         waterBalance.currentPrec = prec[i] / timeLength * 3600   #[mm/hour]
         criteria3D.setRainfall(prec[i], timeLength)
         criteria3D.compute(timeLength)
     
-    print ("\nEnd simulation.")      
+    print ("\nEnd simulation.")   
 main()

@@ -56,7 +56,7 @@ class C3DParameters:
     pond = 0.002                                # [m]
     currentDeltaT = 60.0                        # [s]
     deltaT_min = 6.0                            # [s]
-    deltaT_max = 900                            # [s]
+    deltaT_max = 900.0                          # [s]
     maxIterationsNr = 100
     maxApproximationsNr = 10
     residualTolerance = 1E-12
