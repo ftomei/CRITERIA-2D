@@ -1,7 +1,9 @@
 #waterBalance.py
+
 from math import fabs
 from dataStructures import *
 from soil import getVolumetricWaterContent
+
 
 class C3DBalance:
     waterStorage = NODATA

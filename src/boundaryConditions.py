@@ -1,4 +1,5 @@
 #boundaryConditions.py
+
 from math import sqrt
 from dataStructures import *
 import soil

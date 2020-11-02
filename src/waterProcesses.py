@@ -1,7 +1,7 @@
 #waterProcesses.py
+
 from math import fabs, sqrt
-from commonConst import EPSILON_METER
-from dataStructures import C3DCells, C3DParameters
+from dataStructures import *
 import soil
 import waterBalance
 

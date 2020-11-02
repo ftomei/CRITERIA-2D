@@ -1,4 +1,5 @@
 # solverC.pyx
+
 # it needs Cython and a C compiler to work
 # on windows you can use MinGW or VS compiler
 # compile with:

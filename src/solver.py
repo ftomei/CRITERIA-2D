@@ -1,4 +1,5 @@
 #solver.py
+
 from math import fabs
 import numpy as np
 from dataStructures import *

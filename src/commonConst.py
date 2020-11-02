@@ -25,4 +25,3 @@ LINK_ERROR = -5555
 
 EPSILON_METER = 1E-5                            # [m]
 
-

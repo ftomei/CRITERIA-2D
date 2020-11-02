@@ -1,4 +1,5 @@
 #visual3D.py
+
 import vpython as visual
 from dataStructures import *
 from color import *

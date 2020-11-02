@@ -149,7 +149,7 @@ def main():
     nrObsPrec = len(prec)
     print("Total simulation time [s]:", nrObsPrec * timeLength)
     
-    visual3D.initialize(1024)
+    visual3D.initialize(1280)
     visual3D.isPause = True
     
     # main cycle
