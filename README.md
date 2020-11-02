@@ -1,4 +1,4 @@
-# CRITERIA3D-Python
+# CRITERIA-2D
 Python version of CRITERIA-3D water balance
 
 ![](https://github.com/ftomei/CRITERIA3D-Python/blob/main/img/criteria3d.png)
