@@ -1,8 +1,8 @@
-#PSP_soil.py
+#soil.py
 from math import fabs, log, sqrt
 import numpy as np
-from PSP_readDataFile import readDataFile
-from PSP_dataStructures import *
+from dataStructures import *
+from readDataFile import readDataFile
 
 
 class CsoilHorizon:

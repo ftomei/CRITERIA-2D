@@ -1,8 +1,7 @@
-#PSP_balance.py
+#waterBalance.py
 from math import fabs
-from PSP_dataStructures import *
-from PSP_public import EPSILON_METER, C3DParameters
-from PSP_soil import getVolumetricWaterContent
+from dataStructures import *
+from soil import getVolumetricWaterContent
 
 class C3DBalance:
     waterStorage = NODATA

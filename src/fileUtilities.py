@@ -1,11 +1,10 @@
-#PSP_fileUtilities
+#fileUtilities
 from math import fabs
-from PSP_dataStructures import NODATA, C3DStructure, C3DCells
-import PSP_criteria3D as criteria3D
-import PSP_soil as soil
-from PSP_readDataFile import readDataFile
+from readDataFile import *
+from dataStructures import NODATA, C3DStructure, C3DCells
+import soil
 import tkinter
-from tkinter.filedialog import askopenfilename, asksaveasfilename
+from criteria3D import setMatricPotential
     
     
 def getStateFileName(isSave):
@@ -15,9 +14,9 @@ def getStateFileName(isSave):
     options['filetypes'] = [("Comma separated values", ".csv")]
     options['initialdir'] = "data"
     if isSave:
-        fileName = asksaveasfilename(**options)
+        fileName = tkinter.filedialog.asksaveasfilename(**options)
     else:
-        fileName = askopenfilename(**options)
+        fileName = tkinter.filedialog.askopenfilename(**options)
     root.destroy()
     return fileName
 
@@ -55,7 +54,7 @@ def loadState(fileName):
     depth = state[0]
     #surface
     for i in range(C3DStructure.nrTriangles):
-        criteria3D.setMatricPotential(i, state[i+1][0])
+        setMatricPotential(i, state[i+1][0])
     #subsurface
     for layer in range(1, C3DStructure.nrLayers):
         minDistance = 100.0
@@ -68,8 +67,6 @@ def loadState(fileName):
         if (l != NODATA):
             for i in range(C3DStructure.nrTriangles):
                 index = layer * C3DStructure.nrTriangles + i 
-                criteria3D.setMatricPotential(index, state[i+1][l])
+                setMatricPotential(index, state[i+1][l])
     return True
-
-
 

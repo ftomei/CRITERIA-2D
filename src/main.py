@@ -1,16 +1,18 @@
 import numpy as np
-from PSP_dataStructures import *
-from PSP_readDataFile import readDataFile
-import PSP_soil as soil
-import PSP_balance as balance
-import PSP_tin as tin
-import PSP_criteria3D as Criteria3D
-import PSP_visual3D as visual3D
-from PSP_fileUtilities import loadState
+from dataStructures import *
+from readDataFile import readDataFile
+from fileUtilities import loadState
+import soil
+import waterBalance
+import tin
+import criteria3D
+import visual3D
+import os
 
  
 def main():
-    dataPath = "../data/"
+    print (os.getcwd())
+    dataPath = "./data/"
     print ("Load TIN...")
     vertexList, isFileOk = readDataFile(dataPath + "vertices.csv", 0, ",", False)
     if (not isFileOk): return 
@@ -53,7 +55,7 @@ def main():
     print("Nr. of layers:", nrLayers)
     
     # Initialize memory
-    Criteria3D.memoryAllocation(nrLayers, nrTriangles)
+    criteria3D.memoryAllocation(nrLayers, nrTriangles)
     print("Nr. of cells: ", C3DStructure.nrCells)
     
     print("Set cell properties...")   
@@ -63,36 +65,36 @@ def main():
             index = i + nrTriangles * layer
             elevation = z - soil.depth[layer]
             volume = float(tin.C3DTIN[i].area * soil.thickness[layer])
-            Criteria3D.setCellGeometry(index, x, y, 
+            criteria3D.setCellGeometry(index, x, y, 
                                 elevation, volume, tin.C3DTIN[i].area)
             if (layer == 0):
                 # surface 
                 if tin.C3DTIN[i].isBoundary:
-                    Criteria3D.setCellProperties(index, True, BOUNDARY_RUNOFF)
-                    Criteria3D.setBoundaryProperties(index, 
+                    criteria3D.setCellProperties(index, True, BOUNDARY_RUNOFF)
+                    criteria3D.setBoundaryProperties(index, 
                                   tin.C3DTIN[i].boundarySide, tin.C3DTIN[i].boundarySlope)
                 else:
-                    Criteria3D.setCellProperties(index, True, BOUNDARY_NONE)
-                Criteria3D.setMatricPotential(index, 0.0)
+                    criteria3D.setCellProperties(index, True, BOUNDARY_NONE)
+                criteria3D.setMatricPotential(index, 0.0)
                 
             elif (layer == (nrLayers-1)):
                 # last layer
                 if C3DParameters.isFreeDrainage:
-                    Criteria3D.setCellProperties(index, False, BOUNDARY_FREEDRAINAGE)
+                    criteria3D.setCellProperties(index, False, BOUNDARY_FREEDRAINAGE)
                 else:
-                    Criteria3D.setCellProperties(index, False, BOUNDARY_NONE)
+                    criteria3D.setCellProperties(index, False, BOUNDARY_NONE)
                     
-                Criteria3D.setMatricPotential(index, C3DParameters.initialWaterPotential)
+                criteria3D.setMatricPotential(index, C3DParameters.initialWaterPotential)
                 
             else:
                 if tin.C3DTIN[i].isBoundary: 
-                    Criteria3D.setCellProperties(index, False, BOUNDARY_FREELATERALDRAINAGE)
-                    Criteria3D.setBoundaryProperties(index, tin.C3DTIN[i].boundarySide * soil.thickness[layer], 
+                    criteria3D.setCellProperties(index, False, BOUNDARY_FREELATERALDRAINAGE)
+                    criteria3D.setBoundaryProperties(index, tin.C3DTIN[i].boundarySide * soil.thickness[layer], 
                                                      tin.C3DTIN[i].boundarySlope)
                 else:
-                    Criteria3D.setCellProperties(index, False, BOUNDARY_NONE)
+                    criteria3D.setCellProperties(index, False, BOUNDARY_NONE)
                     
-                Criteria3D.setMatricPotential(index, C3DParameters.initialWaterPotential)
+                criteria3D.setMatricPotential(index, C3DParameters.initialWaterPotential)
                  
     print("Set links...")   
     for i in range(nrTriangles): 
@@ -101,7 +103,7 @@ def main():
             exchangeArea = tin.C3DTIN[i].area
             index = nrTriangles * layer + i 
             linkIndex = index - nrTriangles
-            Criteria3D.SetCellLink(index, linkIndex, UP, exchangeArea)   
+            criteria3D.SetCellLink(index, linkIndex, UP, exchangeArea)   
         # LATERAL
         for j in range(len(neighbourList[i])):
             neighbour = int(neighbourList[i,j])
@@ -116,21 +118,21 @@ def main():
                         exchangeArea = soil.thickness[layer] * linkSide
                     index = nrTriangles * layer + i 
                     linkIndex = nrTriangles * layer + neighbour
-                    Criteria3D.SetCellLink(index, linkIndex, LATERAL, exchangeArea)
+                    criteria3D.SetCellLink(index, linkIndex, LATERAL, exchangeArea)
         # DOWN
         for layer in range(nrLayers-1):
             exchangeArea = tin.C3DTIN[i].area
             index = nrTriangles * layer + i 
             linkIndex = index + nrTriangles
-            Criteria3D.SetCellLink(index, linkIndex, DOWN, exchangeArea)
+            criteria3D.SetCellLink(index, linkIndex, DOWN, exchangeArea)
             
     # LOAD INITIAL STATE - comment if you dont't have one
     if (not C3DParameters.computeOnlySurface): 
         print ("Load initial state...")
         loadState(dataPath + "state_0.csv")
     
-    balance.initializeBalance()
-    print("Initial water storage [m^3]:", format(balance.currentStep.waterStorage, ".3f"))
+    waterBalance.initializeBalance()
+    print("Initial water storage [m^3]:", format(waterBalance.currentStep.waterStorage, ".3f"))
         
     print("Read precipitation data...")
     precFileName = dataPath + "precipitation.txt"
@@ -152,9 +154,9 @@ def main():
     
     # main cycle
     for i in range(nrObsPrec):
-        balance.currentPrec = prec[i] / timeLength * 3600   #[mm/hour]
-        Criteria3D.setRainfall(prec[i], timeLength)
-        Criteria3D.compute(timeLength)
+        waterBalance.currentPrec = prec[i] / timeLength * 3600   #[mm/hour]
+        criteria3D.setRainfall(prec[i], timeLength)
+        criteria3D.compute(timeLength)
     
     print ("\nEnd simulation.")      
 main()

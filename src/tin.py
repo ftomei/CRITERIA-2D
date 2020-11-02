@@ -1,9 +1,10 @@
-#PSP_tin.py
+#tin.py
 from math import fabs, sqrt
 import numpy as np
 from copy import copy
-from PSP_public import NODATA, NOLINK
 from IPython.testing.decorators import skip
+from commonConst import NODATA, NOLINK
+
 
 class CheaderTin():     
     xMin = NODATA  

@@ -1,9 +1,12 @@
-#PSP_solver.py
-from PSP_waterProcesses import *
-from PSP_public import C3DParameters, NOLINK, NODATA
-from PSP_dataStructures import C3DCells, C3DStructure
-import PSP_boundaryConditions as boundary
+#solver.py
+from math import fabs
 import numpy as np
+from dataStructures import *
+from waterProcesses import runoff, infiltration, redistribution
+import boundaryConditions
+import waterBalance
+import soil
+
 
 A = np.array([[],[]], np.float64)
 C = np.array([], np.float64)
@@ -33,16 +36,16 @@ def computeStep(deltaT):
     while ((not isValidStep) 
     and (approximation <= C3DParameters.maxApproximationsNr)):
         isFirstApprox = (approximation == 1)
-        balance.maxCourant = 0.0
+        waterBalance.maxCourant = 0.0
         for i in range(C3DStructure.nrCells):
             if (not C3DCells[i].isSurface):
                 C3DCells[i].Se = soil.getDegreeOfSaturation(i)
                 C3DCells[i].k = soil.getHydraulicConductivity(i)
                 C[i] = C3DCells[i].volume * soil.getdTheta_dH(i)
-        boundary.updateBoundary(deltaT)
+        boundaryConditions.updateBoundary(deltaT)
         
         print ("approximation nr:", approximation)
-        print ("Sum flows (abs) [m^3]:", format(balance.sumWaterFlow(deltaT, True),".3f"))  
+        print ("Sum flows (abs) [m^3]:", format(waterBalance.sumWaterFlow(deltaT, True),".3f"))  
         
         for i in range(C3DStructure.nrCells):
             k = 0
@@ -61,17 +64,17 @@ def computeStep(deltaT):
                 
             arrangeMatrix(i, deltaT)
             
-        if ((balance.maxCourant > 1.0) 
+        if ((waterBalance.maxCourant > 1.0) 
         and (deltaT > C3DParameters.deltaT_min)):
-            print ("Courant too high:", balance.maxCourant)
+            print ("Courant too high:", waterBalance.maxCourant)
             print ("Decrease time step")
-            while (balance.maxCourant > 1.0):
-                balance.halveTimeStep()
-                balance.maxCourant *= 0.5
+            while (waterBalance.maxCourant > 1.0):
+                waterBalance.halveTimeStep()
+                waterBalance.maxCourant *= 0.5
             return(False)
 
         if not solveMatrix(approximation):
-            balance.halveTimeStep()
+            waterBalance.halveTimeStep()
             print("System not convergent.")
             return(False)
         # check surface error
@@ -83,9 +86,9 @@ def computeStep(deltaT):
         for i in range(0, C3DStructure.nrCells):
             C3DCells[i].H = x[i]
             C3DCells[i].Se = soil.getDegreeOfSaturation(i)
-        # balance
-        isValidStep = balance.waterBalance(deltaT, approximation)
-        if (balance.forceExit): return(False)
+        # waterBalance
+        isValidStep = waterBalance.waterBalance(deltaT, approximation)
+        if (waterBalance.forceExit): return(False)
         approximation += 1
     
     return (isValidStep)

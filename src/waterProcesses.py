@@ -1,9 +1,10 @@
-#PSP_waterProcesses.py
+#waterProcesses.py
 from math import fabs, sqrt
-from PSP_public import C3DParameters, EPSILON_METER
-from PSP_dataStructures import C3DCells
-import PSP_soil as soil
-import PSP_balance as balance
+from commonConst import EPSILON_METER
+from dataStructures import C3DCells, C3DParameters
+import soil
+import waterBalance
+
 
 def redistribution(i, link, isLateral, deltaT):
     j = link.index
@@ -55,7 +56,7 @@ def runoff(i, link, deltaT, isFirstApprox):
     # [m/s] Manning equation
     v = (pow(Hs, 2.0 / 3.0) * sqrt(dH/link.distance)) / C3DParameters.roughness
     Courant = v * deltaT / link.distance
-    balance.maxCourant = max(balance.maxCourant, Courant)
+    waterBalance.maxCourant = max(waterBalance.maxCourant, Courant)
 
     # on surface: link.area = side length [m]
     area = link.area * Hs 

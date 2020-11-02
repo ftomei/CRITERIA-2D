@@ -1,4 +1,4 @@
-#PSP_color.py
+#color.py
 import numpy as np
 
 colorScaleTIN = np.array([[],[]], float)

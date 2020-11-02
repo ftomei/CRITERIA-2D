@@ -1,4 +1,4 @@
-#PSP_readDataFile.py  
+#readDataFile.py  
 import csv
 import numpy as np
              

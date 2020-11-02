@@ -1,12 +1,11 @@
-#PSP_visual3D.py
-from PSP_public import EPSILON_METER, C3DParameters
-from PSP_dataStructures import C3DCells, C3DStructure
-from PSP_color import *
-from PSP_fileUtilities import loadState, saveState
-import PSP_balance as balance
-import PSP_tin as tin
-import PSP_soil as soil
+#visual3D.py
 import vpython as visual
+from dataStructures import *
+from color import *
+import waterBalance
+import tin
+import soil
+
 
 surfaceTriangles = []
 subSurfaceTriangles = []
@@ -159,7 +158,7 @@ def keyInput(evt):
         isPause = True
         print ("Load State...")
         if loadState(""):
-            balance.initializeBalance()
+            waterBalance.initializeBalance()
             redraw()
     elif s == "c":
         if (isPause):
@@ -227,13 +226,13 @@ def drawSubSurface(isFirst):
     
     
 def updateInterface():       
-    timeLabel.text = "Time: " + str(int(balance.totalTime)) + " [s]"
-    precLabel.text = "Prec: " + str(balance.currentPrec) + " [mm/hour]"
-    storage = balance.currentStep.waterStorage
-    flow = balance.currentStep.waterFlow
+    timeLabel.text = "Time: " + str(int(waterBalance.totalTime)) + " [s]"
+    precLabel.text = "Prec: " + str(waterBalance.currentPrec) + " [mm/hour]"
+    storage = waterBalance.currentStep.waterStorage
+    flow = waterBalance.currentStep.waterFlow
     timeStep = C3DParameters.currentDeltaT
-    totalFlow = balance.allSimulation.waterFlow
-    totalError = balance.allSimulation.MBE
+    totalFlow = waterBalance.allSimulation.waterFlow
+    totalError = waterBalance.allSimulation.MBE
     stepLabel.text = "Time step: " + str(timeStep) +" [s]"
     storageLabel.text = "Storage: " + format(storage,".2f") +" [m3]"
     flowLabel.text = "Flow: " + format(flow,".3f") + " [m3]"

@@ -1,17 +1,17 @@
-#PSP_criteria3D.py
+#criteria3D.py
 from math import fabs
-from PSP_dataStructures import *
-import PSP_soil as soil
-from PSP_balance import sumSinkSource
-from PSP_tin import distance3D
-import PSP_visual3D as visual3D
+from dataStructures import *
+from waterBalance import sumSinkSource
+from tin import distance3D
+import visual3D
+import soil
 import time
 
 CYTHON = True
 if CYTHON:
-    import PSP_solverCython as solver
+    import solverCython as solver
 else:
-    import PSP_solver as solver
+    import solver as solver
 
 
 def memoryAllocation(nrLayers, nrTriangles):

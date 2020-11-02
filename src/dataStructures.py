@@ -1,5 +1,5 @@
-#PSP_dataStructures.py
-from PSP_public import  *
+#dataStructures.py
+from commonConst import  *
 
 class C3DStructure:
     nrLayers = 0
@@ -40,6 +40,27 @@ class Ccell:
         self.upLink = Clink()
         self.downLink = Clink()
         self.lateralLink = [Clink(), Clink(), Clink()]
+        
+# user choices
+class C3DParameters:
+    waterRetentionCurve = IPPISCH_VG
+    meanType = LOGARITHMIC
+    initialWaterPotential = -2.0                # [m]
+    computeOnlySurface = False
+    isFreeDrainage = True
+    minThickness = 0.01                         # [m]
+    maxThickness = 0.1                          # [m]
+    geometricFactor = 1.2
+    roughness = 0.24                            # [s m^0.33]
+    pond = 0.002                                # [m]
+    currentDeltaT = 60.0                        # [s]
+    deltaT_min = 6.0                            # [s]
+    deltaT_max = 900                            # [s]
+    maxIterationsNr = 100
+    maxApproximationsNr = 10
+    residualTolerance = 1E-12
+    MBRThreshold = 1E-3
+    conductivityHVRatio = 10.0
 
 #global
 C3DCells = []

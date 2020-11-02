@@ -1,12 +1,12 @@
-#PSP_boundaryConditions.py
+#boundaryConditions.py
 from math import sqrt
-from PSP_dataStructures import *
-import PSP_soil as soil
+from dataStructures import *
+import soil
 
 def updateBoundary(deltaT):
     retentionCurve = C3DParameters.waterRetentionCurve 
     for i in range(C3DStructure.nrCells):
-        #sink/source: precipitation, evapotranspiration
+        #sink/source: precipitation, evapo-transpiration
         if (C3DCells[i].sinkSource != NODATA):
             #[m3 s-1]
             C3DCells[i].flow = C3DCells[i].sinkSource
@@ -44,6 +44,5 @@ def updateBoundary(deltaT):
                 C3DCells[i].boundary.flow = -k * C3DCells[i].upLink.area
                 
             C3DCells[i].flow += C3DCells[i].boundary.flow
-            
             
             
