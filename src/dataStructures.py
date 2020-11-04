@@ -6,8 +6,8 @@ class C3DStructure:
     nrLayers = 0
     nrTriangles = 0
     nrCells = 0
-    nrLateralLinks = 2
-    nrMaxLinks = 4
+    nrLateralLinks = 3
+    nrMaxLinks = 5
     totalArea = 0
 
 class Clink:
