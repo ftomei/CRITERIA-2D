@@ -6,8 +6,8 @@ class C3DStructure:
     nrLayers = 0
     nrTriangles = 0
     nrCells = 0
-    nrLateralLinks = 3
-    nrMaxLinks = 5
+    nrLateralLinks = 2
+    nrMaxLinks = 4
     totalArea = 0
 
 class Clink:
@@ -55,7 +55,7 @@ class C3DParameters:
     roughness = 0.24                            # [s m^0.33]
     pond = 0.002                                # [m]
     currentDeltaT = 60.0                        # [s]
-    deltaT_min = 6.0                            # [s]
+    deltaT_min = 1.0                            # [s]
     deltaT_max = 900.0                          # [s]
     maxIterationsNr = 100
     maxApproximationsNr = 10
