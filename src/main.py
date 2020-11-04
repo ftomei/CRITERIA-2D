@@ -13,7 +13,6 @@ from PenmanMonteith import computeHourlyET0
  
 def main():
     print (os.getcwd())
-    print (et0)
     dataPath = "./data/"
     print ("Load TIN...")
     vertexList, isFileOk = readDataFile(dataPath + "vertices.csv", 0, ",", False)

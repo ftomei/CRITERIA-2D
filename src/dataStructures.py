@@ -29,6 +29,7 @@ class Ccell:
         self.y = NODATA                   # [m]            
         self.z = NODATA                   # [m]
         self.volume = NODATA              # [m^3] volume
+        self.area = NODATA                # [m^3] area (for surface cells)
         self.isSurface = False            # true if the cell is on surface
         self.Se = NODATA                  # [-] degree of saturation
         self.H = NODATA                   # [m] total water potential
