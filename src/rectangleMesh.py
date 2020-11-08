@@ -5,9 +5,10 @@ import numpy as np
 from copy import copy
 from IPython.testing.decorators import skip
 from commonConst import NODATA, NOLINK
+from dataStructures import *
 
 
-class CheaderTin():     
+class CheaderRM():     
     xMin = NODATA  
     xMax = NODATA
     yMin = NODATA
@@ -17,45 +18,67 @@ class CheaderTin():
     dz = NODATA     
     magnify = NODATA
     
-class Ctriangle:
-    def __init__(self, v = np.zeros((3, 3), float)):
+class Crectangle:
+    def __init__(self, v = np.zeros((C3DStructure.nrVerticesPerRectangle, C3DStructure.nrDimensions), float)):
         self.isBoundary = False
         self.boundarySlope = NODATA
         self.boundarySide = NODATA
         self.v = copy(v)
-        if (not np.all(v == 0.0)): 
-            self.centroid = (v[0]+v[1]+v[2])/3.0
+        if (not np.all(v == C3DStructure.gridOrigin)): 
+            self.centroid = getCentroid2D(self.v)
             self.area = getArea2D(self.v)
 
 #global structures
-header = CheaderTin()
-C3DTIN = []
+header = CheaderRM()
+C3DRM = []
 
+def rectangleMeshCreation():
+    for y in np.arange(C3DStructure.gridOrigin, C3DStructure.gridHeight, C3DStructure.gridStep):
+        for x in np.arange(C3DStructure.gridOrigin, C3DStructure.gridHeight, C3DStructure.gridStep):
+            rectangle = Crectangle(getRectangleVertices(x, y))
+            C3DRM.append(copy(rectangle))
+            C3DStructure.totalArea += rectangle.area
+
+def getRectangleVertices(x, y):
+    v = np.zeros((C3DStructure.nrVerticesPerRectangle, C3DStructure.nrDimensions), float)
+    v[0] = [x, y, C3DStructure.gridOrigin]
+    v[1] = [x + C3DStructure.gridStep, y, C3DStructure.gridOrigin]
+    v[2] = [x, y + C3DStructure.gridStep, C3DStructure.gridOrigin]
+    v[3] = [x + C3DStructure.gridStep, y + C3DStructure.gridStep, C3DStructure.gridOrigin]
+    return v
+
+# TODO to check
 def magnitude(v):
     return(np.sqrt(v.dot(v)))
 
+# TODO to check
 def getArea(v):
     return 0.5 * magnitude(np.cross(v[1] - v[0], v[2] - v[0]))
 
-# Area = 1/2 |x1(y2-y3) - x2(y1-y3) + x3(y1 - y2)| 
-def getArea2D(v):
-    x = v[:,0]
-    y = v[:,1]
-    return 0.5 * fabs(x[0]*(y[1]-y[2]) - x[1]*(y[0]-y[2]) + x[2]*(y[0]-y[1]))
+def getCentroid2D(vertices):
+    return np.array(
+        [(vertices[0][0] + vertices[1][0]) / 2, 
+        (vertices[0][1] + vertices[2][1]) / 2, 
+        C3DStructure.gridOrigin])
+       
+def getArea2D(vertices):
+    x_side = vertices[1][0] - vertices[0][0]
+    y_side = vertices[2][1] - vertices[0][1]
+    return x_side * y_side
 
-def getHeader(triangleList):
-    header = CheaderTin()
-    header.xMin = triangleList[0].centroid[0]
-    header.yMin = triangleList[0].centroid[1]
-    header.zMin = triangleList[0].centroid[2]
+def getHeader(rectangleList):
+    header = CheaderRM()
+    header.xMin = rectangleList[0].centroid[0]
+    header.yMin = rectangleList[0].centroid[1]
+    header.zMin = rectangleList[0].centroid[2]
     header.xMax = header.xMin
     header.yMax = header.yMin
     header.zMax = header.zMin
     
-    for i in range(1, len(triangleList)):
-        x = triangleList[i].centroid[0]
-        y = triangleList[i].centroid[1]
-        z = triangleList[i].centroid[2]
+    for i in range(1, len(rectangleList)):
+        x = rectangleList[i].centroid[0]
+        y = rectangleList[i].centroid[1]
+        z = rectangleList[i].centroid[2]
         header.xMin = min(header.xMin, x)
         header.yMin = min(header.yMin, y)
         header.zMin = min(header.zMin, z)
@@ -69,19 +92,21 @@ def getHeader(triangleList):
     ratio = sqrt(dx*dy) / header.dz
     header.magnify = max(1., min(10., ratio / 5.))
     return(header)
-         
+
+# TODO to check
 def distance2D(v1, v2):
     dx = fabs(v1[0] - v2[0])
     dy = fabs(v1[1] - v2[1])
     return sqrt(dx*dx + dy*dy)
 
+# TODO to check
 def distance3D(v1, v2):
     dx = fabs(v1[0] - v2[0])
     dy = fabs(v1[1] - v2[1])
     dz = fabs(v1[2] - v2[2])
     return sqrt(dx*dx + dy*dy + dz*dz)
 
-
+# TODO to check
 def boundaryProperties(TIN, index, neighbours):
     # compute nr of adj triangles 
     nrAdj = [0,0,0]
@@ -115,7 +140,7 @@ def boundaryProperties(TIN, index, neighbours):
     dxy = distance2D(TIN[index].centroid, boundaryPoint)
     TIN[index].boundarySlope = dz/dxy
 
-
+# TODO to check
 def getAdjacentVertices(t1, t2):
     isFirst = True
     for i in range(3):
@@ -129,6 +154,7 @@ def getAdjacentVertices(t1, t2):
                     return (index1, index2)
     return NOLINK, NOLINK
 
+# TODO to check
 def getAdjacentSide(i, j, vertexList, triangleList):
     triangle1 = triangleList[i]
     triangle2 = triangleList[j]

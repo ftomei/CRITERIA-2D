@@ -3,11 +3,20 @@
 from commonConst import  *
 
 class C3DStructure:
+    nrDimensions = 3
+    nrVerticesPerRectangle = 4
+    gridWidth = 1.2 # X axis
+    gridHeight = 1.2 # Y axis
+    gridStep = 0.01
+    gridOrigin = 0.0
+    nrRectanglesInXAxis = int(gridWidth / gridStep)
+    nrRectanglesInYAxis = int(gridHeight / gridStep)
+    nrRectangles = nrRectanglesInXAxis * nrRectanglesInYAxis
+
     nrLayers = 0
-    nrTriangles = 0
     nrCells = 0
-    nrLateralLinks = 3
-    nrMaxLinks = 5
+    nrLateralLinks = 4
+    nrMaxLinks = 6
     totalArea = 0
 
 class Clink:

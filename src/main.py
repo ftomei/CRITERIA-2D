@@ -4,7 +4,7 @@ from readDataFile import readDataFile
 from fileUtilities import loadState
 import soil
 import waterBalance
-import tin
+import rectangleMesh
 import criteria3D
 import visual3D
 import os
@@ -14,25 +14,13 @@ from PenmanMonteith import computeHourlyET0
 def main():
     print (os.getcwd())
     dataPath = "./data/"
-    print ("Load TIN...")
-    vertexList, isFileOk = readDataFile(dataPath + "vertices.csv", 0, ",", False)
-    if (not isFileOk): return 
-    triangleList, isFileOk = readDataFile(dataPath + "triangles.csv", 0, ",", False) 
-    if (not isFileOk): return 
-    nrTriangles = len(triangleList)
-    neighbourList, isFileOk = readDataFile(dataPath + "neighbours.csv", 0, ",", False) 
-    if (not isFileOk): return 
-    print ("Nr. of triangles:", nrTriangles)
-    
-    v = np.zeros((3, 3), float)
-    for i in range(nrTriangles):
-        for j in range(3):
-            v[j] = vertexList[int(triangleList[i,j])]
-        tin.C3DTIN.append(tin.Ctriangle(v))
-        C3DStructure.totalArea += tin.C3DTIN[i].area
+
+    print("Building rectangle mesh...")
+    rectangleMesh.rectangleMeshCreation()
+    print ("Nr. of rectangles:", C3DStructure.nrRectangles)
     print ("Total area [m^2]:", C3DStructure.totalArea)
     
-    tin.header = tin.getHeader(tin.C3DTIN)
+    rectangleMesh.header = rectangleMesh.getHeader(rectangleMesh.C3DRM)
     
     print ("Set boundary...")
     for i in range(nrTriangles):
