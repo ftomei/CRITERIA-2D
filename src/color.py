@@ -64,7 +64,7 @@ def setAllColorScale():
     setColorScaleSurfaceWater()
     
 def getTINColor(z, header):
-    zRelative = (z - header.zMin) / header.dz
+    zRelative =  0.0 if (header.dz == 0.0) else (z - header.zMin) / header.dz
     index = int(zRelative * (len(colorScaleTIN)-1))
     index = min(len(colorScaleTIN)-1, max(index, 0))
     return(colorScaleTIN[index])

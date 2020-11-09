@@ -4,7 +4,7 @@ import vpython as visual
 from dataStructures import *
 from color import *
 import waterBalance
-import tin
+import rectangleMesh
 import soil
 
 
@@ -32,10 +32,10 @@ def initialize(totalWidth):
     h = int(dy / 30)
     
     #CENTER
-    cX = (tin.header.xMin + tin.header.xMax) * 0.5
-    cY = (tin.header.yMin + tin.header.yMax) * 0.5
-    cZ = tin.header.zMin * tin.header.magnify
-    Zlabel = (tin.header.zMax + tin.header.dz*0.75) * tin.header.magnify
+    cX = (rectangleMesh.header.xMin + rectangleMesh.header.xMax) * 0.5
+    cY = (rectangleMesh.header.yMin + rectangleMesh.header.yMax) * 0.5
+    cZ = rectangleMesh.header.zMin * rectangleMesh.header.magnify
+    Zlabel = (rectangleMesh.header.zMax + rectangleMesh.header.dz*0.75) * rectangleMesh.header.magnify
     
     #INTERFACE CANVAS
     interface = visual.canvas(width = interfaceWidth, height = dy, align="left")
@@ -71,7 +71,7 @@ def initialize(totalWidth):
         soilCanvas.ambient = visual.vector(0.33, 0.33, 0.5)
         soilCanvas.up = visual.vector(0,0,1)
         soilCanvas.forward = visual.vector(0.33, -0.33, -0.15)
-        soilCanvas.range = (tin.header.xMax - tin.header.xMin) * 0.55
+        soilCanvas.range = (rectangleMesh.header.xMax - rectangleMesh.header.xMin) * 0.55
         layerLabel = visual.label(canvas = soilCanvas, height = h, pos=visual.vector(cX, cY, Zlabel))
         
         drawColorScale()
@@ -84,7 +84,7 @@ def initialize(totalWidth):
     surfaceCanvas.ambient = visual.vector(0.33, 0.33, 0.5)
     surfaceCanvas.up = visual.vector(0,0,1)
     surfaceCanvas.forward = visual.vector(0.33, -0.33, -0.15)
-    surfaceCanvas.range = (tin.header.xMax - tin.header.xMin) * 0.55
+    surfaceCanvas.range = (rectangleMesh.header.xMax - rectangleMesh.header.xMin) * 0.55
     surfaceCanvas.caption = " *** COMMANDS ***\n\n 'r': run simulation \n 'p': pause "
     surfaceCanvas.caption += "\n 'u': move up (soil layer) \n 'd': move down (soil layer) "
     surfaceCanvas.caption += "\n 'l': load state \n 's': save state \n 'c': colorscale range"
@@ -169,7 +169,7 @@ def keyInput(evt):
 def getNewTriangle(myColor, myCanvas, v):
     vert = []
     for i in range(3):
-        vert.append(visual.vertex(pos = visual.vector(v[i,0], v[i,1], v[i,2] * tin.header.magnify)))
+        vert.append(visual.vertex(pos = visual.vector(v[i,0], v[i,1], v[i,2] * rectangleMesh.header.magnify)))
         vert[i].color = myColor
                      
     newTriangle = visual.triangle(canvas = myCanvas, vs=[vert[0],vert[1],vert[2]])
@@ -180,8 +180,8 @@ def drawSurface(isFirst):
     global surfaceCanves, surfaceTriangles
     maximum = 0.05
     for i in range(C3DStructure.nrTriangles):
-        z = tin.C3DTIN[i].centroid[2]
-        TINColor = getTINColor(z, tin.header)
+        z = rectangleMesh.C3DRM[i].centroid[2]
+        TINColor = getTINColor(z, rectangleMesh.header)
         waterHeight = max(C3DCells[i].H - C3DCells[i].z, 0.0)
         waterColor = getSurfaceWaterColor(waterHeight, maximum)
         
@@ -196,7 +196,7 @@ def drawSurface(isFirst):
         myColor = visual.vector(c[0], c[1], c[2])
         
         if (isFirst):
-            newTriangle = getNewTriangle(myColor, surfaceCanvas, tin.C3DTIN[i].v)
+            newTriangle = getNewTriangle(myColor, surfaceCanvas, rectangleMesh.C3DRM[i].v)
             surfaceTriangles.append(newTriangle)
         else:
             surfaceTriangles[i].v0.color = myColor 
@@ -218,7 +218,7 @@ def drawSubSurface(isFirst):
         myColor = visual.vector(c[0], c[1], c[2])
         
         if (isFirst):
-            newTriangle = getNewTriangle(myColor, soilCanvas, tin.C3DTIN[i].v)
+            newTriangle = getNewTriangle(myColor, soilCanvas, rectangleMesh.C3DRM[i].v)
             subSurfaceTriangles.append(newTriangle)
         else:
             subSurfaceTriangles[i].v0.color = myColor
