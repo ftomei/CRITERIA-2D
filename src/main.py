@@ -21,14 +21,7 @@ def main():
     print ("Total area [m^2]:", C3DStructure.totalArea)
     
     rectangleMesh.header = rectangleMesh.getHeader(rectangleMesh.C3DRM)
-    print(rectangleMesh.header.xMin) 
-    print(rectangleMesh.header.xMax)
-    print(rectangleMesh.header.yMin)
-    print(rectangleMesh.header.yMax)
-    print(rectangleMesh.header.zMin)
-    print(rectangleMesh.header.zMax)
-    print(rectangleMesh.header.dz)    
-    print(rectangleMesh.header.magnify)
+   
     # SOIL
     print ("Load soil...")
     soil.C3DSoil = soil.readHorizon(dataPath + "soil.txt", 1)
@@ -117,7 +110,7 @@ def main():
     # LOAD INITIAL STATE - comment if you dont't have one
     if (not C3DParameters.computeOnlySurface): 
         print ("Load initial state...")
-        loadState(dataPath + "state_1.csv")
+        loadState(dataPath + "state_0.csv")
     
     waterBalance.initializeBalance()
     print("Initial water storage [m^3]:", format(waterBalance.currentStep.waterStorage, ".3f"))

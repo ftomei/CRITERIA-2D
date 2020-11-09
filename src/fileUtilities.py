@@ -48,8 +48,6 @@ def loadState(fileName):
         fileName = getStateFileName(False)
     if (fileName == ""): return False
     state, isFileOk = readDataFile(fileName, 0, ",", False)
-    print(state)
-    print(len(state))
     if not isFileOk or (C3DStructure.nrRectangles + 1) != len(state): 
         print("*** Wrong state file!")
         return False
