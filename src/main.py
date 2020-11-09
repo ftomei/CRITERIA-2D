@@ -22,13 +22,6 @@ def main():
     
     rectangleMesh.header = rectangleMesh.getHeader(rectangleMesh.C3DRM)
     
-    print ("Set boundary...")
-    for i in range(nrTriangles):
-        tin.C3DTIN[i].isBoundary = False
-        if (neighbourList[i,2] == NOLINK):
-            tin.C3DTIN[i].isBoundary = True
-            tin.boundaryProperties(tin.C3DTIN, i, neighbourList[i])
-    
     # SOIL
     print ("Load soil...")
     soil.C3DSoil = soil.readHorizon(dataPath + "soil.txt", 1)
