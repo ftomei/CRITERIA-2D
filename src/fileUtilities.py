@@ -33,9 +33,9 @@ def saveState():
             if layer < lastLayer: f.write(",")
             else: f.write("\n")
         #water potential
-        for i in range(C3DStructure.nrTriangles):
+        for i in range(C3DStructure.nrRectangles):
             for layer in range(C3DStructure.nrLayers):
-                index = i + C3DStructure.nrTriangles * layer
+                index = i + C3DStructure.nrRectangles * layer
                 h = C3DCells[index].H - C3DCells[index].z
                 if fabs(h) < 1E-12: h = 0.0
                 f.write(str(h))
@@ -48,13 +48,15 @@ def loadState(fileName):
         fileName = getStateFileName(False)
     if (fileName == ""): return False
     state, isFileOk = readDataFile(fileName, 0, ",", False)
-    if not isFileOk or (C3DStructure.nrTriangles + 1) != len(state): 
+    print(state)
+    print(len(state))
+    if not isFileOk or (C3DStructure.nrRectangles + 1) != len(state): 
         print("*** Wrong state file!")
         return False
     #first row: depth
     depth = state[0]
     #surface
-    for i in range(C3DStructure.nrTriangles):
+    for i in range(C3DStructure.nrRectangles):
         setMatricPotential(i, state[i+1][0])
     #subsurface
     for layer in range(1, C3DStructure.nrLayers):
@@ -66,8 +68,8 @@ def loadState(fileName):
                 minDistance = dz
                 l = stateLayer
         if (l != NODATA):
-            for i in range(C3DStructure.nrTriangles):
-                index = layer * C3DStructure.nrTriangles + i 
+            for i in range(C3DStructure.nrRectangles):
+                index = layer * C3DStructure.nrRectangles + i 
                 setMatricPotential(index, state[i+1][l])
     return True
 

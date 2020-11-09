@@ -3,7 +3,7 @@
 from math import fabs
 from dataStructures import *
 from waterBalance import sumSinkSource
-from tin import distance3D
+from rectangleMesh import distance3D
 import visual3D
 import soil
 import time
@@ -15,10 +15,10 @@ else:
     import solver as solver
 
 
-def memoryAllocation(nrLayers, nrTriangles):
-    C3DStructure.nrTriangles = nrTriangles
+def memoryAllocation(nrLayers, nrRectangles):
+    C3DStructure.nrTriangles = nrRectangles
     C3DStructure.nrLayers = nrLayers
-    nrCells = nrLayers * nrTriangles
+    nrCells = nrLayers * nrRectangles
     C3DStructure.nrCells = nrCells
     solver.setCriteria3DArrays(nrCells, C3DStructure.nrMaxLinks)
     for i in range(nrCells): 

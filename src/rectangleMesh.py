@@ -112,7 +112,11 @@ def boundaryProperties(index, vertices, centroid):
                 vertix_to_check[coordinate_to_check], C3DStructure.gridStep), 
                 limit_to_check):
             neighbours.append(neighbours_map[key]["index"])
+            boundarySides.append(NODATA)
+            boundarySlopes.append(NODATA)
         else:
+            neighbours.append(NOLINK)
+
             # compute boundary side
             boundarySides.append(distance3D(neighbours_map[key]["vertices"][0], neighbours_map[key]["vertices"][1]))
             boundaryPoint = (neighbours_map[key]["vertices"][0] + neighbours_map[key]["vertices"][1]) * 0.5
@@ -188,25 +192,18 @@ def distance3D(v1, v2):
     dz = fabs(v1[2] - v2[2])
     return sqrt(dx*dx + dy*dy + dz*dz)
 
-# TODO to check
-def getAdjacentVertices(t1, t2):
-    isFirst = True
-    for i in range(3):
-        for j in range(3):
-            if (t1[i] == t2[j]):
-                if isFirst:
-                    index1 = t1[i]
-                    isFirst = False
-                else:
-                    index2= t1[i]
-                    return (index1, index2)
-    return NOLINK, NOLINK
+def getAdjacentVertices(rectangle1, rectangle2):
+    commonVertices = []
+    for i in rectangle1.v:
+        for j in rectangle2.v:
+            if np.allclose(i, j, rtol = 1e-05):
+                commonVertices.append(i)
+    if len(commonVertices) > 2:
+        raise Exception('Too many common vertices')
+    return commonVertices[0], commonVertices[1]
 
-# TODO to check
-def getAdjacentSide(i, j, vertexList, triangleList):
-    triangle1 = triangleList[i]
-    triangle2 = triangleList[j]
-    index1, index2 = getAdjacentVertices(triangle1, triangle2)
-    v1 = vertexList[int(index1)]
-    v2 = vertexList[int(index2)]
+def getAdjacentSide(i, j):
+    rectangle1 = C3DRM[i]
+    rectangle2 = C3DRM[j]
+    v1, v2 = getAdjacentVertices(rectangle1, rectangle2)
     return distance2D(v1, v2)     

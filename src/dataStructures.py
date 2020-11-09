@@ -49,7 +49,7 @@ class Ccell:
         self.boundary = Cboundary() 
         self.upLink = Clink()
         self.downLink = Clink()
-        self.lateralLink = [Clink(), Clink(), Clink()]
+        self.lateralLink = [Clink(), Clink(), Clink(), Clink()]
         
 # user choices
 class C3DParameters:
