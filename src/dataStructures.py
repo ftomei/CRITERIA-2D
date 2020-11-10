@@ -8,7 +8,7 @@ class C3DStructure:
     gridWidth = 1.0                 # [m] x axis
     gridHeight = 1.0                # [m] y axis
     gridOrigin = 0.0                # [m] z
-    gridStep = 0.04                 # [m]
+    gridStep = 0.05                 # [m]
     nrRectanglesInXAxis = int(gridWidth / gridStep)
     nrRectanglesInYAxis = int(gridHeight / gridStep)
     nrRectangles = nrRectanglesInXAxis * nrRectanglesInYAxis
@@ -55,7 +55,7 @@ class Ccell:
 class C3DParameters:
     waterRetentionCurve = IPPISCH_VG
     meanType = LOGARITHMIC
-    initialWaterPotential = -1.0                # [m]
+    initialWaterPotential = -3.0                # [m]
     computeOnlySurface = False
     isFreeDrainage = True
     minThickness = 0.01                         # [m]
@@ -69,7 +69,7 @@ class C3DParameters:
     maxIterationsNr = 100
     maxApproximationsNr = 10
     residualTolerance = 1E-12
-    MBRThreshold = 1E-3
+    MBRThreshold = 1E-2
     conductivityHVRatio = 10.0
 
 #global

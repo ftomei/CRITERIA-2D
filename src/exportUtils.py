@@ -14,7 +14,7 @@ def createExportFile():
     header = "timestamp," + ",".join(map(lambda index: str(index), exportIndeces)) + "\n"
 
     with open(outputFile, "w") as f:
-        f.write(header)
+       f.write(header)
 
 def takeSlice():
     offset = C3DStructure.nrRectanglesInYAxis / (C3DStructure.gridHeight / heightSlice)

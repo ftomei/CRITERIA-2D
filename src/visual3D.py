@@ -36,7 +36,7 @@ def initialize(totalWidth):
     cX = (rectangularMesh.header.xMin + rectangularMesh.header.xMax) * 0.5
     cY = (rectangularMesh.header.yMin + rectangularMesh.header.yMax) * 0.5
     cZ = rectangularMesh.header.zMin * rectangularMesh.header.magnify
-    Zlabel = (rectangularMesh.header.zMax + rectangularMesh.header.dz*0.75) * rectangularMesh.header.magnify
+    Zlabel = (rectangularMesh.header.zMax + rectangularMesh.header.dz*0.75 + 0.2) * rectangularMesh.header.magnify
     
     #INTERFACE CANVAS
     interface = visual.canvas(width = interfaceWidth, height = dy, align="left")
@@ -244,17 +244,17 @@ def drawSlice(indeces):
     
 def updateInterface():       
     timeLabel.text = "Time: " + str(int(waterBalance.totalTime)) + " [s]"
-    precLabel.text = "Prec: " + str(waterBalance.currentPrec) + " [mm/hour]"
+    precLabel.text = "Irrigation: " + str(waterBalance.currentPrec) + " [l/hour]"
     storage = waterBalance.currentStep.waterStorage
     flow = waterBalance.currentStep.waterFlow
     timeStep = C3DParameters.currentDeltaT
     totalFlow = waterBalance.allSimulation.waterFlow
     totalError = waterBalance.allSimulation.MBE
     stepLabel.text = "Time step: " + str(timeStep) +" [s]"
-    storageLabel.text = "Storage: " + format(storage,".3f") +" [m3]"
-    flowLabel.text = "Flow: " + format(flow,".4f") + " [m3]"
-    totalFlowLabel.text = "Total flow: " + format(totalFlow,".4f") + " [m3]"
-    totalErrorLabel.text = "Total error: " + format(totalError,".4f") + " [m3]"
+    storageLabel.text = "Storage: " + format(storage,".4f") +" [m3]"
+    flowLabel.text = "Flow: " + format(flow * 1000,".4f") + " [l]"
+    totalFlowLabel.text = "Total flow: " + format(totalFlow * 1000,".4f") + " [l]"
+    totalErrorLabel.text = "Total error: " + format(totalError * 1000,".4f") + " [l]"
     
     
 def redraw():

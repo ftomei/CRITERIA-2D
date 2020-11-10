@@ -107,7 +107,7 @@ def computeBalanceError(deltaT):
         currentStep.MBR = fabs(currentStep.MBE) / minimumFlow
     else:
         currentStep.MBR = fabs(currentStep.MBE) / sumFlow
-    print ("Mass Balance Error [m^3]:", format(currentStep.MBE,".3f"))
+    print ("Mass Balance Error [m^3]:", format(currentStep.MBE,".6f"))
     print ("Mass Balance Ratio:", format(currentStep.MBR,".5f"))
     
 def waterBalance(deltaT, approximation):

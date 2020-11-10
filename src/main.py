@@ -139,8 +139,8 @@ def main():
 
     # main cycle
     for i in range(int(nrObsPrec)):
-        waterBalance.currentPrec = prec[i] / timeLength * 3600   #[mm/hour]
-        criteria3D.setRainfall(prec[i], timeLength)
+        waterBalance.currentPrec = prec[i] / timeLength * 3600   #[l/hour]
+        criteria3D.setDripIrrigation(prec[i], timeLength)
         criteria3D.compute(timeLength)
     
     print ("\nEnd simulation.")   

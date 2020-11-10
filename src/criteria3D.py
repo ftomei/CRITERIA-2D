@@ -92,6 +92,21 @@ def setRainfall(rain, duration):
     for i in range(C3DStructure.nrRectangles):
         area = C3DCells[i].area                         #[m^2]
         C3DCells[i].sinkSource = rate * area            #[m^3 s^-1]
+
+#-----------------------------------------------------------
+# set drip
+# irrigation      [l]
+# duration        [s]            
+#-----------------------------------------------------------
+def setDripIrrigation(irrigation, duration):   
+    for i in range(C3DStructure.nrRectangles):
+        C3DCells[i].sinkSource = NODATA
+    rate = irrigation / duration                    #[l s^-1]
+    nrX = int(C3DStructure.gridWidth / C3DStructure.gridStep)
+    nrY = int(C3DStructure.gridHeight / C3DStructure.gridStep)
+    index = nrX * int(nrY/2) + int(nrX/2)
+    C3DCells[index].sinkSource = rate * 0.001       #[m^3 s^-1]        
+        
         
 def restoreWater():
     for i in range(C3DStructure.nrCells):
@@ -114,7 +129,7 @@ def compute(timeLength):
             deltaT = min(C3DParameters.currentDeltaT, residualTime)
             print ("\ntime step [s]: ", deltaT)
             print ("MBR threshold [-]: ", C3DParameters.MBRThreshold)
-            print ("sink/source [m^3]:", format(sumSinkSource(deltaT),".3f")) 
+            print ("sink/source [m^3]:", format(sumSinkSource(deltaT),".5f")) 
              
             acceptedStep = solver.computeStep(deltaT)          
             if not acceptedStep: 
