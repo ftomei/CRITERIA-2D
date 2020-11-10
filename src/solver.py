@@ -79,7 +79,7 @@ def computeStep(deltaT):
             print("System not convergent.")
             return(False)
         # check surface error
-        for i in range(C3DStructure.nrTriangles):
+        for i in range(C3DStructure.nrRectangles):
             if (C3DCells[i].isSurface):
                 if (x[i] < C3DCells[i].z):
                     x[i] = C3DCells[i].z
