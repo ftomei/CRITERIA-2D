@@ -9,6 +9,7 @@ import criteria3D
 import visual3D
 import os
 from PenmanMonteith import computeHourlyET0
+import exportUtils
 
  
 def main():
@@ -133,6 +134,9 @@ def main():
     visual3D.initialize(1280)
     visual3D.isPause = True
     
+    # export inizialization 
+    exportUtils.createExportFile()
+
     # main cycle
     for i in range(int(nrObsPrec)):
         waterBalance.currentPrec = prec[i] / timeLength * 3600   #[mm/hour]
