@@ -32,10 +32,10 @@ def takeAll():
 
 def takeScreenshot():
     global nrDetections
-    print("_______________________________")
-    print(waterBalance.totalTime)
-    print(int(waterBalance.totalTime / 60), nrDetections)
-    print("_______________________________")
+    #print("_______________________________")
+    #print(waterBalance.totalTime)
+    #print(int(waterBalance.totalTime / 60), nrDetections)
+    #print("_______________________________")
     if int(waterBalance.totalTime / 60) > nrDetections:
         nrDetections += 1
         row = str(waterBalance.totalTime)
