@@ -235,10 +235,10 @@ def updateInterface():
     totalFlow = waterBalance.allSimulation.waterFlow
     totalError = waterBalance.allSimulation.MBE
     stepLabel.text = "Time step: " + str(timeStep) +" [s]"
-    storageLabel.text = "Storage: " + format(storage,".2f") +" [m3]"
-    flowLabel.text = "Flow: " + format(flow,".3f") + " [m3]"
-    totalFlowLabel.text = "Total flow: " + format(totalFlow,".3f") + " [m3]"
-    totalErrorLabel.text = "Total error: " + format(totalError,".3f") + " [m3]"
+    storageLabel.text = "Storage: " + format(storage,".3f") +" [m3]"
+    flowLabel.text = "Flow: " + format(flow,".4f") + " [m3]"
+    totalFlowLabel.text = "Total flow: " + format(totalFlow,".4f") + " [m3]"
+    totalErrorLabel.text = "Total error: " + format(totalError,".4f") + " [m3]"
     
     
 def redraw():

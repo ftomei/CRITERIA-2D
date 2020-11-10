@@ -177,7 +177,7 @@ def getHeader(rectangleList):
     dx = header.xMax - header.xMin
     dy = header.yMax - header.yMin
     header.dz = header.zMax - header.zMin
-    ratio = sqrt(dx*dy) / header.dz
+    ratio = sqrt(dx*dy) / max(header.dz, 0.01)
     header.magnify = max(1., min(10., ratio / 5.))
     return(header)
 
