@@ -6,6 +6,7 @@ from color import *
 import waterBalance
 import rectangularMesh
 import soil
+import exportUtils
 
 
 surfaceRectangles = []
@@ -223,7 +224,22 @@ def drawSubSurface(isFirst):
         else:
             subSurfaceRectangles[i].v0.color = myColor
             subSurfaceRectangles[i].v1.color = myColor
-            subSurfaceRectangles[i].v2.color = myColor    
+            subSurfaceRectangles[i].v2.color = myColor  
+
+def drawSlice(indeces):
+    if C3DParameters.computeOnlySurface: 
+        return
+    
+    depth = soil.depth[visualizedLayer] * 100
+    layerLabel.text = "Degree of saturation " + format(depth,".1f")+"cm"
+        
+    for i in indeces:
+        c = getSEColor(1.0, degreeMinimum, degreeMaximum)
+        myColor = visual.vector(c[0], c[1], c[2])
+        
+        subSurfaceRectangles[i].v0.color = myColor
+        subSurfaceRectangles[i].v1.color = myColor
+        subSurfaceRectangles[i].v2.color = myColor  
     
     
 def updateInterface():       
@@ -246,5 +262,6 @@ def redraw():
     drawSurface(False)
     if not C3DParameters.computeOnlySurface:
         drawSubSurface(False)
+    # drawSlice(exportUtils.exportIndeces[:C3DStructure.nrRectanglesInXAxis])
       
     
