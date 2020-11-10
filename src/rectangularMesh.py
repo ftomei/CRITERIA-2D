@@ -50,7 +50,7 @@ class Crectangle:
 header = CheaderRM()
 C3DRM = []
 
-def rectangleMeshCreation():
+def rectangularMeshCreation():
     index = 0
     for y in np.arange(C3DStructure.gridOrigin, C3DStructure.gridHeight, C3DStructure.gridStep):
         for x in np.arange(C3DStructure.gridOrigin, C3DStructure.gridWidth, C3DStructure.gridStep):

@@ -3,7 +3,7 @@
 from math import fabs
 from dataStructures import *
 from waterBalance import sumSinkSource
-from rectangleMesh import distance3D
+from rectangularMesh import distance3D
 import visual3D
 import soil
 import time

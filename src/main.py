@@ -4,7 +4,7 @@ from readDataFile import readDataFile
 from fileUtilities import loadState
 import soil
 import waterBalance
-import rectangleMesh
+import rectangularMesh
 import criteria3D
 import visual3D
 import os
@@ -16,11 +16,11 @@ def main():
     dataPath = "./data/"
 
     print("Building rectangle mesh...")
-    rectangleMesh.rectangleMeshCreation()
+    rectangularMesh.rectangularMeshCreation()
     print ("Nr. of rectangles:", C3DStructure.nrRectangles)
     print ("Total area [m^2]:", C3DStructure.totalArea)
     
-    rectangleMesh.header = rectangleMesh.getHeader(rectangleMesh.C3DRM)
+    rectangularMesh.header = rectangularMesh.getHeader(rectangularMesh.C3DRM)
    
     # SOIL
     print ("Load soil...")
@@ -43,18 +43,18 @@ def main():
     print("Set cell properties...")   
     for i in range(C3DStructure.nrRectangles):
         for layer in range(C3DStructure.nrLayers): 
-            [x, y, z] = rectangleMesh.C3DRM[i].centroid 
+            [x, y, z] = rectangularMesh.C3DRM[i].centroid 
             index = i + C3DStructure.nrRectangles * layer
             elevation = z - soil.depth[layer]
-            volume = float(rectangleMesh.C3DRM[i].area * soil.thickness[layer])
+            volume = float(rectangularMesh.C3DRM[i].area * soil.thickness[layer])
             criteria3D.setCellGeometry(index, x, y, 
-                                elevation, volume, rectangleMesh.C3DRM[i].area)
+                                elevation, volume, rectangularMesh.C3DRM[i].area)
             if (layer == 0):
                 # surface 
-                if rectangleMesh.C3DRM[i].isBoundary:
+                if rectangularMesh.C3DRM[i].isBoundary:
                     criteria3D.setCellProperties(index, True, BOUNDARY_RUNOFF)
                     criteria3D.setBoundaryProperties(index, 
-                                  rectangleMesh.C3DRM[i].boundarySide, rectangleMesh.C3DRM[i].boundarySlope)
+                                  rectangularMesh.C3DRM[i].boundarySide, rectangularMesh.C3DRM[i].boundarySlope)
                 else:
                     criteria3D.setCellProperties(index, True, BOUNDARY_NONE)
                 criteria3D.setMatricPotential(index, 0.0)
@@ -69,10 +69,10 @@ def main():
                 criteria3D.setMatricPotential(index, C3DParameters.initialWaterPotential)
                 
             else:
-                if rectangleMesh.C3DRM[i].isBoundary: 
+                if rectangularMesh.C3DRM[i].isBoundary: 
                     criteria3D.setCellProperties(index, False, BOUNDARY_FREELATERALDRAINAGE)
-                    criteria3D.setBoundaryProperties(index, rectangleMesh.C3DRM[i].boundarySide * soil.thickness[layer], 
-                                                     rectangleMesh.C3DRM[i].boundarySlope)
+                    criteria3D.setBoundaryProperties(index, rectangularMesh.C3DRM[i].boundarySide * soil.thickness[layer], 
+                                                     rectangularMesh.C3DRM[i].boundarySlope)
                 else:
                     criteria3D.setCellProperties(index, False, BOUNDARY_NONE)
                     
@@ -82,14 +82,14 @@ def main():
     for i in range(C3DStructure.nrRectangles): 
         # UP
         for layer in range(1, nrLayers):
-            exchangeArea = rectangleMesh.C3DRM[i].area
+            exchangeArea = rectangularMesh.C3DRM[i].area
             index = C3DStructure.nrRectangles * layer + i 
             linkIndex = index - C3DStructure.nrRectangles
             criteria3D.SetCellLink(index, linkIndex, UP, exchangeArea)   
         # LATERAL
-        for neighbour in rectangleMesh.C3DRM[i].neighbours:
+        for neighbour in rectangularMesh.C3DRM[i].neighbours:
             if (neighbour != NOLINK):
-                linkSide = rectangleMesh.getAdjacentSide(i, neighbour)
+                linkSide = rectangularMesh.getAdjacentSide(i, neighbour)
                 for layer in range(nrLayers): 
                     if (layer == 0):
                         #surface: boundary length [m]
@@ -102,7 +102,7 @@ def main():
                     criteria3D.SetCellLink(index, linkIndex, LATERAL, exchangeArea)
         # DOWN
         for layer in range(nrLayers-1):
-            exchangeArea = rectangleMesh.C3DRM[i].area
+            exchangeArea = rectangularMesh.C3DRM[i].area
             index = C3DStructure.nrRectangles * layer + i 
             linkIndex = index + C3DStructure.nrRectangles
             criteria3D.SetCellLink(index, linkIndex, DOWN, exchangeArea)
