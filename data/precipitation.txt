@@ -1,4 +1,4 @@
-minutes	Irr (l)
+minutes	irr (l)
 15	0.5
 30	0.5
 45	0.5
