@@ -8,8 +8,8 @@ import rectangleMesh
 import soil
 
 
-surfaceTriangles = []
-subSurfaceTriangles = []
+surfaceRectangles = []
+subSurfaceRectangles = []
 visualizedLayer = 1
 nrColorLevels = 10
 degreeMaximum = 1
@@ -166,20 +166,20 @@ def keyInput(evt):
             updateColorScale()
 
 
-def getNewTriangle(myColor, myCanvas, v):
+def getNewRectangle(myColor, myCanvas, v):
     vert = []
     for i in range(3):
         vert.append(visual.vertex(pos = visual.vector(v[i,0], v[i,1], v[i,2] * rectangleMesh.header.magnify)))
         vert[i].color = myColor
                      
-    newTriangle = visual.triangle(canvas = myCanvas, vs=[vert[0],vert[1],vert[2]])
-    return newTriangle
+    newRectangle = visual.triangle(canvas = myCanvas, vs=[vert[0],vert[1],vert[2]])
+    return newRectangle
 
 
 def drawSurface(isFirst):
-    global surfaceCanves, surfaceTriangles
+    global surfaceCanves, surfaceRectangles
     maximum = 0.05
-    for i in range(C3DStructure.nrTriangles):
+    for i in range(C3DStructure.nrRectangles):
         z = rectangleMesh.C3DRM[i].centroid[2]
         TINColor = getTINColor(z, rectangleMesh.header)
         waterHeight = max(C3DCells[i].H - C3DCells[i].z, 0.0)
@@ -196,34 +196,34 @@ def drawSurface(isFirst):
         myColor = visual.vector(c[0], c[1], c[2])
         
         if (isFirst):
-            newTriangle = getNewTriangle(myColor, surfaceCanvas, rectangleMesh.C3DRM[i].v)
-            surfaceTriangles.append(newTriangle)
+            newRectangle = getNewRectangle(myColor, surfaceCanvas, rectangleMesh.C3DRM[i].v)
+            surfaceRectangles.append(newRectangle)
         else:
-            surfaceTriangles[i].v0.color = myColor 
-            surfaceTriangles[i].v1.color = myColor
-            surfaceTriangles[i].v2.color = myColor 
+            surfaceRectangles[i].v0.color = myColor 
+            surfaceRectangles[i].v1.color = myColor
+            surfaceRectangles[i].v2.color = myColor 
  
  
 def drawSubSurface(isFirst):
-    global subSurfaceTriangles
+    global subSurfaceRectangles
     if C3DParameters.computeOnlySurface: 
         return
     
     depth = soil.depth[visualizedLayer] * 100
     layerLabel.text = "Degree of saturation " + format(depth,".1f")+"cm"
         
-    for i in range(C3DStructure.nrTriangles):
-        index = visualizedLayer * C3DStructure.nrTriangles + i
+    for i in range(C3DStructure.nrRectangles):
+        index = visualizedLayer * C3DStructure.nrRectangles + i
         c = getSEColor(C3DCells[index].Se, degreeMinimum, degreeMaximum)
         myColor = visual.vector(c[0], c[1], c[2])
         
         if (isFirst):
-            newTriangle = getNewTriangle(myColor, soilCanvas, rectangleMesh.C3DRM[i].v)
-            subSurfaceTriangles.append(newTriangle)
+            newRectangle = getNewRectangle(myColor, soilCanvas, rectangleMesh.C3DRM[i].v)
+            subSurfaceRectangles.append(newRectangle)
         else:
-            subSurfaceTriangles[i].v0.color = myColor
-            subSurfaceTriangles[i].v1.color = myColor
-            subSurfaceTriangles[i].v2.color = myColor    
+            subSurfaceRectangles[i].v0.color = myColor
+            subSurfaceRectangles[i].v1.color = myColor
+            subSurfaceRectangles[i].v2.color = myColor    
     
     
 def updateInterface():       

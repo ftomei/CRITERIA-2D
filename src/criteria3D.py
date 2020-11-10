@@ -16,7 +16,7 @@ else:
 
 
 def memoryAllocation(nrLayers, nrRectangles):
-    C3DStructure.nrTriangles = nrRectangles
+    C3DStructure.nrRectangles = nrRectangles
     C3DStructure.nrLayers = nrLayers
     nrCells = nrLayers * nrRectangles
     C3DStructure.nrCells = nrCells
@@ -88,7 +88,7 @@ def setMatricPotential (i, signPsi):
 #-----------------------------------------------------------
 def setRainfall(rain, duration):   
     rate = (rain * 0.001) / duration                    #[m s^-1]
-    for i in range(C3DStructure.nrTriangles):
+    for i in range(C3DStructure.nrRectangles):
         area = C3DCells[i].area                         #[m^2]
         C3DCells[i].sinkSource = rate * area            #[m^3 s^-1]
         
