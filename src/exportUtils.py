@@ -2,19 +2,25 @@ import waterBalance
 from dataStructures import *
 
 exportIndeces = []
-outputFile = "./data/output/slice_60s.csv"
+outputFile = "./data/output/slice_60s_hitmap.csv"
 nrDetections = -1
-heightSlice = 0.25
+heightSlice = 0.5
+oneTimestampPerRow = False
 
 def createExportFile():
     if heightSlice == None:
-        takeAll()
+            takeAll()
     else:
         takeSlice()
-    header = "timestamp," + ",".join(map(lambda index: str(index), exportIndeces)) + "\n"
+    
+    if oneTimestampPerRow:
+        header = "timestamp," + ",".join(map(lambda index: str(index), exportIndeces)) + "\n"
+    else:
+        header = "timestamp,x,z,value\n"
 
     with open(outputFile, "w") as f:
-       f.write(header)
+        f.write(header)
+
 
 def takeSlice():
     offset = C3DStructure.nrRectanglesInYAxis / (C3DStructure.gridHeight / heightSlice)
@@ -38,10 +44,21 @@ def takeScreenshot():
     #print("_______________________________")
     if int(waterBalance.totalTime / 60) > nrDetections:
         nrDetections += 1
-        row = str(waterBalance.totalTime)
-        for index in exportIndeces:
-            row += "," + str(C3DCells[index].Se)
-        row += "\n"
+        if oneTimestampPerRow:
+            row = str(waterBalance.totalTime)
+            for index in exportIndeces:
+                row += "," + str(C3DCells[index].Se)
+            row += "\n"
 
-        with open(outputFile, "a") as f:
-            f.write(row)
+            with open(outputFile, "a") as f:
+                f.write(row)
+        else:
+            for index in exportIndeces:
+                row = str(waterBalance.totalTime)
+                row += "," + str(C3DCells[index].x)
+                row += "," + str(C3DCells[index].z)
+                row += "," + str(C3DCells[index].Se)
+                row += "\n"
+
+                with open(outputFile, "a") as f:
+                    f.write(row)
