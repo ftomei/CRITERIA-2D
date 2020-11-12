@@ -139,6 +139,7 @@ def main():
 
     # main cycle
     for i in range(int(nrObsPrec)):
+        criteria3D.cleanSurfaceSinkSource()
         waterBalance.currentPrec = prec[i] / timeLength * 3600   #[l/hour]
         criteria3D.setDripIrrigation(prec[i], timeLength)
         criteria3D.compute(timeLength)

@@ -81,7 +81,12 @@ def setMatricPotential (i, signPsi):
         C3DCells[i].k = soil.getHydraulicConductivity(i)
     C3DCells[i].H0 = C3DCells[i].H
     return(OK)
-                           
+       
+       
+def cleanSurfaceSinkSource():        
+    for i in range(C3DStructure.nrRectangles):
+        C3DCells[i].sinkSource = 0
+                
 #-----------------------------------------------------------
 # set uniform rainfall rate
 # rain            [mm]
@@ -91,21 +96,17 @@ def setRainfall(rain, duration):
     rate = (rain * 0.001) / duration                    #[m s^-1]
     for i in range(C3DStructure.nrRectangles):
         area = C3DCells[i].area                         #[m^2]
-        C3DCells[i].sinkSource = rate * area            #[m^3 s^-1]
+        C3DCells[i].sinkSource += rate * area            #[m^3 s^-1]
 
 #-----------------------------------------------------------
 # set drip
 # irrigation      [l]
 # duration        [s]            
 #-----------------------------------------------------------
-def setDripIrrigation(irrigation, duration):   
-    for i in range(C3DStructure.nrRectangles):
-        C3DCells[i].sinkSource = NODATA
-    rate = irrigation / duration                    #[l s^-1]
-    nrX = int(C3DStructure.gridWidth / C3DStructure.gridStep)
-    nrY = int(C3DStructure.gridHeight / C3DStructure.gridStep)
-    index = nrX * int(nrY/2) + int(nrX/2)
-    C3DCells[index].sinkSource = rate * 0.001       #[m^3 s^-1]        
+def setDripIrrigation(irrigation, duration):
+    index = C3DStructure.nrRectanglesInXAxis * int(C3DStructure.nrRectanglesInYAxis/2) + int(C3DStructure.nrRectanglesInXAxis/2)   
+    rate = irrigation / duration                     #[l s^-1]
+    C3DCells[index].sinkSource += rate * 0.001       #[m^3 s^-1]        
         
         
 def restoreWater():
