@@ -130,7 +130,7 @@ def compute(timeLength):
             deltaT = min(C3DParameters.currentDeltaT, residualTime)
             print ("\ntime step [s]: ", deltaT)
             print ("MBR threshold [-]: ", C3DParameters.MBRThreshold)
-            print ("sink/source [m^3]:", format(sumSinkSource(deltaT),".5f")) 
+            print ("sink/source [l]:", format(sumSinkSource(deltaT) * 1000.,".5f")) 
              
             acceptedStep = solver.computeStep(deltaT)          
             if not acceptedStep: 

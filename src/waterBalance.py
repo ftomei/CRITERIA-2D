@@ -76,14 +76,14 @@ def sumBoundaryFlow(deltaT):
         if (C3DCells[i].boundary.type != BOUNDARY_NONE):
             if (C3DCells[i].boundary.flow != NODATA):
                 mySum += C3DCells[i].boundary.flow * deltaT
-    return (mySum)
+    return mySum
 
 def sumSinkSource(deltaT):
     mySum = 0.0
     for i in range(C3DStructure.nrCells):
         if (C3DCells[i].sinkSource != NODATA):
             mySum += C3DCells[i].sinkSource * deltaT
-    return (mySum)
+    return mySum
 
 def sumWaterFlow(deltaT, isAbsoluteValue):
     mySum = 0.0
@@ -93,7 +93,7 @@ def sumWaterFlow(deltaT, isAbsoluteValue):
                 mySum += fabs(C3DCells[i].flow * deltaT)
             else:
                 mySum += C3DCells[i].flow * deltaT
-    return (mySum)
+    return mySum
                                     
 def computeBalanceError(deltaT):
     currentStep.waterStorage = getWaterStorage()
@@ -107,7 +107,7 @@ def computeBalanceError(deltaT):
         currentStep.MBR = fabs(currentStep.MBE) / minimumFlow
     else:
         currentStep.MBR = fabs(currentStep.MBE) / sumFlow
-    print ("Mass Balance Error [m^3]:", format(currentStep.MBE,".6f"))
+    print ("Mass Balance Error [l]:", format(currentStep.MBE * 1000,".5f"))
     print ("Mass Balance Ratio:", format(currentStep.MBR,".5f"))
     
 def waterBalance(deltaT, approximation):

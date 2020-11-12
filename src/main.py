@@ -26,10 +26,7 @@ def main():
     # SOIL
     print ("Load soil...")
     soil.C3DSoil = soil.readHorizon(dataPath + "soil.txt", 1)
-    if (C3DParameters.computeOnlySurface):
-        totalDepth = 0
-    else:
-        totalDepth = soil.C3DSoil.lowerDepth
+    totalDepth = soil.C3DSoil.lowerDepth
     print("Soil depth [m]:", totalDepth)
     
     nrLayers, soil.depth, soil.thickness = soil.setLayers(totalDepth, 
@@ -109,9 +106,8 @@ def main():
             criteria3D.SetCellLink(index, linkIndex, DOWN, exchangeArea)
             
     # LOAD INITIAL STATE - comment if you dont't have one
-    if (not C3DParameters.computeOnlySurface): 
-        print ("Load initial state...")
-        loadState(dataPath + "state_0.csv")
+    #print ("Load initial state...")
+    #loadState(dataPath + "state_0.csv")
     
     waterBalance.initializeBalance()
     print("Initial water storage [m^3]:", format(waterBalance.currentStep.waterStorage, ".3f"))

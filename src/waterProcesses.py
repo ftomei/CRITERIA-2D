@@ -48,10 +48,10 @@ def runoff(i, link, deltaT, isFirstApprox):
     if isFirstApprox:
         rain = (C3DCells[i].sinkSource / C3DCells[i].area) * (deltaT / 2.0)
         Hs += rain
-    if (Hs <= EPSILON_METER): return(0.0)
+    if (Hs <= EPSILON_METER): return 0.
     
     dH = fabs(C3DCells[i].H - C3DCells[j].H)
-    if (dH < EPSILON_METER): return (0.0)
+    if (dH < EPSILON_METER): return 0.
     
     # [m/s] Manning equation
     v = (pow(Hs, 2.0 / 3.0) * sqrt(dH/link.distance)) / C3DParameters.roughness

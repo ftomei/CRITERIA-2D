@@ -41,12 +41,8 @@ def initialize(totalWidth):
     #INTERFACE CANVAS
     interface = visual.canvas(width = interfaceWidth, height = dy, align="left")
     interface.background = visual.color.white
-    if (not C3DParameters.computeOnlySurface):
-        interface.center = visual.vector(1,0,0)
-        interface.range = 5
-    else:
-        interface.center = visual.vector(0,0,0)
-        interface.range = 4
+    interface.center = visual.vector(1,0,0)
+    interface.range = 5
 
     timeLabel = visual.label(height=h, pos=visual.vector(0,3,0), text = "", canvas = interface)
     stepLabel = visual.label(height=h, pos=visual.vector(0,2,0), text = "", canvas = interface)
@@ -56,27 +52,26 @@ def initialize(totalWidth):
     totalFlowLabel = visual.label(height=h, pos=visual.vector(0,-2,0), text = "", canvas = interface)
     totalErrorLabel = visual.label(height=h, pos=visual.vector(0,-3,0), text = "", canvas = interface)
     
-    if (not C3DParameters.computeOnlySurface):
-        #COLOR LEGEND
-        stepY = 10 / nrColorLevels
-        colorScale = []
-        for i in range (nrColorLevels+1):
-            label = visual.label(canvas = interface, pos=visual.vector(4, -5+(i*stepY), 0), height=h, 
-                                 background = visual.vec(0,0,0))
-            colorScale.append(label)
+    #COLOR LEGEND
+    stepY = 10 / nrColorLevels
+    colorScale = []
+    for i in range (nrColorLevels+1):
+        label = visual.label(canvas = interface, pos=visual.vector(4, -5+(i*stepY), 0), height=h, 
+                             background = visual.vec(0,0,0))
+        colorScale.append(label)
 
-        #SOIL CANVAS
-        soilCanvas = visual.canvas(width = dx, height = dy, align="left")
-        soilCanvas.background = visual.color.white
-        soilCanvas.center = visual.vector(cX, cY, cZ)
-        soilCanvas.ambient = visual.vector(0.33, 0.33, 0.5)
-        soilCanvas.up = visual.vector(0,0,1)
-        soilCanvas.forward = visual.vector(0.33, -0.33, -0.15)
-        soilCanvas.range = (rectangularMesh.header.xMax - rectangularMesh.header.xMin) * 0.55
-        layerLabel = visual.label(canvas = soilCanvas, height = h, pos=visual.vector(cX, cY, Zlabel))
-        
-        drawColorScale()
-        drawSubSurface(True)
+    #SOIL CANVAS
+    soilCanvas = visual.canvas(width = dx, height = dy, align="left")
+    soilCanvas.background = visual.color.white
+    soilCanvas.center = visual.vector(cX, cY, cZ)
+    soilCanvas.ambient = visual.vector(0.33, 0.33, 0.5)
+    soilCanvas.up = visual.vector(0,0,1)
+    soilCanvas.forward = visual.vector(0.33, -0.33, -0.15)
+    soilCanvas.range = (rectangularMesh.header.xMax - rectangularMesh.header.xMin) * 0.55
+    layerLabel = visual.label(canvas = soilCanvas, height = h, pos=visual.vector(cX, cY, Zlabel))
+    
+    drawColorScale()
+    drawSubSurface(True)
     
     #SURFACE CANVAS
     surfaceCanvas = visual.canvas(width = dx, height = dy, align="left")
@@ -96,10 +91,7 @@ def initialize(totalWidth):
     interface.bind('keydown', keyInput)
 
 
-def drawColorScale():
-    if C3DParameters.computeOnlySurface: 
-        return
-    
+def drawColorScale():   
     step = (degreeMaximum - degreeMinimum) / nrColorLevels
     for i in range (nrColorLevels+1):
         degree = degreeMinimum + step * i
@@ -110,8 +102,6 @@ def drawColorScale():
 
 def updateColorScale():
     global degreeMinimum, degreeMaximum
-    if C3DParameters.computeOnlySurface: 
-        return
     
     rangeOk = False
     while not rangeOk:
@@ -128,8 +118,6 @@ def updateColorScale():
 
 def updateLayer(s):
     global visualizedLayer
-    if C3DParameters.computeOnlySurface: 
-        return
     
     if s == 'd':
         if (visualizedLayer < C3DStructure.nrLayers-1):
@@ -207,8 +195,6 @@ def drawSurface(isFirst):
  
 def drawSubSurface(isFirst):
     global subSurfaceRectangles
-    if C3DParameters.computeOnlySurface: 
-        return
     
     depth = soil.depth[visualizedLayer] * 100
     layerLabel.text = "Degree of saturation " + format(depth,".1f")+"cm"
@@ -226,10 +212,7 @@ def drawSubSurface(isFirst):
             subSurfaceRectangles[i].v1.color = myColor
             subSurfaceRectangles[i].v2.color = myColor  
 
-def drawSlice(indeces):
-    if C3DParameters.computeOnlySurface: 
-        return
-    
+def drawSlice(indeces):   
     depth = soil.depth[visualizedLayer] * 100
     layerLabel.text = "Degree of saturation " + format(depth,".1f")+"cm"
         
@@ -260,8 +243,7 @@ def updateInterface():
 def redraw():
     updateInterface()
     drawSurface(False)
-    if not C3DParameters.computeOnlySurface:
-        drawSubSurface(False)
+    drawSubSurface(False)
     # drawSlice(exportUtils.exportIndeces[:C3DStructure.nrRectanglesInXAxis])
       
     

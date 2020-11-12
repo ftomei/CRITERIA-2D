@@ -35,7 +35,7 @@ def computeStep(deltaT):
         boundaryConditions.updateBoundary(deltaT)
         
         print ("approximation nr:", approximation)
-        print ("Sum flows (abs) [m^3]:", format(waterBalance.sumWaterFlow(deltaT, True),".5f"))  
+        print ("Sum flows (abs) [l]:", format(waterBalance.sumWaterFlow(deltaT, True) * 1000.,".5f"))  
         
         for i in range(C3DStructure.nrCells):
             k = 0
@@ -61,12 +61,12 @@ def computeStep(deltaT):
             while (waterBalance.maxCourant > 1.0):
                 waterBalance.halveTimeStep()
                 waterBalance.maxCourant *= 0.5
-            return(False)
+            return False
 
         if not solveMatrix(approximation):
             waterBalance.halveTimeStep()
             print("System not convergent.")
-            return(False)
+            return False
        
         # new hydraulic head
         for i in range(0, C3DStructure.nrCells):
@@ -79,20 +79,23 @@ def computeStep(deltaT):
             
         # waterBalance
         isValidStep = waterBalance.waterBalance(deltaT, approximation)
-        if (waterBalance.forceExit): return(False)
+        if (waterBalance.forceExit): return False
         approximation += 1
-    return (isValidStep)
+    return isValidStep
 
 
 def  newMatrixElement(i, link, k, isLateral, deltaT, isFirstApprox):
     global A, indices
     j = link.index
-    if (j == NOLINK): return (False)
+    if (j == NOLINK): return False
     
     value = 0.0
     if C3DCells[i].isSurface:
         if C3DCells[j].isSurface:
-            value = runoff(i, link, deltaT, isFirstApprox)
+            if (C3DParameters.surfaceFlux):
+                value = runoff(i, link, deltaT, isFirstApprox)
+            else:
+                value = 0.0
         else:
             value = infiltration(i, j, link, deltaT, isFirstApprox)
     else:
@@ -100,15 +103,14 @@ def  newMatrixElement(i, link, k, isLateral, deltaT, isFirstApprox):
             value = infiltration(j, i, link, deltaT, isFirstApprox)
         else:
             value = redistribution(i, link, isLateral, deltaT)
-    if (value == 0.0): return(False)
+    if (value == 0.0): return False
     
     set_indices(i, k, j)
     set_A(i, k, value)
-    return (True)
+    return True
 
 def solveMatrix(approximation):
-    ratio = (C3DParameters.maxIterationsNr 
-             / C3DParameters.maxApproximationsNr)
+    ratio = (C3DParameters.maxIterationsNr / C3DParameters.maxApproximationsNr)
     maxIterationsNr = max(10, ratio * approximation)
     
     iteration = 0
@@ -117,7 +119,7 @@ def solveMatrix(approximation):
     while ((norm > C3DParameters.residualTolerance) 
     and (iteration < maxIterationsNr)): 
         norm = GaussSeidel()
-        if norm > (bestNorm * 10.0): return(False)
+        if norm > (bestNorm * 10.): return False
         bestNorm = min(norm, bestNorm)
         iteration += 1
-    return(True)
+    return True

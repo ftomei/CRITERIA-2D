@@ -46,7 +46,7 @@ def computeStep(deltaT):
         boundaryConditions.updateBoundary(deltaT)
         
         print ("approximation nr:", approximation)
-        print ("Sum flows (abs) [m^3]:", format(waterBalance.sumWaterFlow(deltaT, True),".5f"))  
+        print ("Sum flows (abs) [l]:", format(waterBalance.sumWaterFlow(deltaT, True) *1000.,".5f"))  
         
         for i in range(C3DStructure.nrCells):
             k = 0
@@ -102,7 +102,10 @@ def  newMatrixElement(i, link, k, isLateral, deltaT, isFirstApprox):
     value = 0.0
     if C3DCells[i].isSurface:
         if C3DCells[j].isSurface:
-            value = runoff(i, link, deltaT, isFirstApprox)
+            if (C3DParameters.surfaceFlux):
+                value = runoff(i, link, deltaT, isFirstApprox)
+            else:
+                value = 0.0
         else:
             value = infiltration(i, j, link, deltaT, isFirstApprox)
     else:
@@ -137,8 +140,7 @@ def arrangeMatrix(i, deltaT):
         A[i][j] /= D 
 
 def solveMatrix(approximation):
-    ratio = (C3DParameters.maxIterationsNr 
-             / C3DParameters.maxApproximationsNr)
+    ratio = (C3DParameters.maxIterationsNr / C3DParameters.maxApproximationsNr)
     maxIterationsNr = max(10, ratio * approximation)
     
     iteration = 0
