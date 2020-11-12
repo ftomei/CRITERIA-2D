@@ -55,7 +55,7 @@ class Ccell:
 class C3DParameters:
     waterRetentionCurve = IPPISCH_VG
     meanType = LOGARITHMIC
-    surfaceFlux = False
+    computeSurfaceFlux = False
     initialWaterPotential = -3.0                # [m]
     isFreeDrainage = True
     minThickness = 0.01                         # [m]
@@ -63,7 +63,7 @@ class C3DParameters:
     geometricFactor = 1.2
     roughness = 0.24                            # [s m^0.33]
     pond = 0.01                                 # [m]
-    currentDeltaT = 60.0                        # [s]
+    currentDeltaT = 16.0                        # [s]
     deltaT_min = 1.0                            # [s]
     deltaT_max = 900.0                          # [s]
     maxIterationsNr = 100
