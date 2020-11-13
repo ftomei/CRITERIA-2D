@@ -8,10 +8,14 @@ import rectangularMesh
 import soil
 import exportUtils
 
+from copy import copy
 
-surfaceRectangles = []
+
+#surfaceRectangles = []
+sliceRectangles = []
 subSurfaceRectangles = []
 visualizedLayer = 0
+visualizedSlice = 0
 nrColorLevels = 10
 degreeMaximum = 1
 degreeMinimum = 0.5
@@ -19,10 +23,10 @@ isPause = False
   
 
 def initialize(totalWidth):
-    global surfaceCanvas, soilCanvas, interface
-    global layerLabel, timeLabel, precLabel, stepLabel, storageLabel
+    global sliceCanvas, soilCanvas, interface
+    global sliceLabel, layerLabel, timeLabel, precLabel, stepLabel, storageLabel
     global flowLabel, totalFlowLabel, totalErrorLabel, colorScale
-    global visualizedLayer
+    global visualizedSlice, visualizedLayer
     
     setAllColorScale()
     
@@ -37,7 +41,7 @@ def initialize(totalWidth):
     cY = (rectangularMesh.header.yMin + rectangularMesh.header.yMax) * 0.5
     cZ = rectangularMesh.header.zMin * rectangularMesh.header.magnify
     Zlabel = (rectangularMesh.header.zMax + rectangularMesh.header.dz*0.75 + 0.2) * rectangularMesh.header.magnify
-    
+
     #INTERFACE CANVAS
     interface = visual.canvas(width = interfaceWidth, height = dy, align="left")
     interface.background = visual.color.white
@@ -72,21 +76,24 @@ def initialize(totalWidth):
     
     drawColorScale()
     drawSubSurface(True)
+
+
+
+    #SLICE CANVAS
+    sliceCanvas = visual.canvas(width = dx, height = dy, align="left")
+    sliceCanvas.background = visual.color.white
+    sliceCanvas.center = visual.vector(cX, cY, cZ)
+    sliceCanvas.ambient = visual.vector(0.33, 0.33, 0.5)
+    sliceCanvas.up = visual.vector(0,0,1)
+    sliceCanvas.forward = visual.vector(0.33, -0.33, -0.15)
+    sliceCanvas.range = (rectangularMesh.header.xMax - rectangularMesh.header.xMin) * 0.55
+    sliceCanvas.caption = " *** COMMANDS ***\n\n 'r': run simulation \n 'p': pause "
+    sliceCanvas.caption += "\n 'w': move up (soil layer) \n 's': move down (soil layer) "
+    sliceCanvas.caption += "\n 'a': move left (soil slice) \n 'd': move right (soil slice) "
+    sliceCanvas.caption += "\n 'l': load state \n 'k': save state \n 'c': colorscale range"
+    sliceLabel = visual.label(canvas = sliceCanvas, height = h, pos=visual.vector(cX, cY, Zlabel))
     
-    #SURFACE CANVAS
-    surfaceCanvas = visual.canvas(width = dx, height = dy, align="left")
-    surfaceCanvas.background = visual.color.white
-    surfaceCanvas.center = visual.vector(cX, cY, cZ)
-    surfaceCanvas.ambient = visual.vector(0.33, 0.33, 0.5)
-    surfaceCanvas.up = visual.vector(0,0,1)
-    surfaceCanvas.forward = visual.vector(0.33, -0.33, -0.15)
-    surfaceCanvas.range = (rectangularMesh.header.xMax - rectangularMesh.header.xMin) * 0.55
-    surfaceCanvas.caption = " *** COMMANDS ***\n\n 'r': run simulation \n 'p': pause "
-    surfaceCanvas.caption += "\n 'u': move up (soil layer) \n 'd': move down (soil layer) "
-    surfaceCanvas.caption += "\n 'l': load state \n 's': save state \n 'c': colorscale range"
-    visual.label(canvas = surfaceCanvas, height = h, pos=visual.vector(cX, cY, Zlabel), text = "Surface")
-    
-    drawSurface(True)
+    drawSlice(True)
     updateInterface()
     interface.bind('keydown', keyInput)
 
@@ -112,22 +119,37 @@ def updateColorScale():
         else:
             rangeOk = True
             
-    drawColorScale();
+    drawColorScale()
     drawSubSurface(False)
+    drawSlice(False)
+
 
 
 def updateLayer(s):
     global visualizedLayer
     
-    if s == 'd':
+    if s == 's':
         if (visualizedLayer < C3DStructure.nrLayers-1):
             visualizedLayer += 1
-    elif s == 'u':
+    elif s == 'w':
         if (visualizedLayer > 0):
             visualizedLayer -= 1
              
     updateInterface()
     drawSubSurface(False)
+
+def updateSlice(s):
+    global visualizedSlice
+    
+    if s == 'a':
+        if (visualizedSlice < (C3DStructure.nrRectangles - C3DStructure.nrRectanglesInXAxis)):
+            visualizedSlice += C3DStructure.nrRectanglesInXAxis
+    elif s == 'd':
+        if (visualizedSlice > 0):
+            visualizedSlice -= C3DStructure.nrRectanglesInXAxis
+             
+    updateInterface()
+    drawSlice(False)
           
                 
 def keyInput(evt):
@@ -138,9 +160,11 @@ def keyInput(evt):
     elif s == 'p':
         isPause = True
         print ("Pause...")
-    elif s == 'd' or s == 'u':
+    elif s == 's' or s == 'w':
         updateLayer(s)
-    elif s == 's':
+    elif s == 'a' or s == 'd':
+        updateSlice(s)
+    elif s == 'k':
         isPause = True
         print ("Save State...")
         saveState()
@@ -162,43 +186,40 @@ def getNewRectangle(myColor, myCanvas, v):
         vert[i].color = myColor
                      
     newRectangle = visual.quad(canvas = myCanvas, vs=[vert[0],vert[1],vert[3],vert[2]])
-    return newRectangle
+    return newRectangle 
 
-
-def drawSurface(isFirst):
-    global surfaceCanves, surfaceRectangles
-    maximum = 0.05
-    for i in range(C3DStructure.nrRectangles):
-        z = rectangularMesh.C3DRM[i].centroid[2]
-        TINColor = getTINColor(z, rectangularMesh.header)
-        waterHeight = max(C3DCells[i].H - C3DCells[i].z, 0.0)
-        waterColor = getSurfaceWaterColor(waterHeight, maximum)
-        
-        if waterHeight > maximum: 
-            a = 1
-        elif waterHeight < EPSILON_METER: 
-            a = 0.0
-        else: 
-            a = max(0.2, waterHeight / maximum)
+def drawSlice(isFirst):
+    global sliceRectangles
+    
+    _slice = visualizedSlice * C3DStructure.gridStep
+    sliceLabel.text = "Degree of saturation, slice at " + format(_slice,".1f")+"cm"
+    
+    
+    for z in range(C3DStructure.nrLayers):
+        for x in range(C3DStructure.nrRectanglesInXAxis):
+            index = visualizedSlice + x + (z * C3DStructure.nrRectangles)
+            i = z * C3DStructure.nrRectanglesInXAxis + x
+            c = getSEColor(C3DCells[index].Se, degreeMinimum, degreeMaximum)
+            myColor = visual.vector(c[0], c[1], c[2])
             
-        c = a*waterColor + (1-a)*TINColor
-        myColor = visual.vector(c[0], c[1], c[2])
-        
-        if (isFirst):
-            newRectangle = getNewRectangle(myColor, surfaceCanvas, rectangularMesh.C3DRM[i].v)
-            surfaceRectangles.append(newRectangle)
-        else:
-            surfaceRectangles[i].v0.color = myColor 
-            surfaceRectangles[i].v1.color = myColor
-            surfaceRectangles[i].v2.color = myColor
-            surfaceRectangles[i].v3.color = myColor 
+            if (isFirst):
+                vertices = copy(rectangularMesh.C3DRM[visualizedSlice + x].v)
+                for v in vertices:
+                    v[2] = v[2] - soil.depth[z]
+                newRectangle = getNewRectangle(myColor, sliceCanvas, vertices)
+                sliceRectangles.append(newRectangle)
+            else:
+                sliceRectangles[i].v0.color = myColor
+                sliceRectangles[i].v1.color = myColor
+                sliceRectangles[i].v2.color = myColor  
+                sliceRectangles[i].v3.color = myColor
  
  
 def drawSubSurface(isFirst):
     global subSurfaceRectangles
     
     depth = soil.depth[visualizedLayer] * 100
-    layerLabel.text = "Degree of saturation " + format(depth,".1f")+"cm"
+    layerLabel.text = "Degree of saturation, layer at " + format(depth,".1f")+"cm"
         
     for i in range(C3DStructure.nrRectangles):
         index = visualizedLayer * C3DStructure.nrRectangles + i
@@ -213,20 +234,6 @@ def drawSubSurface(isFirst):
             subSurfaceRectangles[i].v1.color = myColor
             subSurfaceRectangles[i].v2.color = myColor  
             subSurfaceRectangles[i].v3.color = myColor
-
-def drawSlice(indeces):   
-    depth = soil.depth[visualizedLayer] * 100
-    layerLabel.text = "Degree of saturation " + format(depth,".1f")+"cm"
-        
-    for i in indeces:
-        c = getSEColor(1.0, degreeMinimum, degreeMaximum)
-        myColor = visual.vector(c[0], c[1], c[2])
-        
-        subSurfaceRectangles[i].v0.color = myColor
-        subSurfaceRectangles[i].v1.color = myColor
-        subSurfaceRectangles[i].v2.color = myColor 
-        subSurfaceRectangles[i].v3.color = myColor 
-    
     
 def updateInterface():       
     timeLabel.text = "Time: " + str(int(waterBalance.totalTime)) + " [s]"
@@ -245,8 +252,7 @@ def updateInterface():
     
 def redraw():
     updateInterface()
-    drawSurface(False)
+    drawSlice(False)
     drawSubSurface(False)
-    # drawSlice(exportUtils.exportIndeces[:C3DStructure.nrRectanglesInXAxis])
       
     
