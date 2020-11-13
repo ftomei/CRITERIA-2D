@@ -2,7 +2,7 @@ import waterBalance
 from dataStructures import *
 
 exportIndeces = []
-outputFile = "./data/output/slice_60s_hitmap.csv"
+outputFile = "./data/output/slice_60s_heatmap.csv"
 nrDetections = -1
 heightSlice = 0.5
 oneTimestampPerRow = False
