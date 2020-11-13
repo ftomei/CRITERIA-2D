@@ -85,7 +85,7 @@ def initialize(totalWidth):
     sliceCanvas.center = visual.vector(cX, cY, cZ)
     sliceCanvas.ambient = visual.vector(0.33, 0.33, 0.5)
     sliceCanvas.up = visual.vector(0,0,1)
-    sliceCanvas.forward = visual.vector(0.33, -0.33, -0.15)
+    sliceCanvas.forward = visual.vector(0, -0.1, 0)
     sliceCanvas.range = (rectangularMesh.header.xMax - rectangularMesh.header.xMin) * 0.55
     sliceCanvas.caption = " *** COMMANDS ***\n\n 'r': run simulation \n 'p': pause "
     sliceCanvas.caption += "\n 'w': move up (soil layer) \n 's': move down (soil layer) "
@@ -204,8 +204,15 @@ def drawSlice(isFirst):
             
             if (isFirst):
                 vertices = copy(rectangularMesh.C3DRM[visualizedSlice + x].v)
-                for v in vertices:
+                for v in vertices[:2]:
                     v[2] = v[2] - soil.depth[z]
+                vertices[2] = vertices[0]
+                vertices[3] = vertices[1]
+                for v in vertices[:2]:
+                    if (z + 1) == C3DStructure.nrLayers:
+                        v[2] = soil.thickness[len(soil.thickness) - 1]
+                    else:
+                        v[2] = v[2] - soil.depth[z + 1]
                 newRectangle = getNewRectangle(myColor, sliceCanvas, vertices)
                 sliceRectangles.append(newRectangle)
             else:
