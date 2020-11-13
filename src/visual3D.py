@@ -11,7 +11,7 @@ import exportUtils
 
 surfaceRectangles = []
 subSurfaceRectangles = []
-visualizedLayer = 1
+visualizedLayer = 0
 nrColorLevels = 10
 degreeMaximum = 1
 degreeMinimum = 0.5
@@ -123,7 +123,7 @@ def updateLayer(s):
         if (visualizedLayer < C3DStructure.nrLayers-1):
             visualizedLayer += 1
     elif s == 'u':
-        if (visualizedLayer > 1):
+        if (visualizedLayer > 0):
             visualizedLayer -= 1
              
     updateInterface()
@@ -157,11 +157,11 @@ def keyInput(evt):
 
 def getNewRectangle(myColor, myCanvas, v):
     vert = []
-    for i in range(3):
+    for i in range(C3DStructure.nrVerticesPerRectangle):
         vert.append(visual.vertex(pos = visual.vector(v[i,0], v[i,1], v[i,2] * rectangularMesh.header.magnify)))
         vert[i].color = myColor
                      
-    newRectangle = visual.triangle(canvas = myCanvas, vs=[vert[0],vert[1],vert[2]])
+    newRectangle = visual.quad(canvas = myCanvas, vs=[vert[0],vert[1],vert[3],vert[2]])
     return newRectangle
 
 
@@ -190,7 +190,8 @@ def drawSurface(isFirst):
         else:
             surfaceRectangles[i].v0.color = myColor 
             surfaceRectangles[i].v1.color = myColor
-            surfaceRectangles[i].v2.color = myColor 
+            surfaceRectangles[i].v2.color = myColor
+            surfaceRectangles[i].v3.color = myColor 
  
  
 def drawSubSurface(isFirst):
@@ -211,6 +212,7 @@ def drawSubSurface(isFirst):
             subSurfaceRectangles[i].v0.color = myColor
             subSurfaceRectangles[i].v1.color = myColor
             subSurfaceRectangles[i].v2.color = myColor  
+            subSurfaceRectangles[i].v3.color = myColor
 
 def drawSlice(indeces):   
     depth = soil.depth[visualizedLayer] * 100
@@ -222,7 +224,8 @@ def drawSlice(indeces):
         
         subSurfaceRectangles[i].v0.color = myColor
         subSurfaceRectangles[i].v1.color = myColor
-        subSurfaceRectangles[i].v2.color = myColor  
+        subSurfaceRectangles[i].v2.color = myColor 
+        subSurfaceRectangles[i].v3.color = myColor 
     
     
 def updateInterface():       
