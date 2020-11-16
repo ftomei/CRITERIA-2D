@@ -3,7 +3,7 @@ from dataStructures import *
 
 exportIndeces = []
 outputFile = "./data/output/slice_60s_heatmap.csv"
-nrDetections = -1
+#nrDetections = -1
 heightSlice = 0.5
 oneTimestampPerRow = False
 
@@ -36,29 +36,35 @@ def takeAll():
         exportIndeces.append(index)
 
 
-def takeScreenshot():
-    global nrDetections
+def takeScreenshot(timestamp):
+    #global nrDetections
+    
     #print("_______________________________")
     #print(waterBalance.totalTime)
     #print(int(waterBalance.totalTime / 60), nrDetections)
     #print("_______________________________")
-    if int(waterBalance.totalTime / 60) > nrDetections:
-        nrDetections += 1
-        if oneTimestampPerRow:
-            row = str(waterBalance.totalTime)
-            for index in exportIndeces:
-                row += "," + str(C3DCells[index].Se)
+    
+    #if int(waterBalance.totalTime / 60) > nrDetections:
+        #nrDetections += 1
+        #anche tutto il resto andrebbe sotto l'if, se lo scommento
+
+    if oneTimestampPerRow:
+        #row = str(waterBalance.totalTime)
+        row = str(timestamp)
+        for index in exportIndeces:
+            row += "," + str(C3DCells[index].Se)
+        row += "\n"
+
+        with open(outputFile, "a") as f:
+            f.write(row)
+    else:
+        for index in exportIndeces:
+            #row = str(waterBalance.totalTime)
+            row = str(timestamp)
+            row += "," + str(C3DCells[index].x)
+            row += "," + str(C3DCells[index].z)
+            row += "," + str(C3DCells[index].Se)
             row += "\n"
 
             with open(outputFile, "a") as f:
                 f.write(row)
-        else:
-            for index in exportIndeces:
-                row = str(waterBalance.totalTime)
-                row += "," + str(C3DCells[index].x)
-                row += "," + str(C3DCells[index].z)
-                row += "," + str(C3DCells[index].Se)
-                row += "\n"
-
-                with open(outputFile, "a") as f:
-                    f.write(row)

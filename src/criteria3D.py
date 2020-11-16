@@ -7,7 +7,6 @@ from rectangularMesh import distance3D
 import visual3D
 import soil
 import time
-import exportUtils
 
 CYTHON = True
 if CYTHON:
@@ -116,9 +115,7 @@ def restoreWater():
 # timeLength        [s]          
 def compute(timeLength):  
     currentTime = 0
-    while (currentTime < timeLength):  
-        exportUtils.takeScreenshot()
-        
+    while (currentTime < timeLength):
         residualTime = timeLength - currentTime
         acceptedStep = False
         while (not acceptedStep):

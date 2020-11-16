@@ -1,4 +1,4 @@
-﻿Inizio validità (UTC),Fine validità (UTC),Velocita' media oraria scalare del vento a 10 m dal suolo (M/S)
+﻿start,end,wind
 2019-11-02 22:00:00+00:00,2019-11-02 23:00:00+00:00,1.3
 2019-11-02 23:00:00+00:00,2019-11-03 00:00:00+00:00,1.5
 2019-11-03 00:00:00+00:00,2019-11-03 01:00:00+00:00,1.7

@@ -1,4 +1,4 @@
-﻿Inizio validità (UTC),Fine validità (UTC),Temperatura dell'aria media oraria a 2 m dal suolo (°C)
+﻿start,end,temperature
 2019-11-02 22:00:00+00:00,2019-11-02 23:00:00+00:00,11.30
 2019-11-02 23:00:00+00:00,2019-11-03 00:00:00+00:00,11.10
 2019-11-03 00:00:00+00:00,2019-11-03 01:00:00+00:00,10.80

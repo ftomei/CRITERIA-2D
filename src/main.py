@@ -10,11 +10,12 @@ import visual3D
 import os
 from PenmanMonteith import computeHourlyET0
 import exportUtils
+import importUtils
 
  
 def main():
     print (os.getcwd())
-    dataPath = "./data/"
+    dataPath = "data"
 
     print("Building rectangle mesh...")
     rectangularMesh.rectangularMeshCreation()
@@ -25,7 +26,10 @@ def main():
    
     # SOIL
     print ("Load soil...")
-    soil.C3DSoil = soil.readHorizon(dataPath + "soil.txt", 1)
+    soilFolder = "soil"
+    soilFile = "soil.txt"
+    soilPath = os.path.join(dataPath, soilFolder, soilFile)
+    soil.C3DSoil = soil.readHorizon(soilPath, 1)
     totalDepth = soil.C3DSoil.lowerDepth
     print("Soil depth [m]:", totalDepth)
     
@@ -112,20 +116,22 @@ def main():
     waterBalance.initializeBalance()
     print("Initial water storage [m^3]:", format(waterBalance.currentStep.waterStorage, ".3f"))
         
-    print("Read precipitation data...")
-    precFileName = dataPath + "precipitation.txt"
+    print("Read arpae data...")
+    arpaeFolder = "arpae"
+    arpaePath = os.path.join(dataPath, arpaeFolder)
+    stationInfo, arpaeData = importUtils.readArpaeData(arpaePath)
+
+    print("Read irrigations data...")
+    irrigationsFolder = "irrigations"
+    irrigationsPath = os.path.join(dataPath, irrigationsFolder)
+    irrigationsConfigurations, irrigationsData = importUtils.readIrrigationsData(irrigationsPath, arpaeData.iloc[0]["start"], arpaeData.iloc[-1]["start"])
+
     # TIME LENGHT 
     # change it if your observed data are different (ex: hourly)
-    timeLength = 15 * 60         # [s]
+    timeLength = importUtils.TIME_LENGHT * 60         # [s]
     C3DParameters.deltaT_max = timeLength
     print("Time lenght [s]:", timeLength)
-    data, isFileOk = readDataFile(precFileName, 1, "\t", False)
-    if (not isFileOk):
-        print("Error! Wrong precipitation file.") 
-        return
-    prec = data[:,1]
-    nrObsPrec = len(prec)
-    print("Total simulation time [s]:", nrObsPrec * timeLength)
+    print("Total simulation time [s]:", len(arpaeData) * timeLength)
     
     visual3D.initialize(1280)
     visual3D.isPause = True
@@ -134,10 +140,12 @@ def main():
     exportUtils.createExportFile()
 
     # main cycle
-    for i in range(int(nrObsPrec)):
+    for index, hourly_relevation in arpaeData.iterrows():
         criteria3D.cleanSurfaceSinkSource()
-        waterBalance.currentPrec = prec[i] / timeLength * 3600   #[l/hour]
-        criteria3D.setDripIrrigation(prec[i], timeLength)
+        waterBalance.currentPrec = hourly_relevation["precipitations"] / timeLength * 3600   #[l/hour]
+        criteria3D.setRainfall(hourly_relevation["precipitations"], timeLength)
+        #criteria3D.setDripIrrigation("irrigation", timeLength)
+        exportUtils.takeScreenshot(hourly_relevation["start"])
         criteria3D.compute(timeLength)
     
     print ("\nEnd simulation.")   
