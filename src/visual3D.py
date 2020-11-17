@@ -24,7 +24,7 @@ isPause = False
 
 def initialize(totalWidth):
     global sliceCanvas, soilCanvas, interface
-    global sliceLabel, layerLabel, timeLabel, precLabel, stepLabel, storageLabel
+    global sliceLabel, layerLabel, timeLabel, precLabel, irrLabel, stepLabel, storageLabel
     global flowLabel, totalFlowLabel, totalErrorLabel, colorScale
     global visualizedSlice, visualizedLayer
     
@@ -51,10 +51,11 @@ def initialize(totalWidth):
     timeLabel = visual.label(height=h, pos=visual.vector(0,3,0), text = "", canvas = interface)
     stepLabel = visual.label(height=h, pos=visual.vector(0,2,0), text = "", canvas = interface)
     precLabel = visual.label(height=h,pos=visual.vector(0,1,0), text = "", canvas = interface)
-    storageLabel = visual.label(height=h,pos=visual.vector(0,0,0), text = "", canvas = interface)
-    flowLabel = visual.label(height=h, pos=visual.vector(0,-1,0), text = "", canvas = interface)
-    totalFlowLabel = visual.label(height=h, pos=visual.vector(0,-2,0), text = "", canvas = interface)
-    totalErrorLabel = visual.label(height=h, pos=visual.vector(0,-3,0), text = "", canvas = interface)
+    irrLabel = visual.label(height=h,pos=visual.vector(0,0,0), text = "", canvas = interface)
+    storageLabel = visual.label(height=h,pos=visual.vector(0,-1,0), text = "", canvas = interface)
+    flowLabel = visual.label(height=h, pos=visual.vector(0,-2,0), text = "", canvas = interface)
+    totalFlowLabel = visual.label(height=h, pos=visual.vector(0,-3,0), text = "", canvas = interface)
+    totalErrorLabel = visual.label(height=h, pos=visual.vector(0,-4,0), text = "", canvas = interface)
     
     #COLOR LEGEND
     stepY = 10 / nrColorLevels
@@ -244,7 +245,8 @@ def drawSubSurface(isFirst):
     
 def updateInterface():       
     timeLabel.text = "Time: " + str(int(waterBalance.totalTime)) + " [s]"
-    precLabel.text = "Irrigation: " + str(waterBalance.currentPrec) + " [l/hour]"
+    precLabel.text = "Precipitation: " + str(waterBalance.currentPrec) + " [m/hour]"
+    irrLabel.text = "Irrigation: " + str(waterBalance.currentIrr) + " [l/hour]"
     storage = waterBalance.currentStep.waterStorage
     flow = waterBalance.currentStep.waterFlow
     timeStep = C3DParameters.currentDeltaT

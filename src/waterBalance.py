@@ -13,6 +13,7 @@ class C3DBalance:
 
 totalTime = 0.0
 currentPrec = 0.0
+currentIrr = 0.0
 MBRMultiply = 1.0
 maxCourant = 0.0
 bestMBR = NODATA

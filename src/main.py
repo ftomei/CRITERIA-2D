@@ -157,9 +157,8 @@ def main():
             waterIndex = arpaeIndex + pd.Timedelta(str(i * waterTimeLength) + ' seconds')
             waterEvent = waterData.loc[waterIndex]
 
-            waterByPrecipitations = waterEvent["precipitations"] / waterTimeLength * 3600      #[l/hour]
-            waterByIrrigations = waterEvent["irrigations"] / waterTimeLength * 3600            #[l/hour]
-            waterBalance.currentPrec = waterByPrecipitations + waterByIrrigations              #[l/hour]
+            waterBalance.currentIrr = (len(criteria3D.irrigationIndeces) * waterEvent["irrigations"]) / waterTimeLength * 3600  #[l/hour]
+            waterBalance.currentPrec = waterEvent["precipitations"] / waterTimeLength * 3600   #[m/hour]
 
             criteria3D.setRainfall(waterEvent["precipitations"], waterTimeLength)
             criteria3D.setDripIrrigation(waterEvent["irrigations"], waterTimeLength)
