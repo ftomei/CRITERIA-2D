@@ -52,7 +52,7 @@ def takeScreenshot(timestamp):
         #row = str(waterBalance.totalTime)
         row = str(timestamp.value // 10 ** 9)
         for index in exportIndeces:
-            row += "," + str(round(C3DCells[index].Se, 6))
+            row += "," + '{:.6f}'.format(C3DCells[index].Se)
         row += "\n"
 
         with open(outputFile, "a") as f:
@@ -61,10 +61,10 @@ def takeScreenshot(timestamp):
         for index in exportIndeces:
             #row = str(waterBalance.totalTime)
             row = str(timestamp.value // 10 ** 9)
-            row += "," + str(round(C3DCells[index].x, 6))
-            row += "," + str(round(C3DCells[index].z, 6))
-            row += "," + str(round(C3DCells[index].Se, 6))
-            row += "," + str(round(C3DCells[index].H, 6))
+            row += "," + '{:.6f}'.format(C3DCells[index].x)
+            row += "," + '{:.6f}'.format(C3DCells[index].z)
+            row += "," + '{:.6f}'.format(C3DCells[index].Se)
+            row += "," + '{:.6f}'.format(C3DCells[index].H)
             row += "\n"
 
             with open(outputFile, "a") as f:
