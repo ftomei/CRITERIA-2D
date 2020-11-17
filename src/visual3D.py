@@ -91,7 +91,7 @@ def initialize(totalWidth):
     sliceCanvas.caption = " *** COMMANDS ***\n\n 'r': run simulation \n 'p': pause "
     sliceCanvas.caption += "\n 'w': move up (soil layer) \n 's': move down (soil layer) "
     sliceCanvas.caption += "\n 'a': move left (soil slice) \n 'd': move right (soil slice) "
-    sliceCanvas.caption += "\n 'l': load state \n 'k': save state \n 'c': colorscale range"
+    sliceCanvas.caption += "\n 'c': colorscale range"
     sliceLabel = visual.label(canvas = sliceCanvas, height = h, pos=visual.vector(cX, cY, Zlabel))
     
     drawSlice(True)
@@ -165,16 +165,6 @@ def keyInput(evt):
         updateLayer(s)
     elif s == 'a' or s == 'd':
         updateSlice(s)
-    elif s == 'k':
-        isPause = True
-        print ("Save State...")
-        saveState()
-    elif s == 'l':
-        isPause = True
-        print ("Load State...")
-        if loadState(""):
-            waterBalance.initializeBalance()
-            redraw()
     elif s == "c":
         if (isPause):
             updateColorScale()
