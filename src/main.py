@@ -11,6 +11,7 @@ import os
 from PenmanMonteith import computeHourlyET0
 import exportUtils
 import importUtils
+import pandas as pd
 
  
 def main():
@@ -122,31 +123,50 @@ def main():
     stationInfo, arpaeData = importUtils.readArpaeData(arpaePath)
 
     print("Read irrigations data...")
-    irrigationsFolder = "irrigations"
-    irrigationsPath = os.path.join(dataPath, irrigationsFolder)
-    irrigationsConfigurations, irrigationsData = importUtils.readIrrigationsData(irrigationsPath, arpaeData.iloc[0]["start"], arpaeData.iloc[-1]["start"])
+    waterFolder = "water"
+    waterPath = os.path.join(dataPath, waterFolder)
+    irrigationsConfigurations, waterData = importUtils.readWaterData(waterPath, arpaeData.iloc[0]["start"], arpaeData.iloc[-1]["start"])
+
+    arpaeData, waterData = importUtils.transformDates(arpaeData, waterData)
 
     # TIME LENGHT 
     # change it if your observed data are different (ex: hourly)
-    timeLength = importUtils.TIME_LENGHT * 60         # [s]
-    C3DParameters.deltaT_max = timeLength
-    print("Time lenght [s]:", timeLength)
-    print("Total simulation time [s]:", len(arpaeData) * timeLength)
+    arpaeTimeLength = (arpaeData.iloc[0]["end"] - arpaeData.iloc[0]["start"]).seconds        # [s]
+    waterTimeLength = (waterData.iloc[0]["end"] - waterData.iloc[0]["start"]).seconds        # [s]
+    print("Arpae relevations time lenght [s]:", arpaeTimeLength)
+    print("Water relevations time lenght [s]:", arpaeTimeLength)
+    if (arpaeTimeLength % waterTimeLength) != 0:
+        raise Exception("Water time lenght is not a divider of Arpae time lenght")
+    else:
+        nrWaterEventsInArpaeTimeLength = int(arpaeTimeLength / waterTimeLength)
+    C3DParameters.deltaT_max = waterTimeLength
+    print("Total simulation time [s]:", len(arpaeData) * arpaeTimeLength)
     
     visual3D.initialize(1280)
     visual3D.isPause = True
     
     # export inizialization 
     exportUtils.createExportFile()
-
+    
     # main cycle
-    for index, hourly_relevation in arpaeData.iterrows():
-        criteria3D.cleanSurfaceSinkSource()
-        waterBalance.currentPrec = hourly_relevation["precipitations"] / timeLength * 3600   #[l/hour]
-        criteria3D.setRainfall(hourly_relevation["precipitations"], timeLength)
-        #criteria3D.setDripIrrigation("irrigation", timeLength)
-        exportUtils.takeScreenshot(hourly_relevation["start"])
-        criteria3D.compute(timeLength)
+    arpaeData, waterData = importUtils.setDataIndeces(arpaeData, waterData)
+    for arpaeIndex, arpaeRelevation in arpaeData.iterrows():
+        for i in range(nrWaterEventsInArpaeTimeLength):
+            criteria3D.cleanSurfaceSinkSource()
+
+            waterIndex = arpaeIndex + pd.Timedelta(str(i * waterTimeLength) + ' seconds')
+            waterEvent = waterData.loc[waterIndex]
+
+            waterByPrecipitations = waterEvent["precipitations"] / waterTimeLength * 3600      #[l/hour]
+            waterByIrrigations = waterEvent["irrigations"] / waterTimeLength * 3600            #[l/hour]
+            waterBalance.currentPrec = waterByPrecipitations + waterByIrrigations              #[l/hour]
+
+            criteria3D.setRainfall(waterEvent["precipitations"], waterTimeLength)
+            criteria3D.setDripIrrigation(waterEvent["irrigations"], waterTimeLength)
+
+            exportUtils.takeScreenshot(waterIndex)
+
+            criteria3D.compute(waterTimeLength)
     
     print ("\nEnd simulation.")   
 main()

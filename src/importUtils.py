@@ -2,17 +2,12 @@ import pandas as pd
 import os
 from enum import Enum 
 
-TIME_LENGHT = 60
-
 def readArpaeData(arpaePath):
     stationInfoFile = "station_info.csv" 
     stationInfo = pd.read_csv(os.path.join(arpaePath, stationInfoFile))
 
     humidityFile = "humidity.csv"
     humidity = pd.read_csv(os.path.join(arpaePath, humidityFile))
-
-    precipitationsFile= "precipitations.csv"
-    precipitations = pd.read_csv(os.path.join(arpaePath, precipitationsFile))
 
     radiationsFile= "radiations.csv" 
     radiations = pd.read_csv(os.path.join(arpaePath, radiationsFile))
@@ -23,8 +18,7 @@ def readArpaeData(arpaePath):
     windFile = "wind.csv"
     wind = pd.read_csv(os.path.join(arpaePath, windFile))
 
-
-    arpaeData = [humidity, precipitations, radiations, temperature, wind]
+    arpaeData = [humidity, radiations, temperature, wind]
 
     for i in range(len(arpaeData) - 1):
         if arpaeData[i].iloc[0]["start"] != arpaeData[i + 1].iloc[0]["start"]:
@@ -45,14 +39,49 @@ def readArpaeData(arpaePath):
 
     return stationInfo, mergedDf.reset_index()
 
-def readIrrigationsData(irrigationsPath, arpae_start, arpae_end):
+def readWaterData(waterPath, arpae_start, arpae_end):
     irrigationsConfigurationsFile = "irrigations_configurations.csv" 
-    irrigationsConfigurations = pd.read_csv(os.path.join(irrigationsPath, irrigationsConfigurationsFile))
+    irrigationsConfigurations = pd.read_csv(os.path.join(waterPath, irrigationsConfigurationsFile))
 
     irrigationsFile = "irrigations.csv"
-    irrigations = pd.read_csv(os.path.join(irrigationsPath, irrigationsFile))
+    irrigations = pd.read_csv(os.path.join(waterPath, irrigationsFile))
 
-    if arpae_start != irrigations.iloc[0]["start"] or arpae_end != irrigations.iloc[-1]["start"]:
+    precipitationsFile= "precipitations.csv"
+    precipitations = pd.read_csv(os.path.join(waterPath, precipitationsFile))
+
+    if irrigations.iloc[0]["start"] != precipitations.iloc[0]["start"]:
+        raise Exception("Arpae files have different time spans")
+
+    if irrigations.iloc[0]["end"] != precipitations.iloc[0]["end"]:
+        raise Exception("Arpae files haa different time steps")
+
+    if irrigations.iloc[-1]["start"] != precipitations.iloc[-1]["start"]:
+        raise Exception("Arpae files have different time spans")
+
+    irrigations = irrigations.set_index(['start', 'end'])
+    precipitations = precipitations.set_index(['start', 'end'])
+
+    mergedDf = irrigations.merge(precipitations, left_index=True, right_index=True)
+    mergedDf = mergedDf.reset_index()
+
+    if arpae_start != mergedDf.iloc[0]["start"] or arpae_end != mergedDf.iloc[-1]["start"]:
         raise Exception("Irrigations file has a different time span")
 
-    return irrigationsConfigurations, irrigations
+    return irrigationsConfigurations, mergedDf
+
+def transformDates(arpaeData, waterData):
+    arpaeData["start"] = pd.to_datetime(arpaeData["start"], infer_datetime_format=True)
+    arpaeData["end"] = pd.to_datetime(arpaeData["end"], infer_datetime_format=True)
+
+    waterData["start"] = pd.to_datetime(waterData["start"], infer_datetime_format=True)
+    waterData["end"] = pd.to_datetime(waterData["end"], infer_datetime_format=True)
+    
+    return arpaeData, waterData
+
+def setDataIndeces(arpaeData, waterData):
+    arpaeData = arpaeData.set_index(["start"])
+
+    waterData = waterData.set_index(["start"])
+    
+    return arpaeData, waterData
+    
