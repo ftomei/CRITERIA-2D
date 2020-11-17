@@ -121,6 +121,7 @@ def main():
     arpaeFolder = "arpae"
     arpaePath = os.path.join(dataPath, arpaeFolder)
     stationInfo, arpaeData = importUtils.readArpaeData(arpaePath)
+    height = stationInfo.iloc[0]["Altezza (Metri sul livello del mare)"]
 
     print("Read irrigations data...")
     waterFolder = "water"
@@ -148,10 +149,21 @@ def main():
     # export inizialization 
     exportUtils.createExportFile()
     
+    latitude = stationInfo["Latitudine (Gradi Centesimali)"]
+    longitude = stationInfo["Longitudine (Gradi Centesimali)"]
     # main cycle
     arpaeData, waterData = importUtils.setDataIndeces(arpaeData, waterData)
     for arpaeIndex, arpaeRelevation in arpaeData.iterrows():
+
+        airTemperature = arpaeRelevation["temperature"]
+        globalSWRadiation = arpaeRelevation["radiations"]
+        airRelHumidity = arpaeRelevation["humidity"]
+        windSpeed_10m = arpaeRelevation["wind"]
+        normTransmissivity = 0.5
+        evapotranspiration = computeHourlyET0(height, airTemperature, globalSWRadiation, airRelHumidity, windSpeed_10m, normTransmissivity)
+        
         for i in range(nrWaterEventsInArpaeTimeLength):
+            
             criteria3D.cleanSurfaceSinkSource()
 
             waterIndex = arpaeIndex + pd.Timedelta(str(i * waterTimeLength) + ' seconds')
