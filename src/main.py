@@ -126,11 +126,11 @@ def main():
     waterFolder = "water"
     waterPath = os.path.join(dataPath, waterFolder)
     irrigationsConfigurations, waterData = importUtils.readWaterData(waterPath, arpaeData.iloc[0]["start"], arpaeData.iloc[-1]["start"])
+    criteria3D.setDripIrrigationPositions(irrigationsConfigurations)
 
     arpaeData, waterData = importUtils.transformDates(arpaeData, waterData)
 
     # TIME LENGHT 
-    # change it if your observed data are different (ex: hourly)
     arpaeTimeLength = (arpaeData.iloc[0]["end"] - arpaeData.iloc[0]["start"]).seconds        # [s]
     waterTimeLength = (waterData.iloc[0]["end"] - waterData.iloc[0]["start"]).seconds        # [s]
     print("Arpae relevations time lenght [s]:", arpaeTimeLength)

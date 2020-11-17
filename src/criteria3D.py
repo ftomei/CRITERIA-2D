@@ -97,15 +97,23 @@ def setRainfall(rain, duration):
         area = C3DCells[i].area                         #[m^2]
         C3DCells[i].sinkSource += rate * area            #[m^3 s^-1]
 
+irrigationIndeces = []
+def setDripIrrigationPositions(irrigationsConfigurations):
+    for _, position in irrigationsConfigurations.iterrows():
+        xOffset = int(C3DStructure.nrRectanglesInXAxis * position['x'])
+        yOffset = int(C3DStructure.nrRectanglesInYAxis * position['y'])
+        index = C3DStructure.nrRectanglesInXAxis * yOffset + xOffset
+        irrigationIndeces.append(index)
+
 #-----------------------------------------------------------
 # set drip
 # irrigation      [l]
 # duration        [s]            
 #-----------------------------------------------------------
 def setDripIrrigation(irrigation, duration):
-    index = C3DStructure.nrRectanglesInXAxis * int(C3DStructure.nrRectanglesInYAxis/2) + int(C3DStructure.nrRectanglesInXAxis/2)   
-    rate = irrigation / duration                     #[l s^-1]
-    C3DCells[index].sinkSource += rate * 0.001       #[m^3 s^-1]        
+    rate = irrigation / duration                         #[l s^-1]
+    for index in irrigationIndeces:
+        C3DCells[index].sinkSource += rate * 0.001       #[m^3 s^-1]        
         
         
 def restoreWater():
