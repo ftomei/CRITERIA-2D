@@ -9,14 +9,14 @@ oneTimestampPerRow = False
 
 def createExportFile():
     if heightSlice == None:
-            takeAll()
+        takeAll()
     else:
         takeSlice()
     
     if oneTimestampPerRow:
         header = "timestamp," + ",".join(map(lambda index: str(index), exportIndeces)) + "\n"
     else:
-        header = "timestamp,x,z,value\n"
+        header = "timestamp,x,z,Se,H\n"
 
     with open(outputFile, "w") as f:
         f.write(header)
@@ -50,9 +50,9 @@ def takeScreenshot(timestamp):
 
     if oneTimestampPerRow:
         #row = str(waterBalance.totalTime)
-        row = str(timestamp)
+        row = str(timestamp.value // 10 ** 9)
         for index in exportIndeces:
-            row += "," + str(C3DCells[index].Se)
+            row += "," + str(round(C3DCells[index].Se, 6))
         row += "\n"
 
         with open(outputFile, "a") as f:
@@ -60,10 +60,11 @@ def takeScreenshot(timestamp):
     else:
         for index in exportIndeces:
             #row = str(waterBalance.totalTime)
-            row = str(timestamp)
-            row += "," + str(C3DCells[index].x)
-            row += "," + str(C3DCells[index].z)
-            row += "," + str(C3DCells[index].Se)
+            row = str(timestamp.value // 10 ** 9)
+            row += "," + str(round(C3DCells[index].x, 6))
+            row += "," + str(round(C3DCells[index].z, 6))
+            row += "," + str(round(C3DCells[index].Se, 6))
+            row += "," + str(round(C3DCells[index].H, 6))
             row += "\n"
 
             with open(outputFile, "a") as f:
