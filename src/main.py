@@ -149,8 +149,8 @@ def main():
     # export inizialization 
     exportUtils.createExportFile()
     
-    latitude = stationInfo["Latitudine (Gradi Centesimali)"]
-    longitude = stationInfo["Longitudine (Gradi Centesimali)"]
+    latitude = stationInfo.iloc[0]["Latitudine (Gradi Centesimali)"]
+    longitude = stationInfo.iloc[0]["Longitudine (Gradi Centesimali)"]
     # main cycle
     arpaeData, waterData = importUtils.setDataIndeces(arpaeData, waterData)
     for arpaeIndex, arpaeRelevation in arpaeData.iterrows():
@@ -175,7 +175,7 @@ def main():
             criteria3D.setRainfall(waterEvent["precipitations"], waterTimeLength)
             criteria3D.setDripIrrigation(waterEvent["irrigations"], waterTimeLength)
 
-            exportUtils.takeScreenshot(waterIndex)
+            exportUtils.takeScreenshot(waterEvent["end"])
 
             criteria3D.compute(waterTimeLength)
     

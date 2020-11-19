@@ -2,7 +2,7 @@ import waterBalance
 from dataStructures import *
 
 exportIndeces = []
-outputFile = "./data/output/slice_60s_heatmap.csv"
+outputFile = "./data/output/slice_hourly_heatmap.csv"
 #nrDetections = -1
 heightSlice = 0.5
 oneTimestampPerRow = False
@@ -16,7 +16,7 @@ def createExportFile():
     if oneTimestampPerRow:
         header = "timestamp," + ",".join(map(lambda index: str(index), exportIndeces)) + "\n"
     else:
-        header = "timestamp,x,z,Se,H\n"
+        header = "timestamp,x,y,z,Se,H\n"
 
     with open(outputFile, "w") as f:
         f.write(header)
@@ -62,6 +62,7 @@ def takeScreenshot(timestamp):
             #row = str(waterBalance.totalTime)
             row = str(timestamp.value // 10 ** 9)
             row += "," + '{:.6f}'.format(C3DCells[index].x)
+            row += "," + '{:.6f}'.format(C3DCells[index].y)
             row += "," + '{:.6f}'.format(C3DCells[index].z)
             row += "," + '{:.6f}'.format(C3DCells[index].Se)
             row += "," + '{:.6f}'.format(C3DCells[index].H)
