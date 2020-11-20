@@ -194,14 +194,11 @@ def drawSlice(isFirst):
             if (isFirst):
                 vertices = copy(rectangularMesh.C3DRM[visualizedSlice + x].v)
                 for v in vertices[:2]:
-                    v[2] = v[2] - soil.depth[z]
+                    v[2] = v[2] - soil.depth[z] + (soil.thickness[z] * 0.5)
                 vertices[2] = vertices[0]
                 vertices[3] = vertices[1]
                 for v in vertices[2:]:
-                    if (z + 1) == C3DStructure.nrLayers:
-                        v[2] = v[2] - soil.thickness[len(soil.thickness) - 1]
-                    else:
-                        v[2] = v[2] - soil.depth[z + 1]
+                    v[2] = v[2] - soil.thickness[z]
                 newRectangle = getNewRectangle(myColor, sliceCanvas, vertices)
                 sliceRectangles.append(newRectangle)
             else:
