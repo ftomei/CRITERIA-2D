@@ -78,8 +78,6 @@ def initialize(totalWidth):
     drawColorScale()
     drawSubSurface(True)
 
-
-
     #SLICE CANVAS
     sliceCanvas = visual.canvas(width = dx, height = dy, align="left")
     sliceCanvas.background = visual.color.white
@@ -88,6 +86,7 @@ def initialize(totalWidth):
     sliceCanvas.up = visual.vector(0,0,1)
     sliceCanvas.forward = visual.vector(0, -0.1, 0)
     sliceCanvas.range = (rectangularMesh.header.xMax - rectangularMesh.header.xMin) * 0.55
+    
     sliceCanvas.caption = " *** COMMANDS ***\n\n 'r': run simulation \n 'p': pause "
     sliceCanvas.caption += "\n 'w': move up (soil layer) \n 's': move down (soil layer) "
     sliceCanvas.caption += "\n 'a': move left (soil slice) \n 'd': move right (soil slice) "
@@ -182,9 +181,8 @@ def getNewRectangle(myColor, myCanvas, v):
 def drawSlice(isFirst):
     global sliceRectangles
     
-    _slice = visualizedSlice * C3DStructure.gridStep
-    sliceLabel.text = "Degree of saturation, slice at " + format(_slice,".1f")+"cm"
-    
+    posY = (visualizedSlice / C3DStructure.nrRectanglesInXAxis) * C3DStructure.gridStep + C3DStructure.gridStep*0.5
+    sliceLabel.text = "Degree of saturation, slice at " + format(posY*100,".1f")+"cm"
     
     for z in range(C3DStructure.nrLayers):
         for x in range(C3DStructure.nrRectanglesInXAxis):
