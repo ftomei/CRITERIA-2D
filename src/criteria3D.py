@@ -95,7 +95,7 @@ def setRainfall(rain, duration):
     rate = (rain * 0.001) / duration                    #[m s^-1]
     for i in range(C3DStructure.nrRectangles):
         area = C3DCells[i].area                         #[m^2]
-        C3DCells[i].sinkSource += rate * area            #[m^3 s^-1]
+        C3DCells[i].sinkSource += rate * area           #[m^3 s^-1]
 
 irrigationIndeces = []
 def setDripIrrigationPositions(irrigationsConfigurations):

@@ -29,7 +29,6 @@ def clearSkyRad(myDate, finalHourUTC, latDegrees, lonDegrees):
         myDate = myDate -1
     
     doy = dateToDOY(myDate.year, myDate.month, myDate.day)
-    print (doy)
     timeAdjustment = degreeToRadians(279.575 + 0.986 * doy)
     
     timeEq = (-104.7 * math.sin(timeAdjustment) + 596.2 * math.sin(2. * timeAdjustment) 

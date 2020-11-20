@@ -169,6 +169,7 @@ def main():
         airRelHumidity = arpaeRelevation["humidity"]
         windSpeed_10m = arpaeRelevation["wind"]
         normTransmissivity = 0.5
+        # mm m^-2
         evapotranspiration = computeHourlyET0(height, airTemperature, globalSWRadiation, airRelHumidity, windSpeed_10m, normTransmissivity)
         
         for i in range(nrWaterEventsInArpaeTimeLength):
@@ -178,8 +179,8 @@ def main():
             waterIndex = arpaeIndex + pd.Timedelta(str(i * waterTimeLength) + ' seconds')
             waterEvent = waterData.loc[waterIndex]
 
-            waterBalance.currentIrr = (len(criteria3D.irrigationIndeces) * waterEvent["irrigations"]) / waterTimeLength * 3600  #[l/hour]
-            waterBalance.currentPrec = waterEvent["precipitations"] / waterTimeLength * 3600   #[m/hour]
+            waterBalance.currentIrr = (len(criteria3D.irrigationIndeces) * waterEvent["irrigations"]) / waterTimeLength * 3600  #[l hour-1]
+            waterBalance.currentPrec = waterEvent["precipitations"] / waterTimeLength * 3600   #[mm m-2 hour-1]
 
             criteria3D.setRainfall(waterEvent["precipitations"], waterTimeLength)
             criteria3D.setDripIrrigation(waterEvent["irrigations"], waterTimeLength)
