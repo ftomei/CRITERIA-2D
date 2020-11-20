@@ -5,6 +5,10 @@
 # Crop Evapotranspiration – Guidelines for Computing Crop Water Requirements
 
 import math
+import transmissivity
+import datetime
+import pandas as pd
+from copy import copy
 
 # [W m-2 K-4] Stefan-Boltzmann constant
 STEFAN_BOLTZMANN = 5.670373E-8      
@@ -27,7 +31,7 @@ ALBEDO_CROP_REFERENCE = 0.23
 # [-] ratio molecular weight of water vapour/dry air
 RATIO_WATER_VD = 0.622
 
-
+TRASMISSIVITY_THREESHOLD = 300
 
 # pressure [Pa]
 # height [m]
@@ -40,6 +44,29 @@ def pressureFromAltitude(height):
 def saturationVaporPressure(airTemperature):
     return 611 * math.exp(17.502 * airTemperature / (airTemperature + 240.97))
 
+def computeNormTransmissivity(arpaeRelevation, arpaeData, latitude, longitude):
+    currentDate = copy(arpaeRelevation["end"])
+    potentialRad = 0
+    observedRad = 0
+    nrHoursAhead = -1
+    
+    while potentialRad < TRASMISSIVITY_THREESHOLD:
+        nrHoursAhead += 1
+        date = datetime.date(currentDate.year, currentDate.month, currentDate.day)
+        hour = currentDate.hour
+        potentialRad += transmissivity.clearSkyRad(date, hour, latitude, longitude)
+        observedRad += arpaeData.loc[currentDate - pd.Timedelta('1 hour')]["radiations"]
+        currentDate += pd.Timedelta('1 hour')
+
+    currentDate = copy(arpaeRelevation["end"])
+    for i in range(nrHoursAhead):
+        currentDate -= pd.Timedelta('1 hour')
+        date = datetime.date(currentDate.year, currentDate.month, currentDate.day)
+        hour = currentDate.hour
+        potentialRad += transmissivity.clearSkyRad(date, hour, latitude, longitude)
+        observedRad += arpaeData.loc[currentDate - pd.Timedelta('1 hour')]["radiations"]
+    
+    return observedRad / potentialRad
 
 # return reference evapotranspiration (mm)
 # height               elevation above mean sea level (meters)

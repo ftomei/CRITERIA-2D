@@ -8,11 +8,10 @@ import rectangularMesh
 import criteria3D
 import visual3D
 import os
-from PenmanMonteith import computeHourlyET0
+from PenmanMonteith import computeHourlyET0, computeNormTransmissivity
 import exportUtils
 import importUtils
 import pandas as pd
-import transmissivity
 import datetime
 
  
@@ -154,23 +153,18 @@ def main():
     latitude = stationInfo.iloc[0]["Latitudine (Gradi Centesimali)"]
     longitude = stationInfo.iloc[0]["Longitudine (Gradi Centesimali)"]
     
-    #test
-    myDate = datetime.date(2019, 11, 3)
-    finalHour = 13
-    potentialRad = transmissivity.clearSkyRad(myDate, finalHour, latitude, longitude)
-    print ("Test clear sky radiation:", potentialRad)
-    
     # main cycle
-    arpaeData, waterData = importUtils.setDataIndeces(arpaeData, waterData)
+    extendedArpaeData, extendedWaterData = importUtils.setDataIndeces(arpaeData, waterData)
+    arpaeData, waterData = extendedArpaeData.iloc[24:-24], extendedWaterData.iloc[24:-24]
     for arpaeIndex, arpaeRelevation in arpaeData.iterrows():
 
         airTemperature = arpaeRelevation["temperature"]
         globalSWRadiation = arpaeRelevation["radiations"]
         airRelHumidity = arpaeRelevation["humidity"]
         windSpeed_10m = arpaeRelevation["wind"]
-        normTransmissivity = 0.5
-        # mm m^-2
-        evapotranspiration = computeHourlyET0(height, airTemperature, globalSWRadiation, airRelHumidity, windSpeed_10m, normTransmissivity)
+
+        normTransmissivity = computeNormTransmissivity(arpaeRelevation, extendedArpaeData, latitude, longitude)
+        evapotranspiration = computeHourlyET0(height, airTemperature, globalSWRadiation, airRelHumidity, windSpeed_10m, normTransmissivity) # mm m^-2
         
         for i in range(nrWaterEventsInArpaeTimeLength):
             
