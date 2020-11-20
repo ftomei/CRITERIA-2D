@@ -15,7 +15,7 @@ from copy import copy
 sliceRectangles = []
 subSurfaceRectangles = []
 visualizedLayer = 0
-visualizedSlice = 0
+visualizedSlice = C3DStructure.nrRectanglesInXAxis * int(C3DStructure.nrRectanglesInYAxis / 2)
 nrColorLevels = 10
 degreeMaximum = 1
 degreeMinimum = 0.5
@@ -65,7 +65,7 @@ def initialize(totalWidth):
                              background = visual.vec(0,0,0))
         colorScale.append(label)
 
-    #SOIL CANVAS
+    #SURFACE CANVAS
     soilCanvas = visual.canvas(width = dx, height = dy, align="left")
     soilCanvas.background = visual.color.white
     soilCanvas.center = visual.vector(cX, cY, cZ)
@@ -81,10 +81,10 @@ def initialize(totalWidth):
     #SLICE CANVAS
     sliceCanvas = visual.canvas(width = dx, height = dy, align="left")
     sliceCanvas.background = visual.color.white
-    sliceCanvas.center = visual.vector(cX, cY, cZ)
+    sliceCanvas.center = visual.vector(cX, cY+0.5, cZ-0.25)
     sliceCanvas.ambient = visual.vector(0.33, 0.33, 0.5)
     sliceCanvas.up = visual.vector(0,0,1)
-    sliceCanvas.forward = visual.vector(0, -0.1, 0)
+    sliceCanvas.forward = visual.vector(0, -0.5, 0)
     sliceCanvas.range = (rectangularMesh.header.xMax - rectangularMesh.header.xMin) * 0.55
     
     sliceCanvas.caption = " *** COMMANDS ***\n\n 'r': run simulation \n 'p': pause "
