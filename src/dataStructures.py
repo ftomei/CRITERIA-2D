@@ -8,7 +8,7 @@ class C3DStructure:
     gridWidth = 1.0                 # [m] x axis
     gridHeight = 1.0                # [m] y axis
     gridOrigin = 0.0                # [m] z
-    gridStep = 0.05                 # [m]
+    gridStep = 0.02                 # [m]
     nrRectanglesInXAxis = int(gridWidth / gridStep)
     nrRectanglesInYAxis = int(gridHeight / gridStep)
     nrRectangles = nrRectanglesInXAxis * nrRectanglesInYAxis

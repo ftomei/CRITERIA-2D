@@ -12,6 +12,8 @@ from PenmanMonteith import computeHourlyET0
 import exportUtils
 import importUtils
 import pandas as pd
+import transmissivity
+import datetime
 
  
 def main():
@@ -151,6 +153,13 @@ def main():
     
     latitude = stationInfo.iloc[0]["Latitudine (Gradi Centesimali)"]
     longitude = stationInfo.iloc[0]["Longitudine (Gradi Centesimali)"]
+    
+    #test
+    myDate = datetime.date(2019, 11, 3)
+    finalHour = 13
+    potRad = transmissivity.clearSkyRad(myDate, finalHour, latitude, longitude)
+    print ("radiazione potenziale:", potRad)
+    
     # main cycle
     arpaeData, waterData = importUtils.setDataIndeces(arpaeData, waterData)
     for arpaeIndex, arpaeRelevation in arpaeData.iterrows():
