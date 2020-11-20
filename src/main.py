@@ -157,8 +157,8 @@ def main():
     #test
     myDate = datetime.date(2019, 11, 3)
     finalHour = 13
-    potRad = transmissivity.clearSkyRad(myDate, finalHour, latitude, longitude)
-    print ("radiazione potenziale:", potRad)
+    potentialRad = transmissivity.clearSkyRad(myDate, finalHour, latitude, longitude)
+    print ("Test clear sky radiation:", potentialRad)
     
     # main cycle
     arpaeData, waterData = importUtils.setDataIndeces(arpaeData, waterData)
