@@ -70,7 +70,7 @@ class C3DParameters:
     maxApproximationsNr = 10
     residualTolerance = 1E-12
     MBRThreshold = 1E-2
-    conductivityHVRatio = 5.0
+    conductivityHVRatio = 2.0
 
 #global
 C3DCells = []
