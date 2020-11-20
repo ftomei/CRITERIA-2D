@@ -235,7 +235,7 @@ def drawSubSurface(isFirst):
     
 def updateInterface():       
     timeLabel.text = "Time: " + str(int(waterBalance.totalTime)) + " [s]"
-    precLabel.text = "Precipitation: " + str(waterBalance.currentPrec) + " [m/hour]"
+    precLabel.text = "Precipitation: " + str(waterBalance.currentPrec) + " [mm/hour]"
     irrLabel.text = "Irrigation: " + str(waterBalance.currentIrr) + " [l/hour]"
     storage = waterBalance.currentStep.waterStorage
     flow = waterBalance.currentStep.waterFlow
