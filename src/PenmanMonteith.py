@@ -31,7 +31,7 @@ ALBEDO_CROP_REFERENCE = 0.23
 # [-] ratio molecular weight of water vapour/dry air
 RATIO_WATER_VD = 0.622
 
-TRASMISSIVITY_THREESHOLD = 300
+TRASMISSIVITY_THRESHOLD = 300
 
 # pressure [Pa]
 # height [m]
@@ -50,7 +50,7 @@ def computeNormTransmissivity(arpaeRelevation, arpaeData, latitude, longitude):
     observedRad = 0
     nrHoursAhead = -1
     
-    while potentialRad < TRASMISSIVITY_THREESHOLD:
+    while potentialRad < TRASMISSIVITY_THRESHOLD:
         nrHoursAhead += 1
         date = datetime.date(currentDate.year, currentDate.month, currentDate.day)
         hour = currentDate.hour

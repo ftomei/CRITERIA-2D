@@ -177,6 +177,7 @@ def main():
             waterBalance.currentPrec = waterEvent["precipitations"] / waterTimeLength * 3600   #[mm m-2 hour-1]
 
             criteria3D.setRainfall(waterEvent["precipitations"], waterTimeLength)
+            print ("irrigation:", waterEvent["irrigations"])
             criteria3D.setDripIrrigation(waterEvent["irrigations"], waterTimeLength)
 
             exportUtils.takeScreenshot(waterEvent["end"])

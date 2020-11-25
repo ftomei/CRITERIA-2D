@@ -53,7 +53,7 @@ def readWaterData(waterPath, arpae_start, arpae_end):
         raise Exception("Arpae files have different time spans")
 
     if irrigations.iloc[0]["end"] != precipitations.iloc[0]["end"]:
-        raise Exception("Arpae files haa different time steps")
+        raise Exception("Arpae files have different time steps")
 
     if irrigations.iloc[-1]["start"] != precipitations.iloc[-1]["start"]:
         raise Exception("Arpae files have different time spans")
