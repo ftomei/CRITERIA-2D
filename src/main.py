@@ -13,6 +13,7 @@ import exportUtils
 import importUtils
 import pandas as pd
 import datetime
+import crop
 
  
 def main():
@@ -39,6 +40,15 @@ def main():
                      C3DParameters.minThickness, C3DParameters.maxThickness, 
                      C3DParameters.geometricFactor) 
     print("Nr. of layers:", nrLayers)
+    
+    #crop
+    kiwifruit = crop.Ccrop()
+    crop.setMaxValues(kiwifruit)
+    rootDensityKiwi = crop.computeRootDensity(kiwifruit, nrLayers)
+    
+    grass = crop.setGrass()
+    crop.setMaxValues(grass)
+    rootDensityGrass = crop.computeRootDensity(grass, nrLayers)
     
     # Initialize memory
     criteria3D.memoryAllocation(nrLayers, C3DStructure.nrRectangles)
