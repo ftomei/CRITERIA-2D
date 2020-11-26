@@ -67,11 +67,15 @@ def setLayers(totalDepth, minThickness, maxThickness, factor):
     z[0] = 0.0
     thickness[0] = 0.0
     for i in range(1, nrLayers):
+        top = z[i-1] + thickness[i-1] * 0.5
         if (i == 1):
             thickness[i] = minThickness
         else:
-            thickness[i] = min(maxThickness, thickness[i-1] * factor)
-        z[i] = z[i-1] + (thickness[i-1] + thickness[i]) * 0.5
+            if (i == nrLayers-1):
+                thickness[i] = totalDepth - top
+            else:
+                thickness[i] = min(maxThickness, thickness[i-1] * factor)
+        z[i] = top + thickness[i] * 0.5
     return(nrLayers, z, thickness)
 
 def getVolumetricWaterContent(i):
