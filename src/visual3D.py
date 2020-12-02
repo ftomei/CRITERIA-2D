@@ -19,6 +19,7 @@ visualizedSlice = C3DStructure.nrRectanglesInXAxis * int(C3DStructure.nrRectangl
 nrColorLevels = 10
 degreeMaximum = 1
 degreeMinimum = 0.5
+waterLevelMaximum = 0.1    # [m]
 isPause = False
   
 
@@ -68,10 +69,10 @@ def initialize(totalWidth):
     #SURFACE CANVAS
     soilCanvas = visual.canvas(width = dx, height = dy, align="left")
     soilCanvas.background = visual.color.white
-    soilCanvas.center = visual.vector(cX, cY, cZ)
-    soilCanvas.ambient = visual.vector(0.33, 0.33, 0.5)
+    soilCanvas.center = visual.vector(cX, cY, cZ+0.2)
+    soilCanvas.ambient = visual.vector(0.33, 0.33, 0.33)
     soilCanvas.up = visual.vector(0,0,1)
-    soilCanvas.forward = visual.vector(0.33, -0.33, -0.15)
+    soilCanvas.forward = visual.vector(0, 1.0, -5.0)
     soilCanvas.range = (rectangularMesh.header.xMax - rectangularMesh.header.xMin) * 0.55
     layerLabel = visual.label(canvas = soilCanvas, height = h, pos=visual.vector(cX, cY, Zlabel))
     
@@ -81,10 +82,10 @@ def initialize(totalWidth):
     #SLICE CANVAS
     sliceCanvas = visual.canvas(width = dx, height = dy, align="left")
     sliceCanvas.background = visual.color.white
-    sliceCanvas.center = visual.vector(cX, cY+0.5, cZ-0.25)
-    sliceCanvas.ambient = visual.vector(0.33, 0.33, 0.5)
+    sliceCanvas.center = visual.vector(cX, cY, cZ-0.2)
+    sliceCanvas.ambient = visual.vector(0.33, 0.33, 0.33)
     sliceCanvas.up = visual.vector(0,0,1)
-    sliceCanvas.forward = visual.vector(0, -0.5, 0)
+    sliceCanvas.forward = visual.vector(0, 1.0, 0)
     sliceCanvas.range = (rectangularMesh.header.xMax - rectangularMesh.header.xMin) * 0.55
     
     sliceCanvas.caption = " *** COMMANDS ***\n\n 'r': run simulation \n 'p': pause "
@@ -212,11 +213,21 @@ def drawSubSurface(isFirst):
     global subSurfaceRectangles
     
     depth = soil.depth[visualizedLayer] * 100
-    layerLabel.text = "Degree of saturation, layer at " + format(depth,".1f")+"cm"
+    if (visualizedLayer == 0):
+        layerLabel.text = "Surface water level"
+    else:
+        layerLabel.text = "Degree of saturation, layer at " + format(depth,".1f")+"cm"
         
     for i in range(C3DStructure.nrRectangles):
         index = visualizedLayer * C3DStructure.nrRectangles + i
-        c = getSEColor(C3DCells[index].Se, degreeMinimum, degreeMaximum)
+        
+        #color
+        if (visualizedLayer == 0):
+            waterLevel = max(C3DCells[i].H - C3DCells[i].z, 0.0)
+            c = getSurfaceWaterColor(waterLevel, waterLevelMaximum)
+        else:
+            c = getSEColor(C3DCells[index].Se, degreeMinimum, degreeMaximum)
+            
         myColor = visual.vector(c[0], c[1], c[2])
         
         if (isFirst):

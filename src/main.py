@@ -8,7 +8,8 @@ import rectangularMesh
 import criteria3D
 import visual3D
 import os
-from PenmanMonteith import computeHourlyET0, computeNormTransmissivity
+from PenmanMonteith import computeHourlyET0
+from transmissivity import computeNormTransmissivity
 import exportUtils
 import importUtils
 import pandas as pd
@@ -165,7 +166,8 @@ def main():
     
     # main cycle
     extendedArpaeData, extendedWaterData = importUtils.setDataIndeces(arpaeData, waterData)
-    arpaeData, waterData = extendedArpaeData.iloc[24:-24], extendedWaterData.iloc[24:-24]
+    arpaeData, waterData = extendedArpaeData.iloc[5258:-24], extendedWaterData.iloc[5258:-24]
+    dailyET0 = 0
     for arpaeIndex, arpaeRelevation in arpaeData.iterrows():
 
         airTemperature = arpaeRelevation["temperature"]
@@ -173,8 +175,15 @@ def main():
         airRelHumidity = arpaeRelevation["humidity"]
         windSpeed_10m = arpaeRelevation["wind"]
 
-        normTransmissivity = computeNormTransmissivity(arpaeRelevation, extendedArpaeData, latitude, longitude)
+        currentDateTime = arpaeRelevation["end"]
+        normTransmissivity = computeNormTransmissivity(extendedArpaeData, currentDateTime, latitude, longitude)
         evapotranspiration = computeHourlyET0(height, airTemperature, globalSWRadiation, airRelHumidity, windSpeed_10m, normTransmissivity) # mm m^-2
+        
+        dailyET0 += evapotranspiration
+        if (currentDateTime.hour == 23):
+            date = datetime.date(currentDateTime.year, currentDateTime.month, currentDateTime.day)
+            print (date, "ET0:", format(dailyET0, ".2f"))
+            dailyET0 = 0
         
         for i in range(nrWaterEventsInArpaeTimeLength):
             
@@ -183,11 +192,10 @@ def main():
             waterIndex = arpaeIndex + pd.Timedelta(str(i * waterTimeLength) + ' seconds')
             waterEvent = waterData.loc[waterIndex]
 
-            waterBalance.currentIrr = (len(criteria3D.irrigationIndeces) * waterEvent["irrigations"]) / waterTimeLength * 3600  #[l hour-1]
             waterBalance.currentPrec = waterEvent["precipitations"] / waterTimeLength * 3600   #[mm m-2 hour-1]
-
             criteria3D.setRainfall(waterEvent["precipitations"], waterTimeLength)
-            print ("irrigation:", waterEvent["irrigations"])
+            
+            waterBalance.currentIrr = (len(criteria3D.irrigationIndeces) * waterEvent["irrigations"]) / waterTimeLength * 3600  #[l hour-1]
             criteria3D.setDripIrrigation(waterEvent["irrigations"], waterTimeLength)
 
             exportUtils.takeScreenshot(waterEvent["end"])

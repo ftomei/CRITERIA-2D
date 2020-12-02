@@ -78,6 +78,6 @@ def getSEColor(degreeSaturation, minimum, maximum):
 def getSurfaceWaterColor(waterHeight, maximum):
     perc = waterHeight / maximum
     perc = min(1.0, max(0.0, perc))
-    index = int(perc*(len(colorRangeSurfaceWater)-1))
-    return colorRangeSurfaceWater[index]
+    index = int(perc*(len(colorRangeSE)-1))
+    return colorRangeSE[index]
 
