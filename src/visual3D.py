@@ -72,7 +72,7 @@ def initialize(totalWidth):
     soilCanvas.center = visual.vector(cX, cY, cZ+0.2)
     soilCanvas.ambient = visual.vector(0.33, 0.33, 0.33)
     soilCanvas.up = visual.vector(0,0,1)
-    soilCanvas.forward = visual.vector(0, 1.0, -5.0)
+    soilCanvas.forward = visual.vector(0, 0.01,-1.0)
     soilCanvas.range = (rectangularMesh.header.xMax - rectangularMesh.header.xMin) * 0.55
     layerLabel = visual.label(canvas = soilCanvas, height = h, pos=visual.vector(cX, cY, Zlabel))
     
@@ -212,18 +212,13 @@ def drawSlice(isFirst):
 def drawSubSurface(isFirst):
     global subSurfaceRectangles
     
-    depth = soil.depth[visualizedLayer] * 100
-    if (visualizedLayer == 0):
-        layerLabel.text = "Surface water level"
-    else:
-        layerLabel.text = "Degree of saturation, layer at " + format(depth,".1f")+"cm"
-        
+    maxWaterlevel = 0
     for i in range(C3DStructure.nrRectangles):
         index = visualizedLayer * C3DStructure.nrRectangles + i
-        
         #color
         if (visualizedLayer == 0):
             waterLevel = max(C3DCells[i].H - C3DCells[i].z, 0.0)
+            maxWaterlevel = max(waterLevel, maxWaterlevel)
             c = getSurfaceWaterColor(waterLevel, waterLevelMaximum)
         else:
             c = getSEColor(C3DCells[index].Se, degreeMinimum, degreeMaximum)
@@ -237,7 +232,14 @@ def drawSubSurface(isFirst):
             subSurfaceRectangles[i].v0.color = myColor
             subSurfaceRectangles[i].v1.color = myColor
             subSurfaceRectangles[i].v2.color = myColor  
-            subSurfaceRectangles[i].v3.color = myColor
+            subSurfaceRectangles[i].v3.color = myColor 
+    # label
+    if (visualizedLayer == 0):
+        layerLabel.text = "Surface water level - max:" + format(maxWaterlevel * 1000,".1f")+"mm"
+    else:
+        depth = soil.depth[visualizedLayer] * 100
+        layerLabel.text = "Degree of saturation, layer at " + format(depth,".1f")+"cm"
+    
     
 def updateInterface():       
     timeLabel.text = "Time: " + str(int(waterBalance.totalTime)) + " [s]"

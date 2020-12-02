@@ -197,6 +197,12 @@ def main():
             
             waterBalance.currentIrr = (len(criteria3D.irrigationIndeces) * waterEvent["irrigations"]) / waterTimeLength * 3600  #[l hour-1]
             criteria3D.setDripIrrigation(waterEvent["irrigations"], waterTimeLength)
+            
+            if (waterBalance.currentIrr > 0):
+                C3DParameters.deltaT_max = 60
+                C3DParameters.currentDeltaT = min(C3DParameters.currentDeltaT, C3DParameters.deltaT_max)
+            else:
+                C3DParameters.deltaT_max = waterTimeLength
 
             exportUtils.takeScreenshot(waterEvent["end"])
 
