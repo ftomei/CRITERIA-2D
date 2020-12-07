@@ -166,7 +166,7 @@ def main():
     
     # main cycle
     extendedArpaeData, extendedWaterData = importUtils.setDataIndeces(arpaeData, waterData)
-    arpaeData, waterData = extendedArpaeData.iloc[24:-24], extendedWaterData.iloc[24:-24]
+    arpaeData, waterData = extendedArpaeData.iloc[15:-12], extendedWaterData.iloc[15:-12]
     dailyET0 = 0
     for arpaeIndex, arpaeRelevation in arpaeData.iterrows():
 
@@ -175,14 +175,16 @@ def main():
         airRelHumidity = arpaeRelevation["humidity"]
         windSpeed_10m = arpaeRelevation["wind"]
 
+        # evapotranspiration
         currentDateTime = pd.to_datetime(arpaeRelevation["end"], unit='s')
         normTransmissivity = computeNormTransmissivity(extendedArpaeData, currentDateTime, latitude, longitude)
         evapotranspiration = computeHourlyET0(height, airTemperature, globalSWRadiation, airRelHumidity, windSpeed_10m, normTransmissivity) # mm m^-2
+        print (currentDateTime, "ET0:", format(evapotranspiration, ".2f"))
         
+        # daily ET0
         dailyET0 += evapotranspiration
         if (currentDateTime.hour == 23):
-            date = datetime.date(currentDateTime.year, currentDateTime.month, currentDateTime.day)
-            print (date, "ET0:", format(dailyET0, ".2f"))
+            print ("Daily ET0:", format(dailyET0, ".2f"))
             dailyET0 = 0
         
         for i in range(nrWaterEventsInArpaeTimeLength):
@@ -207,6 +209,6 @@ def main():
             exportUtils.takeScreenshot(waterEvent["end"])
 
             criteria3D.compute(waterTimeLength)
-    
+        
     print ("\nEnd simulation.")   
 main()

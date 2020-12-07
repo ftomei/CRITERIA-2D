@@ -19,7 +19,7 @@ visualizedSlice = C3DStructure.nrRectanglesInXAxis * int(C3DStructure.nrRectangl
 nrColorLevels = 10
 degreeMaximum = 1
 degreeMinimum = 0.5
-waterLevelMaximum = 0.1    # [m]
+waterLevelMaximum = 0.02    # [m]
 isPause = False
   
 

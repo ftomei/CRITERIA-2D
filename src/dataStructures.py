@@ -62,7 +62,7 @@ class C3DParameters:
     maxThickness = 0.1                          # [m]
     geometricFactor = 1.2
     roughness = 0.24                            # [s m^0.33]
-    pond = 0.01                                 # [m]
+    pond = 0.005                                # [m]
     currentDeltaT = 16.0                        # [s]
     deltaT_min = 1.0                            # [s]
     deltaT_max = 600.0                          # [s]
