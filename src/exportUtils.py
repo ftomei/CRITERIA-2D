@@ -53,24 +53,23 @@ def takeScreenshot(timestamp):
         #anche tutto il resto andrebbe sotto l'if, se lo scommento
 
     if oneTimestampPerRow:
-        #row = str(waterBalance.totalTime)
-        row = str(timestamp.value // 10 ** 9)
+        row = str(int(timestamp))
         for index in exportIndeces:
-            row += "," + '{:.6f}'.format(C3DCells[index].Se)
+            row += "," + '{:.3f}'.format(C3DCells[index].Se)
         row += "\n"
 
         with open(outputFile, "a") as f:
             f.write(row)
     else:
         for index in exportIndeces:
-            #row = str(waterBalance.totalTime)
-            row = str(timestamp)
-            row += "," + '{:.6f}'.format(C3DCells[index].x)
-            row += "," + '{:.6f}'.format(C3DCells[index].y)
-            row += "," + '{:.6f}'.format(C3DCells[index].z)
-            row += "," + '{:.6f}'.format(C3DCells[index].Se)
-            row += "," + '{:.6f}'.format(C3DCells[index].H)
-            row += "\n"
+            if C3DCells[index].z != 0.0:
+                row = str(int(timestamp))
+                row += "," + '{:.3f}'.format(C3DCells[index].x)
+                row += "," + '{:.3f}'.format(C3DCells[index].y)
+                row += "," + '{:.3f}'.format(C3DCells[index].z)
+                row += "," + '{:.3f}'.format(C3DCells[index].Se)
+                row += "," + '{:.3f}'.format(C3DCells[index].H * 100/10.2)
+                row += "\n"
 
-            with open(outputFile, "a") as f:
-                f.write(row)
+                with open(outputFile, "a") as f:
+                    f.write(row)
