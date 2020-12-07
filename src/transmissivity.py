@@ -60,7 +60,8 @@ def computeNormTransmissivity(obsData, currentDateTime, latitude, longitude):
         date = datetime.date(myDateTime.year, myDateTime.month, myDateTime.day)
         hour = myDateTime.hour
         potentialRad += clearSkyRad(date, hour, latitude, longitude)
-        observedRad += obsData.loc[myDateTime - pd.Timedelta('1 hour')]["radiations"]
+        timestamp = (myDateTime - pd.Timedelta('1 hour') - pd.Timestamp("1970-01-01")) // pd.Timedelta('1s')
+        observedRad += obsData.loc[timestamp]["radiations"]
         myDateTime += pd.Timedelta('1 hour')
         if (potentialRad >= TRASMISSIVITY_THRESHOLD): 
             nrHoursAhead += 1
@@ -71,7 +72,8 @@ def computeNormTransmissivity(obsData, currentDateTime, latitude, longitude):
         date = datetime.date(myDateTime.year, myDateTime.month, myDateTime.day)
         hour = myDateTime.hour
         potentialRad += clearSkyRad(date, hour, latitude, longitude)
-        observedRad += obsData.loc[myDateTime - pd.Timedelta('1 hour')]["radiations"]
+        timestamp = (myDateTime - pd.Timedelta('1 hour') - pd.Timestamp("1970-01-01")) // pd.Timedelta('1s')
+        observedRad += obsData.loc[timestamp]["radiations"]
     
     return min(1, observedRad / (potentialRad * MAXIMUM_TRANSMISSIVITY))
     

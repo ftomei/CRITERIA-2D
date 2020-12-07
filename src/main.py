@@ -19,7 +19,7 @@ import crop
  
 def main():
     print (os.getcwd())
-    dataPath = "data"
+    dataPath = os.path.join("data", "fondo_1")
 
     print("Building rectangle mesh...")
     rectangularMesh.rectangularMeshCreation()
@@ -141,11 +141,11 @@ def main():
     irrigationsConfigurations, waterData = importUtils.readWaterData(waterPath, arpaeData.iloc[0]["start"], arpaeData.iloc[-1]["start"])
     criteria3D.setDripIrrigationPositions(irrigationsConfigurations)
 
-    arpaeData, waterData = importUtils.transformDates(arpaeData, waterData)
+    #arpaeData, waterData = importUtils.transformDates(arpaeData, waterData)
 
     # TIME LENGHT 
-    arpaeTimeLength = (arpaeData.iloc[0]["end"] - arpaeData.iloc[0]["start"]).seconds        # [s]
-    waterTimeLength = (waterData.iloc[0]["end"] - waterData.iloc[0]["start"]).seconds        # [s]
+    arpaeTimeLength = (arpaeData.iloc[0]["end"] - arpaeData.iloc[0]["start"])        # [s]
+    waterTimeLength = (waterData.iloc[0]["end"] - waterData.iloc[0]["start"])        # [s]
     print("Arpae relevations time lenght [s]:", arpaeTimeLength)
     print("Water relevations time lenght [s]:", arpaeTimeLength)
     if (arpaeTimeLength % waterTimeLength) != 0:
@@ -166,7 +166,7 @@ def main():
     
     # main cycle
     extendedArpaeData, extendedWaterData = importUtils.setDataIndeces(arpaeData, waterData)
-    arpaeData, waterData = extendedArpaeData.iloc[5258:-24], extendedWaterData.iloc[5258:-24]
+    arpaeData, waterData = extendedArpaeData.iloc[24:-24], extendedWaterData.iloc[24:-24]
     dailyET0 = 0
     for arpaeIndex, arpaeRelevation in arpaeData.iterrows():
 
@@ -175,7 +175,7 @@ def main():
         airRelHumidity = arpaeRelevation["humidity"]
         windSpeed_10m = arpaeRelevation["wind"]
 
-        currentDateTime = arpaeRelevation["end"]
+        currentDateTime = pd.to_datetime(arpaeRelevation["end"], unit='s')
         normTransmissivity = computeNormTransmissivity(extendedArpaeData, currentDateTime, latitude, longitude)
         evapotranspiration = computeHourlyET0(height, airTemperature, globalSWRadiation, airRelHumidity, windSpeed_10m, normTransmissivity) # mm m^-2
         
@@ -189,7 +189,7 @@ def main():
             
             criteria3D.cleanSurfaceSinkSource()
 
-            waterIndex = arpaeIndex + pd.Timedelta(str(i * waterTimeLength) + ' seconds')
+            waterIndex = arpaeIndex + (i * waterTimeLength)
             waterEvent = waterData.loc[waterIndex]
 
             waterBalance.currentPrec = waterEvent["precipitations"] / waterTimeLength * 3600   #[mm m-2 hour-1]

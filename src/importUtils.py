@@ -25,7 +25,7 @@ def readArpaeData(arpaePath):
             raise Exception("Arpae files have different time spans")
 
         if arpaeData[i].iloc[0]["end"] != arpaeData[i + 1].iloc[0]["end"]:
-            raise Exception("Arpae files haa different time steps")
+            raise Exception("Arpae files have different time steps")
 
         if arpaeData[i].iloc[-1]["start"] != arpaeData[i + 1].iloc[-1]["start"]:
             raise Exception("Arpae files have different time spans")
