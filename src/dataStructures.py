@@ -8,7 +8,7 @@ class C3DStructure:
     gridWidth = 1.0                 # [m] x axis
     gridHeight = 1.0                # [m] y axis
     gridOrigin = 0.0                # [m] z
-    gridStep = 0.02                 # [m]
+    gridStep = 0.01                 # [m]
     nrRectanglesInXAxis = int(gridWidth / gridStep)
     nrRectanglesInYAxis = int(gridHeight / gridStep)
     nrRectangles = nrRectanglesInXAxis * nrRectanglesInYAxis
@@ -59,8 +59,8 @@ class C3DParameters:
     initialWaterPotential = -3.0                # [m]
     isFreeDrainage = True
     minThickness = 0.01                         # [m]
-    maxThickness = 0.1                          # [m]
-    geometricFactor = 1.2
+    maxThickness = 0.01                          # [m]
+    geometricFactor = 1.0
     roughness = 0.24                            # [s m^0.33]
     pond = 0.01                                 # [m]
     currentDeltaT = 16.0                        # [s]
