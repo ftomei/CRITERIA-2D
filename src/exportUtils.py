@@ -3,7 +3,8 @@ import os
 from dataStructures import *
 
 exportIndeces = []
-outputFile = os.path.join("data", "fondo_1", "output", "output.csv")
+outputDirectory = os.path.join("data", "fondo_1", "output")
+outputFile = os.path.join(outputDirectory, "output.csv")
 #nrDetections = -1
 heightSlice = C3DStructure.gridHeight/2
 oneTimestampPerRow = False
@@ -19,8 +20,8 @@ def createExportFile():
     else:
         header = "timestamp,x,y,z,Se,H\n"
 
-    if not os.path.exists(outputFile):
-        open(outputFile, 'w').close()
+    if not os.path.exists(outputDirectory):
+        os.makedirs(outputDirectory)
 
     with open(outputFile, "w") as f:
         f.write(header)
