@@ -6,9 +6,9 @@ class C3DStructure:
     nrDimensions = 3
     nrVerticesPerRectangle = 4
     gridWidth = 1.0                 # [m] x axis
-    gridHeight = 1.0                # [m] y axis
+    gridHeight = 0.5                # [m] y axis
     gridOrigin = 0.0                # [m] z
-    gridStep = 0.01                 # [m]
+    gridStep = 0.1                 # [m]
     nrRectanglesInXAxis = int(gridWidth / gridStep)
     nrRectanglesInYAxis = int(gridHeight / gridStep)
     nrRectangles = nrRectanglesInXAxis * nrRectanglesInYAxis
@@ -58,8 +58,8 @@ class C3DParameters:
     computeSurfaceFlux = False
     initialWaterPotential = -3.0                # [m]
     isFreeDrainage = True
-    minThickness = 0.01                         # [m]
-    maxThickness = 0.01                          # [m]
+    minThickness = 0.1                         # [m]
+    maxThickness = 0.1                          # [m]
     geometricFactor = 1.0
     roughness = 0.24                            # [s m^0.33]
     pond = 0.01                                 # [m]
