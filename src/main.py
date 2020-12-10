@@ -77,7 +77,7 @@ def main():
             elif (layer == (nrLayers-1)):
                 # last layer
                 if C3DParameters.isFreeDrainage:
-                    criteria3D.setCellProperties(index, False, BOUNDARY_NONE)
+                    criteria3D.setCellProperties(index, False, BOUNDARY_FREEDRAINAGE)
                 else:
                     criteria3D.setCellProperties(index, False, BOUNDARY_NONE)
                     
@@ -166,7 +166,7 @@ def main():
     
     # main cycle
     extendedArpaeData, extendedWaterData = importUtils.setDataIndeces(arpaeData, waterData)
-    arpaeData, waterData = extendedArpaeData.iloc[13:-12], extendedWaterData.iloc[13:-12]
+    arpaeData, waterData = extendedArpaeData.iloc[12:-12], extendedWaterData.iloc[12:-12]
     dailyET0 = 0
     for arpaeIndex, arpaeRelevation in arpaeData.iterrows():
 
