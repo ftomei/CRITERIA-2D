@@ -23,6 +23,6 @@ OK = 1
 INDEX_ERROR = -1111
 LINK_ERROR = -5555
 
-EPSILON = 1E-5
-EPSILON_METER = 1E-3        # [m]
+EPSILON = 1E-6
+EPSILON_METER = 1E-4        # [m]
 

@@ -79,6 +79,7 @@ def setMatricPotential (i, signPsi):
         C3DCells[i].Se = soil.getDegreeOfSaturation(i)
         C3DCells[i].k = soil.getHydraulicConductivity(i)
     C3DCells[i].H0 = C3DCells[i].H
+    C3DCells[i].Hprev = C3DCells[i].H0
     return(OK)
        
        
@@ -114,11 +115,7 @@ def setDripIrrigation(irrigation, duration):
     rate = irrigation / duration                         #[l s^-1]
     for index in irrigationIndeces:
         C3DCells[index].sinkSource += rate * 0.001       #[m^3 s^-1]        
-        
-        
-def restoreWater():
-    for i in range(C3DStructure.nrCells):
-        C3DCells[i].H = C3DCells[i].H0
+    
         
 # timeLength        [s]          
 def compute(timeLength):  
@@ -138,8 +135,6 @@ def compute(timeLength):
             print ("sink/source [l]:", format(sumSinkSource(deltaT) * 1000.,".5f")) 
              
             acceptedStep = solver.computeStep(deltaT)          
-            if not acceptedStep: 
-                restoreWater()
                 
         visual3D.redraw()  
         currentTime += deltaT

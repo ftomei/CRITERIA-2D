@@ -65,11 +65,11 @@ def computeStep(deltaT):
                 
             arrangeMatrix(i, deltaT)
             
-        if ((waterBalance.maxCourant > 1.0) 
+        if ((waterBalance.maxCourant > 100.0) 
         and (deltaT > C3DParameters.deltaT_min)):
             print ("Courant too high:", waterBalance.maxCourant)
             print ("Decrease time step")
-            while (waterBalance.maxCourant > 1.0):
+            while (waterBalance.maxCourant > 100.0):
                 waterBalance.halveTimeStep()
                 waterBalance.maxCourant *= 0.5
             return(False)

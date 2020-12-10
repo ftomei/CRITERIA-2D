@@ -31,18 +31,17 @@ def updateBoundary(deltaT):
                         C3DCells[i].boundary.flow = -min(flow, maxFlow)
                     
             elif (C3DCells[i].boundary.type == BOUNDARY_FREELATERALDRAINAGE): 
+                #signPsi = meanH - C3DCells[i].z
+                #Se = soil.degreeOfSaturation(retentionCurve, signPsi)
+                #k = soil.hydraulicConductivity(retentionCurve, Se)
+                k = C3DCells[i].k * C3DParameters.conductivityHVRatio
                 if (slope > 0.0):              
-                    signPsi = meanH - C3DCells[i].z
-                    Se = soil.degreeOfSaturation(retentionCurve, signPsi)
-                    k = soil.hydraulicConductivity(retentionCurve, Se)
-                    k *= C3DParameters.conductivityHVRatio
-                    C3DCells[i].boundary.flow = - k * C3DCells[i].boundary.area * slope
+                    C3DCells[i].boundary.flow = -k * C3DCells[i].boundary.area * slope
+                else:
+                    C3DCells[i].boundary.flow = -k * (C3DCells[i].H - C3DCells[i].Hprev)
                                       
             elif (C3DCells[i].boundary.type == BOUNDARY_FREEDRAINAGE):
-                signPsi = meanH - C3DCells[i].z
-                Se = soil.degreeOfSaturation(retentionCurve, signPsi)
-                k = soil.hydraulicConductivity(retentionCurve, Se)
-                C3DCells[i].boundary.flow = -k * C3DCells[i].upLink.area
+                C3DCells[i].boundary.flow = -C3DCells[i].k * C3DCells[i].upLink.area
                 
             C3DCells[i].flow += C3DCells[i].boundary.flow
             

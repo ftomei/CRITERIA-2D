@@ -35,29 +35,29 @@ def setMaxValues(crop):
     crop.currentRootLenght = crop.currentRootDepth - crop.rootDepthZero   
 
     
-def getSurfaceCoverFraction(crop):
+def getCropSurfaceCover(currentLAI):
     k = 0.6      # [-] light extinction coefficient
     
-    if (crop.currentLAI <= 0):
+    if (currentLAI <= 0):
         return 0.
     else:
-        return 1. - math.exp(-k * crop.currentLAI)
+        return 1. - math.exp(-k * currentLAI)
 
 
-def getMaxEvaporation(crop, ET0):
+def getMaxEvaporation(currentLAI, ET0):
     maxEvapRatio = 0.66
     
-    surfaceCoverFraction = getSurfaceCoverFraction(crop)
-    return ET0 * maxEvapRatio * (1. - surfaceCoverFraction)
+    cropSurfaceCover = getCropSurfaceCover(currentLAI)
+    return ET0 * maxEvapRatio * (1. - cropSurfaceCover)
 
 
-def getMaxTranspiration(crop, ET0):
-    if (crop.currentLAI <= 0):
+def getMaxTranspiration(currentLAI, kcMax, ET0):
+    if (currentLAI <= 0):
         return 0.
 
-    surfaceCoverFraction = getSurfaceCoverFraction(crop)
-    kcMaxFactor = 1. + (crop.kcMax - 1.) * surfaceCoverFraction
-    kc = surfaceCoverFraction * kcMaxFactor
+    cropSurfaceCover = getCropSurfaceCover(currentLAI)
+    kcMaxFactor = 1. + (kcMax - 1.) * cropSurfaceCover
+    kc = cropSurfaceCover * kcMaxFactor
     return ET0 * kc 
 
 

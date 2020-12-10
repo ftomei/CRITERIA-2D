@@ -81,6 +81,15 @@ def computeStep(deltaT):
         isValidStep = waterBalance.waterBalance(deltaT, approximation)
         if (waterBalance.forceExit): return False
         approximation += 1
+        
+    if isValidStep:
+        for i in range(C3DStructure.nrCells):
+            C3DCells[i].Hprev = C3DCells[i].H0
+    else: 
+        # restoreWater
+        for i in range(C3DStructure.nrCells):
+            C3DCells[i].H = C3DCells[i].H0
+        
     return isValidStep
 
 
