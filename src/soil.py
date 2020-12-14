@@ -199,3 +199,16 @@ def meanK(meanType, k1, k2):
         k = sqrt(k1 * k2)
     return k
 
+# [m3 m-3] water content at field capacity
+def getFieldCapacityWC():
+    curve = C3DParameters.waterRetentionCurve
+    FC = -2.0        # [m]
+    return thetaFromPsi(curve, FC)
+
+# [m3 m-3] water content at wilting point
+def getWiltingPointWC():
+    curve = C3DParameters.waterRetentionCurve
+    WP = -160.0       # [m]
+    return thetaFromPsi(curve, WP)
+
+

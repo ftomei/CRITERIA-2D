@@ -13,6 +13,7 @@ class Ccrop:
     rootDepthMax = 0.9                  # [m]
     rootDeformation = 1.                # [-]
     kcMax = 1.1                         # [-]
+    fRAW = 0.55                         # [-]
     currentLAI = NODATA              
     currentRootDepth = NODATA
     currentRootLenght = NODATA
@@ -26,6 +27,7 @@ def setGrass():
     grass.rootDepthMax = 0.65            # [m]
     grass.rootDeformation = 1.0          # [-]
     grass.kcMax = 0.8                    # [-]
+    grass.fRAW = 0.65                    # [-]
     return grass 
 
 
@@ -133,12 +135,84 @@ def computeRootDensity(crop, nrLayers):
     return rootDensity
 
 
-'''
-double computeEvaporation(std::vector<soil::Crit3DLayer> &soilLayers, double maxEvaporation)
-{
-   // TODO extend to geometric soilLayers
+def setTranspiration(index, crop, rootDensity, maxTranspiration):
+    FC = soil.getFieldCapacityWC()                  # [m3 m-3] water content at field capacity
+    WP = soil.getWiltingPointWC()                   # [m3 m-3] water content at wilting point
+    WSThreshold = FC - crop.fRAW * (FC - WP);       # [m3 m-3] water scarcity stress threshold
+    
+    # Initialize
+    rootDensityWithoutStress = 0.0                  # [-]
+    actualTranspiration = 0.0                       # [mm]
+    
+    nrLayers = len(rootDensity)
+    isLayerStressed = np.zeros(nrLayers, dtype=bool)
+    layerTranspiration = np.zeros(nrLayers, np.float64)
+    for i in range(nrLayers):
+        isLayerStressed[i] = False
+        layerTranspiration[i] = 0
+    
+    for layer in range(nrLayers):
+        if (rootDensity[layer] > 0):
+            i = index + C3DStructure.nrRectangles * layer
+            theta = soil.getVolumetricWaterContent(i)
+            # TODO water surplus
+            
+            # WATER SCARSITY
+            if (theta < WSThreshold):
+                if (theta <= WP):
+                    layerTranspiration[layer] = 0
+                else:
+                    layerTranspiration[layer] = maxTranspiration * rootDensity[layer] * ((theta - WP) / (WSThreshold - WP))
+                isLayerStressed[layer] = True
+            else:
+                # normal conditions
+                layerTranspiration[layer] = maxTranspiration * rootDensity[layer]
+                
+                # check stress
+                theta_mm = theta * soil.thickness[layer] * 1000.
+                WSThreshold_mm = WSThreshold * soil.thickness[layer] * 1000.
+    
+                if ((theta_mm - layerTranspiration[layer]) > WSThreshold_mm):
+                    isLayerStressed[layer] = false;
+                    rootDensityWithoutStress += rootDensity[layer]
+                else:
+                    isLayerStressed[layer] = True
+                    
+            actualTranspiration += layerTranspiration[layer]
 
-    // surface evaporation
+    # WATER STRESS [-]
+    waterStress = 1. - (actualTranspiration / maxTranspiration)
+
+    # Hydraulic redistribution
+    # the movement of water from moist to dry soil through plant roots
+    # TODO add numerical process
+    if (waterStress > EPSILON and rootDensityWithoutStress > EPSILON):
+        redistribution = min(waterStress, rootDensityWithoutStress) * maxTranspiration
+        
+         # redistribution acts on not stressed roots
+        for layer in range(nrLayers):
+            if (rootDensity[layer] > 0) and (not isLayerStressed[layer]):
+                addTransp = redistribution * (rootDensity[layer] / rootDensityWithoutStress)
+                layerTranspiration[layer] += addTransp;
+                actualTranspiration += addTransp;
+                
+    # Assign transpiration flux [m3 s-1]
+    for layer in range(nrLayers):
+        if (layerTranspiration[layer] > 0):
+            i = index + C3DStructure.nrRectangles * layer
+            rate = layerTranspiration[layer] / 1000. / 3600.    # [m s-1]
+            C3DCells[i].sinkSource += rate * C3DCells[i].area   # [m3 s-1]
+            
+    return actualTranspiration
+
+
+
+'''
+def setEvaporation(index, maxEvaporation):
+{
+   # TODO extend to geometric soilLayers
+
+    # surface evaporation
     double surfaceEvaporation = MINVALUE(maxEvaporation, soilLayers[0].waterContent);
     soilLayers[0].waterContent -= surfaceEvaporation;
 
@@ -148,7 +222,7 @@ double computeEvaporation(std::vector<soil::Crit3DLayer> &soilLayers, double max
     if (residualEvaporation < EPSILON)
         return actualEvaporation;
 
-    // soil evaporation
+    # soil evaporation
     unsigned int lastLayerEvap = unsigned(floor(MAX_EVAPORATION_DEPTH / soilLayers[1].thickness)) +1;
     double* coeffEvap = new double[lastLayerEvap];
     double layerDepth, coeffDepth;
@@ -160,7 +234,7 @@ double computeEvaporation(std::vector<soil::Crit3DLayer> &soilLayers, double max
         layerDepth = soilLayers[i].depth + soilLayers[i].thickness / 2.0;
 
         coeffDepth = MAXVALUE((layerDepth - minDepth) / (MAX_EVAPORATION_DEPTH - minDepth), 0);
-        // coeffEvap: 1 at depthMin, ~0.1 at MAX_EVAPORATION_DEPTH
+        # coeffEvap: 1 at depthMin, ~0.1 at MAX_EVAPORATION_DEPTH
         coeffEvap[i-1] = exp(-2 * coeffDepth);
 
         coeffEvap[i-1] = MINVALUE(1.0, exp((-layerDepth * 2.0) / MAX_EVAPORATION_DEPTH));
@@ -199,3 +273,6 @@ double computeEvaporation(std::vector<soil::Crit3DLayer> &soilLayers, double max
     return actualEvaporation;
 }
 '''
+
+
+

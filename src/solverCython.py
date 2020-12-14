@@ -32,6 +32,8 @@ def computeStep(deltaT):
                 C3DCells[i].k = soil.getHydraulicConductivity(i)
                 dTheta_dH = soil.getdTheta_dH(i)
                 set_C(i, C3DCells[i].volume * dTheta_dH)
+        
+        # boundary
         boundaryConditions.updateBoundary(deltaT)
         
         print ("approximation nr:", approximation)
