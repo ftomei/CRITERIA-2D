@@ -35,7 +35,7 @@ class Crectangle:
 
         self.neighbours, self.boundarySides, self.boundarySlopes  = boundaryProperties(self.index, self.v, self.centroid)
         
-        if len(self.neighbours) < C3DStructure.nrVerticesPerRectangle:
+        if NOLINK in self.neighbours:
             self.isBoundary = True
             self.boundarySide = np.max(self.boundarySides)
             self.boundarySlope = np.max(self.boundarySlopes)
