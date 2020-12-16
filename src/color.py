@@ -35,27 +35,28 @@ def setColorScale(nrLevels, keyColors):
 def setColorScaleTIN():
     global colorScaleTIN
     keyColors = np.zeros((4,3),float)
-    keyColors[0] = (0, 128, 0)      #green
-    keyColors[1] = (255, 255, 0)    #yellow
-    keyColors[2] = (128, 64, 0)     #brown
-    keyColors[3] = (192, 192, 192)   #grey
+    keyColors[0] = (0, 128, 0)          #green
+    keyColors[1] = (255, 255, 0)        #yellow
+    keyColors[2] = (128, 64, 0)         #brown
+    keyColors[3] = (192, 192, 192)      #grey
     colorScaleTIN = setColorScale(512, keyColors)
 
 def setColorScaleDegreeOfSaturation():
     global colorRangeSE
-    keyColors = np.zeros((3,3),float)
+    keyColors = np.zeros((4,3),float)
     
-    keyColors[0] = (255, 0, 0)       # red
-    keyColors[1] = (255, 255, 0)     # yellow
-    keyColors[2] = (0, 0, 255)       # blue
-    colorRangeSE = setColorScale(1024, keyColors)
+    keyColors[0] = (255, 0, 0)          # red
+    keyColors[1] = (255, 255, 0)        # yellow
+    keyColors[2] = (0, 255, 0)          # green
+    keyColors[3] = (0, 0, 255)          # blue
+    colorRangeSE = setColorScale(4096, keyColors)
     
 def setColorScaleSurfaceWater():
     global colorRangeSurfaceWater
     keyColors = np.zeros((3,3),float)
-    keyColors[0] = (255, 255, 255)   #white
+    keyColors[0] = (255, 255, 255)      #white
     keyColors[1] = (0, 255, 255)     
-    keyColors[2] = (0, 0, 255)       #blue
+    keyColors[2] = (0, 0, 255)          #blue
     colorRangeSurfaceWater = setColorScale(512, keyColors)
     
 def setAllColorScale():

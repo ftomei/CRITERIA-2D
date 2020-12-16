@@ -8,7 +8,7 @@ def updateBoundary(deltaT):
     retentionCurve = C3DParameters.waterRetentionCurve 
     for i in range(C3DStructure.nrCells):
         #sink/source: precipitation, evapo-transpiration
-        if (C3DCells[i].sinkSource != NODATA):
+        if (C3DCells[i].sinkSource != NODATA) and (C3DCells[i].sinkSource != 0):
             #[m3 s-1]
             C3DCells[i].flow = C3DCells[i].sinkSource
         else:      
@@ -38,7 +38,7 @@ def updateBoundary(deltaT):
                 if (slope != 0.0):              
                     C3DCells[i].boundary.flow = -k * C3DCells[i].boundary.area * slope
                 else:
-                    C3DCells[i].boundary.flow = -k * C3DCells[i].boundary.area * 0.001  
+                    C3DCells[i].boundary.flow = -k * C3DCells[i].boundary.area * 0.01  
                                       
             elif (C3DCells[i].boundary.type == BOUNDARY_FREEDRAINAGE):
                 C3DCells[i].boundary.flow = -C3DCells[i].k * C3DCells[i].upLink.area

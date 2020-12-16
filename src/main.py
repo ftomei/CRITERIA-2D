@@ -52,12 +52,12 @@ def main():
     rootDensityGrass = crop.computeRootDensity(grass, nrLayers)
 
     LAIkiwi = np.zeros(C3DStructure.nrRectangles)
-    LAIGrass = np.zeros(C3DStructure.nrRectangles)
+    LAIgrass = np.zeros(C3DStructure.nrRectangles)
     for i in range(C3DStructure.nrRectangles):
         [x, y, z] = rectangularMesh.C3DRM[i].centroid
         # Assign grass
         if (x >= 0.8):
-            LAIGrass[i] = grass.currentLAI
+            LAIgrass[i] = grass.currentLAI
 
     # Initialize memory
     criteria3D.memoryAllocation(nrLayers, C3DStructure.nrRectangles)
@@ -75,7 +75,7 @@ def main():
             if (layer == 0):
                 # surface
                 if rectangularMesh.C3DRM[i].isBoundary:
-                    criteria3D.setCellProperties(index, True, BOUNDARY_RUNOFF)
+                    criteria3D.setCellProperties(index, True, BOUNDARY_NONE)
                     criteria3D.setBoundaryProperties(index,
                                   rectangularMesh.C3DRM[i].boundarySide, rectangularMesh.C3DRM[i].boundarySlope)
                 else:
@@ -92,7 +92,7 @@ def main():
                 criteria3D.setMatricPotential(index, C3DParameters.initialWaterPotential)
 
             else:
-                if rectangularMesh.C3DRM[i].isBoundary:
+                if (C3DParameters.isFreeLateralDrainage) and (rectangularMesh.C3DRM[i].isBoundary):
                     criteria3D.setCellProperties(index, False, BOUNDARY_FREELATERALDRAINAGE)
                     criteria3D.setBoundaryProperties(index, rectangularMesh.C3DRM[i].boundarySide * soil.thickness[layer],
                                                      rectangularMesh.C3DRM[i].boundarySlope)
@@ -186,11 +186,18 @@ def main():
         # evapotranspiration
         currentDateTime = pd.to_datetime(arpaeRelevation["end"], unit='s')
         normTransmissivity = computeNormTransmissivity(extendedArpaeData, currentDateTime, latitude, longitude)
-        evapotranspiration = computeHourlyET0(height, airTemperature, globalSWRadiation, airRelHumidity, windSpeed_10m, normTransmissivity) # mm m^-2
-        print (currentDateTime, "ET0:", format(evapotranspiration, ".2f"))
+        ET0 = computeHourlyET0(height, airTemperature, globalSWRadiation, airRelHumidity, windSpeed_10m, normTransmissivity) # mm m^-2
+        print (currentDateTime, "ET0:", format(ET0, ".2f"))
+        if C3DParameters.computeTranspiration:
+            for i in range(C3DStructure.nrRectangles):
+                # initialize
+                for layer in range(nrLayers):
+                    C3DCells[i].sinkSource = 0   
+                maxTranspiration = crop.getMaxTranspiration(LAIgrass[i], grass.kcMax, ET0)
+                crop.setTranspiration(i, grass, rootDensityGrass, maxTranspiration, waterTimeLength)  
 
         # daily ET0
-        dailyET0 += evapotranspiration
+        dailyET0 += ET0
         if (currentDateTime.hour == 23):
             print ("Daily ET0:", format(dailyET0, ".2f"))
             dailyET0 = 0
@@ -205,14 +212,12 @@ def main():
             waterBalance.currentPrec = waterEvent["precipitations"] / waterTimeLength * 3600   #[mm m-2 hour-1]
             criteria3D.setRainfall(waterEvent["precipitations"], waterTimeLength)
 
-            waterBalance.currentIrr = (len(criteria3D.irrigationIndeces) * waterEvent["irrigations"]) / waterTimeLength * 3600  #[l hour-1]
-            criteria3D.setDripIrrigation(waterEvent["irrigations"], waterTimeLength)
+            if (C3DParameters.assignIrrigation):
+                waterBalance.currentIrr = (len(criteria3D.irrigationIndeces) * waterEvent["irrigations"]) / waterTimeLength * 3600  #[l hour-1]
+                criteria3D.setDripIrrigation(waterEvent["irrigations"], waterTimeLength)
 
-            if (waterBalance.currentIrr > 0):
-                C3DParameters.deltaT_max = 60
-                C3DParameters.currentDeltaT = min(C3DParameters.currentDeltaT, C3DParameters.deltaT_max)
-            else:
-                C3DParameters.deltaT_max = waterTimeLength
+            if (waterBalance.currentIrr > 0) or (waterBalance.currentPrec > 0):
+                C3DParameters.currentDeltaT = 16
 
             exportUtils.takeScreenshot(waterEvent["end"])
 

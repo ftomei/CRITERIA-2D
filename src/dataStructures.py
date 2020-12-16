@@ -58,8 +58,10 @@ class C3DParameters:
     computeSurfaceFlux = True
     computeEvaporation = True
     computeTranspiration = True
-    initialWaterPotential = -3.0                # [m]
+    assignIrrigation = False
     isFreeDrainage = True
+    isFreeLateralDrainage = True
+    initialWaterPotential = -20.0               # [m]
     minThickness = 0.01                         # [m]
     maxThickness = 0.1                          # [m]
     geometricFactor = 1.2
@@ -71,8 +73,8 @@ class C3DParameters:
     maxIterationsNr = 100
     maxApproximationsNr = 10
     residualTolerance = 1E-12
-    MBRThreshold = 1E-1
-    conductivityHVRatio = 2.0
+    MBRThreshold = 1E-2
+    conductivityHVRatio = 5.0
 
 #global
 C3DCells = []

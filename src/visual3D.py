@@ -16,9 +16,9 @@ sliceRectangles = []
 subSurfaceRectangles = []
 visualizedLayer = 0
 visualizedSlice = C3DStructure.nrRectanglesInXAxis * int(C3DStructure.nrRectanglesInYAxis / 2)
-nrColorLevels = 10
-degreeMaximum = 1
-degreeMinimum = 0.5
+nrColorLevels = 7
+degreeMaximum = 1.0
+degreeMinimum = 0.2
 waterLevelMaximum = C3DParameters.pond
 isPause = False
   
@@ -242,7 +242,7 @@ def drawSubSurface(isFirst):
     
     
 def updateInterface():       
-    timeLabel.text = "Time: " + str(int(waterBalance.totalTime)) + " [s]"
+    timeLabel.text = "Time: " + format(waterBalance.totalTime / 3600.0, ".3f") + " [h]"
     precLabel.text = "Precipitation: " + format(waterBalance.currentPrec,".1f") + " [mm/hour]"
     irrLabel.text = "Irrigation: " + format(waterBalance.currentIrr,".3f") + " [l/hour]"
     storage = waterBalance.currentStep.waterStorage

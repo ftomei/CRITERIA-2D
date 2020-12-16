@@ -80,7 +80,8 @@ def setMatricPotential (i, signPsi):
         C3DCells[i].k = soil.getHydraulicConductivity(i)
     C3DCells[i].H0 = C3DCells[i].H
     return OK
-       
+
+  
        
 def cleanSurfaceSinkSource():        
     for i in range(C3DStructure.nrRectangles):

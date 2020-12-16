@@ -1,5 +1,5 @@
 #crop.py
-from commonConst import  *
+from dataStructures import  *
 import math
 import soil
 import numpy as np
@@ -26,7 +26,7 @@ def setGrass():
     grass.rootDepthZero = 0.05           # [m]
     grass.rootDepthMax = 0.65            # [m]
     grass.rootDeformation = 1.0          # [-]
-    grass.kcMax = 0.8                    # [-]
+    grass.kcMax = 2.0                    # [-]
     grass.fRAW = 0.65                    # [-]
     return grass 
 
@@ -135,7 +135,10 @@ def computeRootDensity(crop, nrLayers):
     return rootDensity
 
 
-def setTranspiration(index, crop, rootDensity, maxTranspiration):
+def setTranspiration(index, crop, rootDensity, maxTranspiration, timeStep):
+    if (maxTranspiration < EPSILON):
+        return 
+    
     FC = soil.getFieldCapacityWC()                  # [m3 m-3] water content at field capacity
     WP = soil.getWiltingPointWC()                   # [m3 m-3] water content at wilting point
     WSThreshold = FC - crop.fRAW * (FC - WP);       # [m3 m-3] water scarcity stress threshold
@@ -173,7 +176,7 @@ def setTranspiration(index, crop, rootDensity, maxTranspiration):
                 WSThreshold_mm = WSThreshold * soil.thickness[layer] * 1000.
     
                 if ((theta_mm - layerTranspiration[layer]) > WSThreshold_mm):
-                    isLayerStressed[layer] = false;
+                    isLayerStressed[layer] = False;
                     rootDensityWithoutStress += rootDensity[layer]
                 else:
                     isLayerStressed[layer] = True
@@ -200,8 +203,8 @@ def setTranspiration(index, crop, rootDensity, maxTranspiration):
     for layer in range(nrLayers):
         if (layerTranspiration[layer] > 0):
             i = index + C3DStructure.nrRectangles * layer
-            rate = layerTranspiration[layer] / 1000. / 3600.    # [m s-1]
-            C3DCells[i].sinkSource += rate * C3DCells[i].area   # [m3 s-1]
+            rate = (layerTranspiration[layer] * 0.001) / timeStep       # [m s-1]
+            C3DCells[i].sinkSource = -rate * C3DCells[i].area           # [m3 s-1]
             
     return actualTranspiration
 
