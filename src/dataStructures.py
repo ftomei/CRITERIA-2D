@@ -42,8 +42,7 @@ class Ccell:
         self.isSurface = False            # true if the cell is on surface
         self.Se = NODATA                  # [-] degree of saturation
         self.H = NODATA                   # [m] current total water potential
-        self.H0 = NODATA                  # [m] total water potential at the start of the time step 
-        self.Hprev = NODATA               # [m] previous total water potential
+        self.H0 = NODATA                  # [m] total water potential 
         self.k = NODATA                   # [m s^-1] hydraulic conductivity
         self.sinkSource = NODATA          # [m^3 s^-1] water sink/source
         self.flow = NODATA                # [m^3 s^-1] sink/source + boundary
@@ -57,6 +56,8 @@ class C3DParameters:
     waterRetentionCurve = IPPISCH_VG
     meanType = LOGARITHMIC
     computeSurfaceFlux = True
+    computeEvaporation = True
+    computeTranspiration = True
     initialWaterPotential = -3.0                # [m]
     isFreeDrainage = True
     minThickness = 0.01                         # [m]

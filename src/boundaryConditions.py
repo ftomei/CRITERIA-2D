@@ -38,7 +38,7 @@ def updateBoundary(deltaT):
                 if (slope != 0.0):              
                     C3DCells[i].boundary.flow = -k * C3DCells[i].boundary.area * slope
                 else:
-                    C3DCells[i].boundary.flow = -k * (C3DCells[i].H - C3DCells[i].Hprev)
+                    C3DCells[i].boundary.flow = -k * C3DCells[i].boundary.area * 0.001  
                                       
             elif (C3DCells[i].boundary.type == BOUNDARY_FREEDRAINAGE):
                 C3DCells[i].boundary.flow = -C3DCells[i].k * C3DCells[i].upLink.area

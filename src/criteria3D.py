@@ -67,7 +67,7 @@ def SetCellLink(i, linkIndex, direction, interfaceArea):
                 C3DCells[i].lateralLink[j].distance = getCellDistance(i, linkIndex)
                 return(OK)
     else:
-        return(LINK_ERROR)
+        return LINK_ERROR
 
 def setMatricPotential (i, signPsi):
     if (C3DCells[i].isSurface):
@@ -79,8 +79,7 @@ def setMatricPotential (i, signPsi):
         C3DCells[i].Se = soil.getDegreeOfSaturation(i)
         C3DCells[i].k = soil.getHydraulicConductivity(i)
     C3DCells[i].H0 = C3DCells[i].H
-    C3DCells[i].Hprev = C3DCells[i].H0
-    return(OK)
+    return OK
        
        
 def cleanSurfaceSinkSource():        
