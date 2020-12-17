@@ -60,9 +60,7 @@ def computeStep(deltaT):
         and (deltaT > C3DParameters.deltaT_min)):
             print ("Courant too high:", waterBalance.maxCourant)
             print ("Decrease time step")
-            while (waterBalance.maxCourant > 1.0):
-                waterBalance.halveTimeStep()
-                waterBalance.maxCourant *= 0.5
+            waterBalance.halveTimeStep()
             return False
 
         if not solveMatrix(approximation):
@@ -83,13 +81,6 @@ def computeStep(deltaT):
         isValidStep = waterBalance.waterBalance(deltaT, approximation)
         if (waterBalance.forceExit): return False
         approximation += 1
-        
-    if not isValidStep:
-        # restoreWater
-        for i in range(C3DStructure.nrCells):
-            C3DCells[i].H = C3DCells[i].H0
-            C3DCells[i].Se = soil.getDegreeOfSaturation(i)
-            C3DCells[i].k = soil.getHydraulicConductivity(i)
         
     return isValidStep
 

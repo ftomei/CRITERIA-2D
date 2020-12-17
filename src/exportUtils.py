@@ -5,7 +5,7 @@ from dataStructures import *
 exportIndeces = []
 outputFile = os.path.join("data", "fondo_1", "output", "output.csv")
 #nrDetections = -1
-heightSlice = 0.5
+heightSlice = C3DStructure.gridHeight * 0.5
 oneTimestampPerRow = False
 
 def createExportFile():

@@ -160,7 +160,6 @@ def main():
         raise Exception("Water time lenght is not a divider of Arpae time lenght")
     else:
         nrWaterEventsInArpaeTimeLength = int(arpaeTimeLength / waterTimeLength)
-    C3DParameters.deltaT_max = waterTimeLength
     print("Total simulation time [s]:", len(arpaeData) * arpaeTimeLength)
 
     visual3D.initialize(1280)
@@ -198,12 +197,6 @@ def main():
         #if C3DParameters.computeEvaporation:
             # TODO set evaporation 
 
-        # daily ET0
-        dailyET0 += ET0
-        if (currentDateTime.hour == 23):
-            print ("Daily ET0:", format(dailyET0, ".2f"))
-            dailyET0 = 0
-
         for i in range(nrWaterEventsInArpaeTimeLength):
 
             criteria3D.cleanSurfaceSinkSource()
@@ -219,7 +212,10 @@ def main():
                 criteria3D.setDripIrrigation(waterEvent["irrigations"], waterTimeLength)
 
             if (waterBalance.currentIrr > 0) or (waterBalance.currentPrec > 0):
-                C3DParameters.currentDeltaT = min(C3DParameters.currentDeltaT, 30)
+                C3DParameters.currentDeltaT = min(C3DParameters.currentDeltaT, 16)
+                C3DParameters.deltaT_max = 256
+            else:
+                C3DParameters.deltaT_max = waterTimeLength
 
             exportUtils.takeScreenshot(waterEvent["end"])
 

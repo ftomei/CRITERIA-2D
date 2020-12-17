@@ -2,8 +2,8 @@
 
 from math import fabs
 from dataStructures import *
-from waterBalance import sumSinkSource
 from rectangularMesh import distance3D
+import waterBalance
 import visual3D
 import soil
 import time
@@ -98,6 +98,7 @@ def setRainfall(rain, duration):
         area = C3DCells[i].area                         #[m^2]
         C3DCells[i].sinkSource += rate * area           #[m^3 s^-1]
 
+
 irrigationIndeces = []
 def setDripIrrigationPositions(irrigationsConfigurations):
     for _, position in irrigationsConfigurations.iterrows():
@@ -131,10 +132,13 @@ def compute(timeLength):
                 
             deltaT = min(C3DParameters.currentDeltaT, residualTime)
             print ("\ntime step [s]: ", deltaT)
-            print ("MBR threshold [-]: ", C3DParameters.MBRThreshold)
-            print ("sink/source [l]:", format(sumSinkSource(deltaT) * 1000.,".5f")) 
+            print ("sink/source [l]:", format(waterBalance.sumSinkSource(deltaT) * 1000.,".5f")) 
              
-            acceptedStep = solver.computeStep(deltaT)          
+            acceptedStep = solver.computeStep(deltaT)  
+            if not acceptedStep:
+                # restoreWater
+                for i in range(C3DStructure.nrCells):
+                    C3DCells[i].H = C3DCells[i].H0        
                 
         visual3D.redraw()  
         currentTime += deltaT

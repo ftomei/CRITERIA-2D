@@ -20,7 +20,7 @@ visualizedSlice = C3DStructure.nrRectanglesInXAxis * int(C3DStructure.nrRectangl
 nrColorLevels = 8
 degreeMaximum = 1.0
 degreeMinimum = 0.2
-waterLevelMaximum = C3DParameters.pond
+waterLevelMaximum = max(0.005, C3DParameters.pond)
 isPause = False
   
 
@@ -36,13 +36,19 @@ def initialize(totalWidth):
     interfaceWidth = int(totalWidth * 0.2)
     dx = int((totalWidth-interfaceWidth) / 2.0)
     dy = int(dx * 0.8)
-    h = int(dy / 30)
+    h  = int(dy / 30)
     
     #CENTER
     cX = (rectangularMesh.header.xMin + rectangularMesh.header.xMax) * 0.5
     cY = (rectangularMesh.header.yMin + rectangularMesh.header.yMax) * 0.5
     cZ = rectangularMesh.header.zMin * rectangularMesh.header.magnify
-    Zlabel = (rectangularMesh.header.zMax + rectangularMesh.header.dz*0.75 + 0.2) * rectangularMesh.header.magnify
+    #RANGE
+    rx = rectangularMesh.header.xMax - rectangularMesh.header.xMin 
+    ry = rectangularMesh.header.yMax - rectangularMesh.header.yMin
+    rangeXY = max(rx, ry) * rectangularMesh.header.magnify
+    lastLayer = C3DStructure.nrLayers-1
+    rz = soil.depth[lastLayer] + soil.thickness[lastLayer]*0.5
+    rangeZ = rz * rectangularMesh.header.magnify
 
     #INTERFACE CANVAS
     interface = visual.canvas(width = interfaceWidth, height = dy, align="left")
@@ -70,12 +76,12 @@ def initialize(totalWidth):
     #SURFACE CANVAS
     soilCanvas = visual.canvas(width = dx, height = dy, align="left")
     soilCanvas.background = visual.color.white
-    soilCanvas.center = visual.vector(cX, cY, cZ+0.2)
+    soilCanvas.center = visual.vector(cX, cY, cZ+(rangeXY*0.2))
     soilCanvas.ambient = visual.vector(0.33, 0.33, 0.33)
     soilCanvas.up = visual.vector(0,0,1)
     soilCanvas.forward = visual.vector(0, 0.01,-1.0)
-    soilCanvas.range = (rectangularMesh.header.xMax - rectangularMesh.header.xMin) * 0.55
-    layerLabel = visual.label(canvas = soilCanvas, height = h, pos=visual.vector(cX, cY, Zlabel))
+    soilCanvas.range = rangeXY
+    layerLabel = visual.label(canvas = soilCanvas, height = h, pos=visual.vector(cX, cY+rangeXY*0.8, cZ))
     
     drawColorScale()
     drawSubSurface(True)
@@ -83,18 +89,18 @@ def initialize(totalWidth):
     #SLICE CANVAS
     sliceCanvas = visual.canvas(width = dx, height = dy, align="left")
     sliceCanvas.background = visual.color.white
-    sliceCanvas.center = visual.vector(cX, cY, cZ-0.2)
+    sliceCanvas.center = visual.vector(cX, cY, cZ-(rangeZ*0.5))
     sliceCanvas.ambient = visual.vector(0.33, 0.33, 0.33)
-    sliceCanvas.up = visual.vector(0,0,1)
-    sliceCanvas.forward = visual.vector(0, 1.0, 0)
-    sliceCanvas.range = (rectangularMesh.header.xMax - rectangularMesh.header.xMin) * 0.55
+    sliceCanvas.up = visual.vector(0, 0, 1)
+    sliceCanvas.forward = visual.vector(0, 1, 0)
+    sliceCanvas.range = rangeZ
+    sliceLabel = visual.label(canvas = sliceCanvas, height = h, pos=visual.vector(cX, cY, cZ+(rangeZ*0.2)))
     
     sliceCanvas.caption = " *** COMMANDS ***\n\n 'r': run simulation \n 'p': pause "
     sliceCanvas.caption += "\n '^': move up (soil layer) \n 'v': move down (soil layer) "
     sliceCanvas.caption += "\n '<': move left (soil slice) \n '>': move right (soil slice) "
     sliceCanvas.caption += "\n 's': save state \n 'l': load state "
     sliceCanvas.caption += "\n 'c': colorscale range"
-    sliceLabel = visual.label(canvas = sliceCanvas, height = h, pos=visual.vector(cX, cY, Zlabel))
     
     drawSlice(True)
     updateInterface()
@@ -255,7 +261,7 @@ def drawSubSurface(isFirst):
     
 def updateInterface():       
     timeLabel.text = "Time: " + format(waterBalance.totalTime / 3600.0, ".3f") + " [h]"
-    precLabel.text = "Precipitation: " + format(waterBalance.currentPrec,".1f") + " [mm/hour]"
+    precLabel.text = "Rainfall: " + format(waterBalance.currentPrec,".1f") + " [mm/hour]"
     irrLabel.text = "Irrigation: " + format(waterBalance.currentIrr,".3f") + " [l/hour]"
     storage = waterBalance.currentStep.waterStorage
     flow = waterBalance.currentStep.waterFlow

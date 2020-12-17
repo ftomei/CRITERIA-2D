@@ -120,10 +120,9 @@ def waterBalance(deltaT, approximation):
     # case 1: error < tolerance
     if currentStep.MBR < C3DParameters.MBRThreshold:
         updateBalance(deltaT)
-        if approximation < 3 and maxCourant < 0.5 and currentStep.MBR < (C3DParameters.MBRThreshold * 0.5):
+        if approximation < 3 and maxCourant < 0.3 and currentStep.MBR < (C3DParameters.MBRThreshold * 0.5):
             print("Good MBR!")
-            if deltaT > (C3DParameters.deltaT_min * 2):
-                doubleTimeStep()
+            doubleTimeStep()
         return True
     # case 2: continue with next approximation
     if not isLastApprox:
