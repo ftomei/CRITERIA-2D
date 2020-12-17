@@ -194,7 +194,9 @@ def main():
                 for layer in range(nrLayers):
                     C3DCells[i].sinkSource = 0   
                 maxTranspiration = crop.getMaxTranspiration(LAIgrass[i], grass.kcMax, ET0)
-                crop.setTranspiration(i, grass, rootDensityGrass, maxTranspiration, waterTimeLength)  
+                crop.setTranspiration(i, grass, rootDensityGrass, maxTranspiration, waterTimeLength) 
+        #if C3DParameters.computeEvaporation:
+            # TODO set evaporation 
 
         # daily ET0
         dailyET0 += ET0
