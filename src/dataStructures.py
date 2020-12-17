@@ -55,13 +55,13 @@ class Ccell:
 class C3DParameters:
     waterRetentionCurve = IPPISCH_VG
     meanType = LOGARITHMIC
-    computeSurfaceFlux = True
+    computeSurfaceFlux = False
     computeEvaporation = True
     computeTranspiration = True
     assignIrrigation = True
     isFreeDrainage = True
     isFreeLateralDrainage = True
-    initialWaterPotential = -20.0               # [m]
+    initialWaterPotential = -10.0               # [m]
     minThickness = 0.01                         # [m]
     maxThickness = 0.1                          # [m]
     geometricFactor = 1.2
