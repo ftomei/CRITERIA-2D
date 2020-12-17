@@ -112,43 +112,32 @@ def computeBalanceError(deltaT):
     print ("Mass Balance Ratio:", format(currentStep.MBR,".5f"))
     
 def waterBalance(deltaT, approximation):
-    global bestMBR, forceExit
-    if (approximation == 1): bestMBR = 100.0
+    global forceExit
     computeBalanceError(deltaT)
     isLastApprox = (approximation == C3DParameters.maxApproximationsNr)
     
     forceExit = False
     # case 1: error < tolerance
-    if currentStep.MBR <= C3DParameters.MBRThreshold:
+    if currentStep.MBR < C3DParameters.MBRThreshold:
         updateBalance(deltaT)
-        if ((approximation < 3) and (maxCourant < 0.5) 
-        and (currentStep.MBR < (C3DParameters.MBRThreshold * 0.5))):
-                print("Good MBR!")
-                if (deltaT > (C3DParameters.deltaT_min * 2)):
-                    decMBRThreshold()
+        if approximation < 3 and maxCourant < 0.5 and currentStep.MBR < (C3DParameters.MBRThreshold * 0.5):
+            print("Good MBR!")
+            if deltaT > (C3DParameters.deltaT_min * 2):
                 doubleTimeStep()
         return True
-    #case 2: error decreases
-    if (currentStep.MBR < bestMBR):
-        bestMBR = currentStep.MBR
-        if isLastApprox:
-            if (deltaT == C3DParameters.deltaT_min):
-                updateBalance(deltaT)
-                return True
-            else:
-                halveTimeStep()
-                forceExit = True
-                return False 
+    # case 2: continue with next approximation
+    if not isLastApprox:
         return False
-    # case 3: error increases
-    if (deltaT > C3DParameters.deltaT_min):
+    # case 3: decrease time step
+    if deltaT > C3DParameters.deltaT_min:
         print("Solution is not convergent: decrease time step")
         halveTimeStep()
         forceExit = True
-        return False
+        return False 
+    # case 4: accept wrong results
     else:
-        print("Solution is not convergent: increase error tolerance")
-        incMBRThreshold()
-        return False
+        print("Solution wrong but accepted")
+        updateBalance(deltaT)
+        return True
         
         

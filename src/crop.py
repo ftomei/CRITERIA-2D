@@ -23,10 +23,10 @@ def setGrass():
     grass = Ccrop()
     grass.laiMin = 0.5                   # [m2 m-2]
     grass.laiMax = 2.0                   # [m2 m-2]
-    grass.rootDepthZero = 0.05           # [m]
+    grass.rootDepthZero = 0.02           # [m]
     grass.rootDepthMax = 0.65            # [m]
     grass.rootDeformation = 1.0          # [-]
-    grass.kcMax = 2.0                    # [-]
+    grass.kcMax = 0.8                    # [-]
     grass.fRAW = 0.65                    # [-]
     return grass 
 

@@ -88,6 +88,8 @@ def computeStep(deltaT):
         # restoreWater
         for i in range(C3DStructure.nrCells):
             C3DCells[i].H = C3DCells[i].H0
+            C3DCells[i].Se = soil.getDegreeOfSaturation(i)
+            C3DCells[i].k = soil.getHydraulicConductivity(i)
         
     return isValidStep
 

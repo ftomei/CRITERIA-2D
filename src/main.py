@@ -219,7 +219,7 @@ def main():
                 criteria3D.setDripIrrigation(waterEvent["irrigations"], waterTimeLength)
 
             if (waterBalance.currentIrr > 0) or (waterBalance.currentPrec > 0):
-                C3DParameters.currentDeltaT = 16
+                C3DParameters.currentDeltaT = min(C3DParameters.currentDeltaT, 30)
 
             exportUtils.takeScreenshot(waterEvent["end"])
 
