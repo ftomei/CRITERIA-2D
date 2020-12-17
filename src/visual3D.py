@@ -3,6 +3,7 @@
 import vpython as visual
 from dataStructures import *
 from color import *
+import fileUtilities
 import waterBalance
 import rectangularMesh
 import soil
@@ -89,8 +90,9 @@ def initialize(totalWidth):
     sliceCanvas.range = (rectangularMesh.header.xMax - rectangularMesh.header.xMin) * 0.55
     
     sliceCanvas.caption = " *** COMMANDS ***\n\n 'r': run simulation \n 'p': pause "
-    sliceCanvas.caption += "\n 'w': move up (soil layer) \n 's': move down (soil layer) "
-    sliceCanvas.caption += "\n 'a': move left (soil slice) \n 'd': move right (soil slice) "
+    sliceCanvas.caption += "\n '^': move up (soil layer) \n 'v': move down (soil layer) "
+    sliceCanvas.caption += "\n '<': move left (soil slice) \n '>': move right (soil slice) "
+    sliceCanvas.caption += "\n 's': save state \n 'l': load state "
     sliceCanvas.caption += "\n 'c': colorscale range"
     sliceLabel = visual.label(canvas = sliceCanvas, height = h, pos=visual.vector(cX, cY, Zlabel))
     
@@ -129,10 +131,10 @@ def updateColorScale():
 def updateLayer(s):
     global visualizedLayer
     
-    if s == 's':
+    if s == 'down':
         if (visualizedLayer < C3DStructure.nrLayers-1):
             visualizedLayer += 1
-    elif s == 'w':
+    elif s == 'up':
         if (visualizedLayer > 0):
             visualizedLayer -= 1
              
@@ -142,10 +144,10 @@ def updateLayer(s):
 def updateSlice(s):
     global visualizedSlice
     
-    if s == 'a':
+    if s == 'left':
         if (visualizedSlice < (C3DStructure.nrRectangles - C3DStructure.nrRectanglesInXAxis)):
             visualizedSlice += C3DStructure.nrRectanglesInXAxis
-    elif s == 'd':
+    elif s == 'right':
         if (visualizedSlice > 0):
             visualizedSlice -= C3DStructure.nrRectanglesInXAxis
              
@@ -161,10 +163,20 @@ def keyInput(evt):
     elif s == 'p':
         isPause = True
         print ("Pause...")
-    elif s == 's' or s == 'w':
+    elif s == 'up' or s == 'down':
         updateLayer(s)
-    elif s == 'a' or s == 'd':
+    elif s == 'left' or s == 'right':
         updateSlice(s)
+    elif s == 's':
+        isPause = True
+        print ("Save State...")
+        fileUtilities.saveState()
+    elif s == 'l':
+        isPause = True
+        print ("Load State...")
+        if fileUtilities.loadState(""):
+            waterBalance.initializeBalance()
+            redraw()
     elif s == "c":
         if (isPause):
             updateColorScale()
