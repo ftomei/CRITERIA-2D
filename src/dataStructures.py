@@ -8,7 +8,7 @@ class C3DStructure:
     gridWidth = 1.0                 # [m] x axis
     gridHeight = 1.0                # [m] y axis
     gridOrigin = 0.0                # [m] z
-    gridStep = 0.05                 # [m]
+    gridStep = 0.1                  # [m]
     nrRectanglesInXAxis = int(gridWidth / gridStep)
     nrRectanglesInYAxis = int(gridHeight / gridStep)
     nrRectangles = nrRectanglesInXAxis * nrRectanglesInYAxis
@@ -51,31 +51,39 @@ class Ccell:
         self.downLink = Clink()
         self.lateralLink = [Clink(), Clink(), Clink(), Clink()]
         
-# user choices
+# model parameters
 class C3DParameters:
+    # water retention and conductivity
+    initialWaterPotential = -2.0                # [m]
     waterRetentionCurve = IPPISCH_VG
     meanType = LOGARITHMIC
-    computeSurfaceFlux = False
+    conductivityHVRatio = 5.0
+    # soil layers
+    minThickness = 0.01                         # [m]
+    maxThickness = 0.02                         # [m]
+    geometricFactor = 1.2
+    # sink-source
+    assignIrrigation = True
     computeEvaporation = True
     computeTranspiration = True
-    assignIrrigation = True
-    isFreeDrainage = True
-    isFreeLateralDrainage = True
-    initialWaterPotential = -10.0               # [m]
-    minThickness = 0.01                         # [m]
-    maxThickness = 0.1                          # [m]
-    geometricFactor = 1.2
+    # surface flow
+    computeSurfaceFlow = True
     roughness = 0.24                            # [s m^0.33]
-    pond = 0.0                                  # [m]
+    pond = 0.002                                # [m]                   
+    # boundary
+    isSurfaceRunoff = True
+    isFreeLateralDrainage = True
+    isFreeDrainage = True
+    isWaterTable = True
+    waterTableDepth = -1.5                      # [m]
+    # numerical solution
     currentDeltaT = 16.0                        # [s]
     deltaT_min = 1.0                            # [s]
     deltaT_max = 600.0                          # [s]
     maxIterationsNr = 100
     maxApproximationsNr = 10
     residualTolerance = 1E-12
-    MBRThreshold = 1E-1
-    conductivityHVRatio = 5.0
-
+    MBRThreshold = 1E-2
 
 #global
 C3DCells = []

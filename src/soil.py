@@ -76,7 +76,7 @@ def setLayers(totalDepth, minThickness, maxThickness, factor):
             else:
                 thickness[i] = min(maxThickness, thickness[i-1] * factor)
         z[i] = top + thickness[i] * 0.5
-    return(nrLayers, z, thickness)
+    return nrLayers, z, thickness
 
 def getVolumetricWaterContent(i):
     if C3DCells[i].isSurface: return NODATA

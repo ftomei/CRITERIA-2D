@@ -18,6 +18,8 @@ def updateBoundary(deltaT):
   
         if (C3DCells[i].boundary.type != BOUNDARY_NONE):
             slope = C3DCells[i].boundary.slope 
+            if (slope == 0.0):
+                    slope = 0.001
             meanH = (C3DCells[i].H + C3DCells[i].H0) * 0.5
                  
             if (C3DCells[i].boundary.type == BOUNDARY_RUNOFF):
@@ -27,19 +29,26 @@ def updateBoundary(deltaT):
                         boundaryArea = C3DCells[i].boundary.area * Hs
                         maxFlow = (Hs * C3DCells[i].area) / deltaT
                         # Manning equation [m3 s-1]
-                        flow = ((boundaryArea / C3DParameters.roughness) 
-                                            * (Hs**(2./3.)) * sqrt(slope))
+                        flow = ((boundaryArea / C3DParameters.roughness) * (Hs**(2./3.)) * sqrt(slope))
                         C3DCells[i].boundary.flow = -min(flow, maxFlow)
                     
             elif (C3DCells[i].boundary.type == BOUNDARY_FREELATERALDRAINAGE): 
-                k = C3DCells[i].k * C3DParameters.conductivityHVRatio
-                if (slope != 0.0):              
-                    C3DCells[i].boundary.flow = -k * C3DCells[i].boundary.area * slope
-                else:
-                    C3DCells[i].boundary.flow = -k * C3DCells[i].boundary.area * 0.01  
+                k = C3DCells[i].k * C3DParameters.conductivityHVRatio             
+                C3DCells[i].boundary.flow = -k * C3DCells[i].boundary.area * slope 
                                       
             elif (C3DCells[i].boundary.type == BOUNDARY_FREEDRAINAGE):
                 C3DCells[i].boundary.flow = -C3DCells[i].k * C3DCells[i].upLink.area
+            
+            elif (C3DCells[i].boundary.type == BOUNDARY_PRESCRIBEDTOTALPOTENTIAL):
+                curve = C3DParameters.waterRetentionCurve
+                prescribedH = C3DParameters.waterTableDepth
+                boundaryPsi = prescribedH - C3DCells[i].z
+                boundarySe = soil.degreeOfSaturation(curve, boundaryPsi)
+                boundaryK = soil.hydraulicConductivity(curve, boundarySe)
+                k = soil.meanK(C3DParameters.meanType, C3DCells[i].k, boundaryK)
+                dz = C3DCells[i].volume / C3DCells[i].area
+                dH = prescribedH - C3DCells[i].H
+                C3DCells[i].boundary.flow = k * dH * C3DCells[i].area
                 
             C3DCells[i].flow += C3DCells[i].boundary.flow
             

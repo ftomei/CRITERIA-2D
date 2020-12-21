@@ -17,9 +17,9 @@ sliceRectangles = []
 subSurfaceRectangles = []
 visualizedLayer = 0
 visualizedSlice = C3DStructure.nrRectanglesInXAxis * int(C3DStructure.nrRectanglesInYAxis / 2)
-nrColorLevels = 8
+nrColorLevels = 10
 degreeMaximum = 1.0
-degreeMinimum = 0.2
+degreeMinimum = 0.5
 waterLevelMaximum = max(0.005, C3DParameters.pond)
 isPause = False
   

@@ -6,7 +6,7 @@ from dataStructures import NODATA, C3DStructure, C3DCells
 import soil
 import tkinter
 import tkinter.filedialog
-from criteria3D import setMatricPotential
+import criteria3D
     
     
 def getStateFileName(isSave):
@@ -49,14 +49,14 @@ def loadState(fileName):
         fileName = getStateFileName(False)
     if (fileName == ""): return False
     state, isFileOk = readDataFile(fileName, 0, ",", False)
-    if not isFileOk or (C3DStructure.nrRectangles + 1) != len(state): 
+    if not isFileOk or (C3DStructure.nrRectangles + 1) > len(state): 
         print("*** Wrong state file!")
         return False
     #first row: depth
     depth = state[0]
     #surface
     for i in range(C3DStructure.nrRectangles):
-        setMatricPotential(i, state[i+1][0])
+        criteria3D.setMatricPotential(i, state[i+1][0])
     #subsurface
     for layer in range(1, C3DStructure.nrLayers):
         minDistance = 100.0
@@ -69,6 +69,6 @@ def loadState(fileName):
         if (l != NODATA):
             for i in range(C3DStructure.nrRectangles):
                 index = layer * C3DStructure.nrRectangles + i 
-                setMatricPotential(index, state[i+1][l])
+                criteria3D.setMatricPotential(index, state[i+1][l])
     return True
 

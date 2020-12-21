@@ -37,30 +37,13 @@ def main():
     totalDepth = soil.C3DSoil.lowerDepth
     print("Soil depth [m]:", totalDepth)
 
-    nrLayers, soil.depth, soil.thickness = soil.setLayers(totalDepth,
+    C3DStructure.nrLayers, soil.depth, soil.thickness = soil.setLayers(totalDepth,
                      C3DParameters.minThickness, C3DParameters.maxThickness,
                      C3DParameters.geometricFactor)
-    print("Nr. of layers:", nrLayers)
-
-    # Initialize crop
-    kiwifruit = crop.Ccrop()
-    crop.setMaxValues(kiwifruit)
-    rootDensityKiwi = crop.computeRootDensity(kiwifruit, nrLayers)
-
-    grass = crop.setGrass()
-    crop.setMaxValues(grass)
-    rootDensityGrass = crop.computeRootDensity(grass, nrLayers)
-
-    LAIkiwi = np.zeros(C3DStructure.nrRectangles)
-    LAIgrass = np.zeros(C3DStructure.nrRectangles)
-    for i in range(C3DStructure.nrRectangles):
-        [x, y, z] = rectangularMesh.C3DRM[i].centroid
-        # Assign grass
-        if (x >= 0.8):
-            LAIgrass[i] = grass.currentLAI
+    print("Nr. of layers:", C3DStructure.nrLayers)
 
     # Initialize memory
-    criteria3D.memoryAllocation(nrLayers, C3DStructure.nrRectangles)
+    criteria3D.memoryAllocation(C3DStructure.nrLayers, C3DStructure.nrRectangles)
     print("Nr. of cells: ", C3DStructure.nrCells)
 
     print("Set cell properties...")
@@ -74,17 +57,20 @@ def main():
                                 elevation, volume, rectangularMesh.C3DRM[i].area)
             if (layer == 0):
                 # surface
-                if rectangularMesh.C3DRM[i].isBoundary:
-                    criteria3D.setCellProperties(index, True, BOUNDARY_NONE)
+                if rectangularMesh.C3DRM[i].isBoundary and C3DParameters.isSurfaceRunoff:
+                    criteria3D.setCellProperties(index, True, BOUNDARY_RUNOFF)
                     criteria3D.setBoundaryProperties(index,
                                   rectangularMesh.C3DRM[i].boundarySide, rectangularMesh.C3DRM[i].boundarySlope)
                 else:
                     criteria3D.setCellProperties(index, True, BOUNDARY_NONE)
+                    
                 criteria3D.setMatricPotential(index, 0.0)
 
-            elif (layer == (nrLayers-1)):
+            elif (layer == (C3DStructure.nrLayers-1)):
                 # last layer
-                if C3DParameters.isFreeDrainage:
+                if C3DParameters.isWaterTable:
+                    criteria3D.setCellProperties(index, False, BOUNDARY_PRESCRIBEDTOTALPOTENTIAL)
+                elif C3DParameters.isFreeDrainage:
                     criteria3D.setCellProperties(index, False, BOUNDARY_FREEDRAINAGE)
                 else:
                     criteria3D.setCellProperties(index, False, BOUNDARY_NONE)
@@ -92,7 +78,7 @@ def main():
                 criteria3D.setMatricPotential(index, C3DParameters.initialWaterPotential)
 
             else:
-                if (C3DParameters.isFreeLateralDrainage) and (rectangularMesh.C3DRM[i].isBoundary):
+                if  rectangularMesh.C3DRM[i].isBoundary and C3DParameters.isFreeLateralDrainage:
                     criteria3D.setCellProperties(index, False, BOUNDARY_FREELATERALDRAINAGE)
                     criteria3D.setBoundaryProperties(index, rectangularMesh.C3DRM[i].boundarySide * soil.thickness[layer],
                                                      rectangularMesh.C3DRM[i].boundarySlope)
@@ -104,7 +90,7 @@ def main():
     print("Set links...")
     for i in range(C3DStructure.nrRectangles):
         # UP
-        for layer in range(1, nrLayers):
+        for layer in range(1, C3DStructure.nrLayers):
             exchangeArea = rectangularMesh.C3DRM[i].area
             index = C3DStructure.nrRectangles * layer + i
             linkIndex = index - C3DStructure.nrRectangles
@@ -113,7 +99,7 @@ def main():
         for neighbour in rectangularMesh.C3DRM[i].neighbours:
             if (neighbour != NOLINK):
                 linkSide = rectangularMesh.getAdjacentSide(i, neighbour)
-                for layer in range(nrLayers):
+                for layer in range(C3DStructure.nrLayers):
                     if (layer == 0):
                         #surface: boundary length [m]
                         exchangeArea = linkSide
@@ -124,15 +110,11 @@ def main():
                     linkIndex = C3DStructure.nrRectangles * layer + neighbour
                     criteria3D.SetCellLink(index, linkIndex, LATERAL, exchangeArea)
         # DOWN
-        for layer in range(nrLayers-1):
+        for layer in range(C3DStructure.nrLayers-1):
             exchangeArea = rectangularMesh.C3DRM[i].area
             index = C3DStructure.nrRectangles * layer + i
             linkIndex = index + C3DStructure.nrRectangles
             criteria3D.SetCellLink(index, linkIndex, DOWN, exchangeArea)
-
-    # LOAD INITIAL STATE - comment if you dont't have one
-    #print ("Load initial state...")
-    #loadState(dataPath + "state_0.csv")
 
     waterBalance.initializeBalance()
     print("Initial water storage [m^3]:", format(waterBalance.currentStep.waterStorage, ".3f"))
@@ -150,6 +132,8 @@ def main():
     criteria3D.setDripIrrigationPositions(irrigationsConfigurations)
 
     #arpaeData, waterData = importUtils.transformDates(arpaeData, waterData)
+    
+    crop.initializeCrop()
 
     # TIME LENGHT
     arpaeTimeLength = (arpaeData.iloc[0]["end"] - arpaeData.iloc[0]["start"])        # [s]
@@ -165,7 +149,7 @@ def main():
     visual3D.initialize(1280)
     visual3D.isPause = True
 
-    # export inizialization
+    # initialize export
     exportUtils.createExportFile()
 
     latitude = stationInfo.iloc[0]["Latitudine (Gradi Centesimali)"]
@@ -187,19 +171,13 @@ def main():
         normTransmissivity = computeNormTransmissivity(extendedArpaeData, currentDateTime, latitude, longitude)
         ET0 = computeHourlyET0(height, airTemperature, globalSWRadiation, airRelHumidity, windSpeed_10m, normTransmissivity) # mm m^-2
         print (currentDateTime, "ET0:", format(ET0, ".2f"))
-        if C3DParameters.computeTranspiration:
-            for i in range(C3DStructure.nrRectangles):
-                # initialize
-                for layer in range(nrLayers):
-                    C3DCells[i].sinkSource = 0   
-                maxTranspiration = crop.getMaxTranspiration(LAIgrass[i], grass.kcMax, ET0)
-                crop.setTranspiration(i, grass, rootDensityGrass, maxTranspiration, waterTimeLength) 
-        #if C3DParameters.computeEvaporation:
-            # TODO set evaporation 
+        
+        crop.setEvapotranspiration(ET0)
 
         for i in range(nrWaterEventsInArpaeTimeLength):
 
             criteria3D.cleanSurfaceSinkSource()
+            # todo restore evaporation
 
             waterIndex = arpaeIndex + (i * waterTimeLength)
             waterEvent = waterData.loc[waterIndex]

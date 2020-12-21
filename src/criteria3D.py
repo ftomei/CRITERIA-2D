@@ -13,15 +13,16 @@ if CYTHON:
     import solverCython as solver
 else:
     import solver as solver
+    
+irrigationIndeces = []
 
 
 def memoryAllocation(nrLayers, nrRectangles):
     C3DStructure.nrRectangles = nrRectangles
     C3DStructure.nrLayers = nrLayers
-    nrCells = nrLayers * nrRectangles
-    C3DStructure.nrCells = nrCells
-    solver.setCriteria3DArrays(nrCells, C3DStructure.nrMaxLinks)
-    for i in range(nrCells): 
+    C3DStructure.nrCells = nrLayers * nrRectangles
+    solver.setCriteria3DArrays(C3DStructure.nrCells, C3DStructure.nrMaxLinks)
+    for i in range(C3DStructure.nrCells): 
         C3DCells.append(Ccell())
 
 def setCellGeometry(i, x, y, z, volume, area):
@@ -38,6 +39,13 @@ def setCellProperties(i, isSurface, boundaryType):
 def setBoundaryProperties(i, area, slope):
     C3DCells[i].boundary.area = area
     C3DCells[i].boundary.slope = slope
+    
+def setDripIrrigationPositions(irrigationsConfigurations):
+    for _, position in irrigationsConfigurations.iterrows():
+        xOffset = int(C3DStructure.nrRectanglesInXAxis * position['x'])
+        yOffset = int(C3DStructure.nrRectanglesInYAxis * position['y'])
+        index = C3DStructure.nrRectanglesInXAxis * yOffset + xOffset
+        irrigationIndeces.append(index)
 
 def getCellDistance(i, j):
     v1 = [C3DCells[i].x, C3DCells[i].y, C3DCells[i].z]
@@ -81,8 +89,7 @@ def setMatricPotential (i, signPsi):
     C3DCells[i].H0 = C3DCells[i].H
     return OK
 
-  
-       
+
 def cleanSurfaceSinkSource():        
     for i in range(C3DStructure.nrRectangles):
         C3DCells[i].sinkSource = 0
@@ -98,17 +105,8 @@ def setRainfall(rain, duration):
         area = C3DCells[i].area                         #[m^2]
         C3DCells[i].sinkSource += rate * area           #[m^3 s^-1]
 
-
-irrigationIndeces = []
-def setDripIrrigationPositions(irrigationsConfigurations):
-    for _, position in irrigationsConfigurations.iterrows():
-        xOffset = int(C3DStructure.nrRectanglesInXAxis * position['x'])
-        yOffset = int(C3DStructure.nrRectanglesInYAxis * position['y'])
-        index = C3DStructure.nrRectanglesInXAxis * yOffset + xOffset
-        irrigationIndeces.append(index)
-
 #-----------------------------------------------------------
-# set drip
+# set drip irrigation
 # irrigation      [l]
 # duration        [s]            
 #-----------------------------------------------------------

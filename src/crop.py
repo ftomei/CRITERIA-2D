@@ -2,45 +2,77 @@
 from dataStructures import  *
 import math
 import soil
+import rectangularMesh
 import numpy as np
 
+MAX_EVAPORATION_DEPTH = 0.15                # [m]
 
-#default: kiwifruit
 class Ccrop:
-    laiMin = 1.0                        # [m2 m-2]
-    laiMax = 3.5                        # [m2 m-2]
-    rootDepthZero = 0.1                 # [m]
-    rootDepthMax = 0.9                  # [m]
-    rootDeformation = 1.                # [-]
-    kcMax = 1.1                         # [-]
-    fRAW = 0.55                         # [-]
+    laiMin = NODATA                         # [m2 m-2]
+    laiMax = NODATA                         # [m2 m-2]
+    rootDepthZero = NODATA                  # [m]
+    rootDepthMax = NODATA                   # [m]
+    rootDeformation = NODATA                # [-]
+    kcMax = NODATA                          # [-]
+    fRAW = NODATA                           # [-]
     currentLAI = NODATA              
     currentRootDepth = NODATA
     currentRootLenght = NODATA
-  
-  
-def setGrass():
-    grass = Ccrop()
-    grass.laiMin = 0.5                   # [m2 m-2]
-    grass.laiMax = 2.0                   # [m2 m-2]
-    grass.rootDepthZero = 0.02           # [m]
-    grass.rootDepthMax = 0.65            # [m]
-    grass.rootDeformation = 1.0          # [-]
-    grass.kcMax = 0.8                    # [-]
-    grass.fRAW = 0.65                    # [-]
-    return grass 
+    
+    def setMaxValues(self):
+        self.currentLAI = self.laiMax     
+        self.currentRootDepth = self.rootDepthMax
+        self.currentRootLenght = self.currentRootDepth - self.rootDepthZero
+        
+    def setKiwifruit(self):
+        self.laiMin = 1.0                        # [m2 m-2]
+        self.laiMax = 3.5                        # [m2 m-2]
+        self.rootDepthZero = 0.1                 # [m]
+        self.rootDepthMax = 1.0                  # [m]
+        self.rootDeformation = 1.0               # [-]
+        self.kcMax = 1.1                         # [-]
+        self.fRAW = 0.55                         # [-]
+        self.setMaxValues()
+
+    def setGrass(self):
+        self.laiMin = 0.5                       # [m2 m-2]
+        self.laiMax = 2.0                       # [m2 m-2]
+        self.rootDepthZero = 0.05               # [m]
+        self.rootDepthMax = 0.8                 # [m]
+        self.rootDeformation = 1.0              # [-]
+        self.kcMax = 0.8                        # [-]
+        self.fRAW = 0.65                        # [-]
+        self.setMaxValues()
 
 
-def setMaxValues(crop): 
-    crop.currentLAI = crop.laiMax     
-    crop.currentRootDepth = crop.rootDepthMax
-    crop.currentRootLenght = crop.currentRootDepth - crop.rootDepthZero   
+kiwi = Ccrop()
+grass = Ccrop()
 
+
+def initializeCrop():
+    global rootDensityGrass, rootDensityKiwi, LAI_kiwi, LAI_grass
+    # kiwifruit
+    kiwi.setKiwifruit()
+    kiwi.currentLAI = 2.0
+    rootDensityKiwi = computeRootDensity(kiwi, C3DStructure.nrLayers)
+    #grass
+    grass.setGrass()
+    rootDensityGrass = computeRootDensity(grass, C3DStructure.nrLayers)
+    # assign LAI
+    LAI_kiwi = np.zeros(C3DStructure.nrRectangles)
+    LAI_grass = np.zeros(C3DStructure.nrRectangles)
+    for i in range(C3DStructure.nrRectangles):
+        [x, y, z] = rectangularMesh.C3DRM[i].centroid
+        # assign kiwi to whole  area
+        LAI_kiwi[i] = kiwi.currentLAI
+        # assign grass to right area
+        if (x >= 0.8):
+            LAI_grass[i] = grass.currentLAI
+            
     
 def getCropSurfaceCover(currentLAI):
     k = 0.6      # [-] light extinction coefficient
-    
-    if (currentLAI <= 0):
+    if (currentLAI == NODATA) or (currentLAI <= 0):
         return 0.
     else:
         return 1. - math.exp(-k * currentLAI)
@@ -48,19 +80,18 @@ def getCropSurfaceCover(currentLAI):
 
 def getMaxEvaporation(currentLAI, ET0):
     maxEvapRatio = 0.66
-    
     cropSurfaceCover = getCropSurfaceCover(currentLAI)
     return ET0 * maxEvapRatio * (1. - cropSurfaceCover)
 
 
 def getMaxTranspiration(currentLAI, kcMax, ET0):
-    if (currentLAI <= 0):
+    if (currentLAI == NODATA) or (currentLAI <= 0):
         return 0.
-
-    cropSurfaceCover = getCropSurfaceCover(currentLAI)
-    kcMaxFactor = 1. + (kcMax - 1.) * cropSurfaceCover
-    kc = cropSurfaceCover * kcMaxFactor
-    return ET0 * kc 
+    else:
+        cropSurfaceCover = getCropSurfaceCover(currentLAI)
+        kcMaxFactor = 1. + (kcMax - 1.) * cropSurfaceCover
+        kc = cropSurfaceCover * kcMaxFactor
+        return ET0 * kc 
 
 
 def cardioidDistribution(deformationFactor, nrLayersWithRoot):
@@ -135,9 +166,10 @@ def computeRootDensity(crop, nrLayers):
     return rootDensity
 
 
-def setTranspiration(index, crop, rootDensity, maxTranspiration, timeStep):
+# assign hourly transpiration
+def setTranspiration(surfaceIndex, crop, rootDensity, maxTranspiration):
     if (maxTranspiration < EPSILON):
-        return 
+        return 0.0 
     
     FC = soil.getFieldCapacityWC()                  # [m3 m-3] water content at field capacity
     WP = soil.getWiltingPointWC()                   # [m3 m-3] water content at wilting point
@@ -150,13 +182,13 @@ def setTranspiration(index, crop, rootDensity, maxTranspiration, timeStep):
     nrLayers = len(rootDensity)
     isLayerStressed = np.zeros(nrLayers, dtype=bool)
     layerTranspiration = np.zeros(nrLayers, np.float64)
-    for i in range(nrLayers):
-        isLayerStressed[i] = False
-        layerTranspiration[i] = 0
+    for layer in range(nrLayers):
+        isLayerStressed[layer] = False
+        layerTranspiration[layer] = 0
     
     for layer in range(nrLayers):
         if (rootDensity[layer] > 0):
-            i = index + C3DStructure.nrRectangles * layer
+            i = surfaceIndex + C3DStructure.nrRectangles * layer
             theta = soil.getVolumetricWaterContent(i)
             # TODO water surplus
             
@@ -202,31 +234,32 @@ def setTranspiration(index, crop, rootDensity, maxTranspiration, timeStep):
     # Assign transpiration flux [m3 s-1]
     for layer in range(nrLayers):
         if (layerTranspiration[layer] > 0):
-            i = index + C3DStructure.nrRectangles * layer
-            rate = (layerTranspiration[layer] * 0.001) / timeStep       # [m s-1]
-            C3DCells[i].sinkSource = -rate * C3DCells[i].area           # [m3 s-1]
+            i = surfaceIndex + C3DStructure.nrRectangles * layer
+            rate = (layerTranspiration[layer] * 0.001) / 3600.0         # [m s-1]
+            if (C3DCells[i].sinkSource == NODATA):
+                C3DCells[i].sinkSource = -rate * C3DCells[i].area       # [m3 s-1]
+            else:
+                C3DCells[i].sinkSource -= rate * C3DCells[i].area       # [m3 s-1]
             
     return actualTranspiration
 
 
-
-'''
-def setEvaporation(index, maxEvaporation):
-{
-   # TODO extend to geometric soilLayers
-
+def setEvaporation(surfaceIndex, maxEvaporation):
     # surface evaporation
-    double surfaceEvaporation = MINVALUE(maxEvaporation, soilLayers[0].waterContent);
-    soilLayers[0].waterContent -= surfaceEvaporation;
+    surfaceWater = C3DCells[surfaceIndex].H - C3DCells[surfaceIndex].z
+    surfaceEvaporation = min(maxEvaporation, surfaceWater)
+    rate = (surfaceEvaporation * 0.001) / 3600.0                                # [m s-1]
+    C3DCells[surfaceIndex].sinkSource -= rate * C3DCells[surfaceIndex].area     # [m3 s-1]
 
-    double actualEvaporation = surfaceEvaporation;
-
-    double residualEvaporation = maxEvaporation - surfaceEvaporation;
-    if (residualEvaporation < EPSILON)
-        return actualEvaporation;
-
+    actualEvaporation = surfaceEvaporation
+    residualEvaporation = maxEvaporation - surfaceEvaporation
+    
+    if (residualEvaporation < EPSILON):
+        return actualEvaporation
+    
     # soil evaporation
-    unsigned int lastLayerEvap = unsigned(floor(MAX_EVAPORATION_DEPTH / soilLayers[1].thickness)) +1;
+    '''
+    lastLayerEvap = unsigned(floor(MAX_EVAPORATION_DEPTH / soilLayers[1].thickness)) +1
     double* coeffEvap = new double[lastLayerEvap];
     double layerDepth, coeffDepth;
 
@@ -272,10 +305,27 @@ def setEvaporation(index, maxEvaporation):
     }
 
     delete[] coeffEvap;
-
-    return actualEvaporation;
-}
-'''
+    '''
+    return actualEvaporation
 
 
+def setEvapotranspiration(ET0):
+    for i in range(C3DStructure.nrCells):
+        C3DCells[i].sinkSource = 0 
+        
+    if C3DParameters.computeTranspiration:
+        for i in range(C3DStructure.nrRectangles):
+            # kiwifruit
+            maxTranspKiwi = getMaxTranspiration(LAI_kiwi[i], kiwi.kcMax, ET0)
+            setTranspiration(i, kiwi, rootDensityKiwi, maxTranspKiwi) 
+            # grass
+            maxTranspGrass = getMaxTranspiration(LAI_grass[i], grass.kcMax, ET0)
+            setTranspiration(i, grass, rootDensityGrass, maxTranspGrass) 
+                
+    if C3DParameters.computeEvaporation:
+        for i in range(C3DStructure.nrRectangles):
+            LAIsum = LAI_grass[i] + LAI_kiwi[i]
+            maxEvaporation = getMaxEvaporation(LAIsum, ET0)
+            setEvaporation(i, maxEvaporation) 
+            
 
