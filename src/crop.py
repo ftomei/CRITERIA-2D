@@ -40,7 +40,7 @@ class Ccrop:
         self.rootDepthZero = 0.05               # [m]
         self.rootDepthMax = 0.8                 # [m]
         self.rootDeformation = 1.0              # [-]
-        self.kcMax = 0.8                        # [-]
+        self.kcMax = 1.0                        # [-]
         self.fRAW = 0.65                        # [-]
         self.setMaxValues()
 
@@ -57,6 +57,7 @@ def initializeCrop():
     rootDensityKiwi = computeRootDensity(kiwi, C3DStructure.nrLayers)
     #grass
     grass.setGrass()
+    grass.currentLAI = 1.0
     rootDensityGrass = computeRootDensity(grass, C3DStructure.nrLayers)
     # assign LAI
     LAI_kiwi = np.zeros(C3DStructure.nrRectangles)
