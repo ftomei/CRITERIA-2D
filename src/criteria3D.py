@@ -42,8 +42,14 @@ def setBoundaryProperties(i, area, slope):
     
 def setDripIrrigationPositions(irrigationsConfigurations):
     for _, position in irrigationsConfigurations.iterrows():
-        xOffset = int(C3DStructure.nrRectanglesInXAxis * position['x'])
-        yOffset = int(C3DStructure.nrRectanglesInYAxis * position['y'])
+        if position['x'] == 0.0:
+            xOffset = 0
+        else:
+            xOffset = int(C3DStructure.nrRectanglesInXAxis / (C3DStructure.gridWidth / position['x'])-1)
+        if position['y'] == 0.0:
+            yOffset = 0
+        else:
+            yOffset = int(C3DStructure.nrRectanglesInYAxis / (C3DStructure.gridHeight / position['y'])-1)
         index = C3DStructure.nrRectanglesInXAxis * yOffset + xOffset
         irrigationIndeces.append(index)
 
