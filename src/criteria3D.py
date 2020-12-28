@@ -2,8 +2,8 @@
 
 from math import fabs
 from dataStructures import *
-from waterBalance import sumSinkSource
 from rectangularMesh import distance3D
+import waterBalance
 import visual3D
 import soil
 import time
@@ -13,15 +13,16 @@ if CYTHON:
     import solverCython as solver
 else:
     import solver as solver
+    
+irrigationIndeces = []
 
 
 def memoryAllocation(nrLayers, nrRectangles):
     C3DStructure.nrRectangles = nrRectangles
     C3DStructure.nrLayers = nrLayers
-    nrCells = nrLayers * nrRectangles
-    C3DStructure.nrCells = nrCells
-    solver.setCriteria3DArrays(nrCells, C3DStructure.nrMaxLinks)
-    for i in range(nrCells): 
+    C3DStructure.nrCells = nrLayers * nrRectangles
+    solver.setCriteria3DArrays(C3DStructure.nrCells, C3DStructure.nrMaxLinks)
+    for i in range(C3DStructure.nrCells): 
         C3DCells.append(Ccell())
 
 def setCellGeometry(i, x, y, z, volume, area):
@@ -38,6 +39,13 @@ def setCellProperties(i, isSurface, boundaryType):
 def setBoundaryProperties(i, area, slope):
     C3DCells[i].boundary.area = area
     C3DCells[i].boundary.slope = slope
+    
+def setDripIrrigationPositions(irrigationsConfigurations):
+    for _, position in irrigationsConfigurations.iterrows():
+        xOffset = int(C3DStructure.nrRectanglesInXAxis * position['x'])
+        yOffset = int(C3DStructure.nrRectanglesInYAxis * position['y'])
+        index = C3DStructure.nrRectanglesInXAxis * yOffset + xOffset
+        irrigationIndeces.append(index)
 
 def getCellDistance(i, j):
     v1 = [C3DCells[i].x, C3DCells[i].y, C3DCells[i].z]
@@ -67,7 +75,7 @@ def SetCellLink(i, linkIndex, direction, interfaceArea):
                 C3DCells[i].lateralLink[j].distance = getCellDistance(i, linkIndex)
                 return(OK)
     else:
-        return(LINK_ERROR)
+        return LINK_ERROR
 
 def setMatricPotential (i, signPsi):
     if (C3DCells[i].isSurface):
@@ -79,9 +87,9 @@ def setMatricPotential (i, signPsi):
         C3DCells[i].Se = soil.getDegreeOfSaturation(i)
         C3DCells[i].k = soil.getHydraulicConductivity(i)
     C3DCells[i].H0 = C3DCells[i].H
-    return(OK)
-       
-       
+    return OK
+
+
 def cleanSurfaceSinkSource():        
     for i in range(C3DStructure.nrRectangles):
         C3DCells[i].sinkSource = 0
@@ -97,16 +105,8 @@ def setRainfall(rain, duration):
         area = C3DCells[i].area                         #[m^2]
         C3DCells[i].sinkSource += rate * area           #[m^3 s^-1]
 
-irrigationIndeces = []
-def setDripIrrigationPositions(irrigationsConfigurations):
-    for _, position in irrigationsConfigurations.iterrows():
-        xOffset = int(C3DStructure.nrRectanglesInXAxis * position['x'])
-        yOffset = int(C3DStructure.nrRectanglesInYAxis * position['y'])
-        index = C3DStructure.nrRectanglesInXAxis * yOffset + xOffset
-        irrigationIndeces.append(index)
-
 #-----------------------------------------------------------
-# set drip
+# set drip irrigation
 # irrigation      [l]
 # duration        [s]            
 #-----------------------------------------------------------
@@ -114,11 +114,7 @@ def setDripIrrigation(irrigation, duration):
     rate = irrigation / duration                         #[l s^-1]
     for index in irrigationIndeces:
         C3DCells[index].sinkSource += rate * 0.001       #[m^3 s^-1]        
-        
-        
-def restoreWater():
-    for i in range(C3DStructure.nrCells):
-        C3DCells[i].H = C3DCells[i].H0
+    
         
 # timeLength        [s]          
 def compute(timeLength):  
@@ -134,12 +130,13 @@ def compute(timeLength):
                 
             deltaT = min(C3DParameters.currentDeltaT, residualTime)
             print ("\ntime step [s]: ", deltaT)
-            print ("MBR threshold [-]: ", C3DParameters.MBRThreshold)
-            print ("sink/source [l]:", format(sumSinkSource(deltaT) * 1000.,".5f")) 
+            print ("sink/source [l]:", format(waterBalance.sumSinkSource(deltaT) * 1000.,".5f")) 
              
-            acceptedStep = solver.computeStep(deltaT)          
-            if not acceptedStep: 
-                restoreWater()
+            acceptedStep = solver.computeStep(deltaT)  
+            if not acceptedStep:
+                # restoreWater
+                for i in range(C3DStructure.nrCells):
+                    C3DCells[i].H = C3DCells[i].H0        
                 
         visual3D.redraw()  
         currentTime += deltaT

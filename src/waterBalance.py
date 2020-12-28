@@ -23,11 +23,18 @@ previousStep = C3DBalance()
 allSimulation = C3DBalance()
     
 def doubleTimeStep():
-    C3DParameters.currentDeltaT = min(C3DParameters.currentDeltaT * 2.0, 
+    global MBRMultiply
+    if (C3DParameters.currentDeltaT == C3DParameters.deltaT_min) and (MBRMultiply > 1.0):
+        decMBRThreshold()
+    else:
+        C3DParameters.currentDeltaT = min(C3DParameters.currentDeltaT * 2.0, 
                                       C3DParameters.deltaT_max)
     
 def halveTimeStep():
-    C3DParameters.currentDeltaT = max(C3DParameters.currentDeltaT * 0.5, 
+    if (C3DParameters.currentDeltaT == C3DParameters.deltaT_min):
+        incMBRThreshold()
+    else:
+        C3DParameters.currentDeltaT = max(C3DParameters.currentDeltaT * 0.5, 
                                       C3DParameters.deltaT_min)
     
 def incMBRThreshold():
@@ -103,7 +110,7 @@ def computeBalanceError(deltaT):
     currentStep.MBE = deltaStorage - currentStep.waterFlow
     
     sumFlow = sumWaterFlow(deltaT, True)
-    minimumFlow = C3DStructure.totalArea * EPSILON_METER * (deltaT / 3600.0)
+    minimumFlow = C3DStructure.totalArea * 0.001 * (deltaT / 3600.0)
     if (sumFlow < minimumFlow):
         currentStep.MBR = fabs(currentStep.MBE) / minimumFlow
     else:
@@ -112,43 +119,26 @@ def computeBalanceError(deltaT):
     print ("Mass Balance Ratio:", format(currentStep.MBR,".5f"))
     
 def waterBalance(deltaT, approximation):
-    global bestMBR, forceExit
-    if (approximation == 1): bestMBR = 100.0
+    global forceExit
     computeBalanceError(deltaT)
     isLastApprox = (approximation == C3DParameters.maxApproximationsNr)
     
     forceExit = False
-    # case 1: error < tolerance
-    if currentStep.MBR <= C3DParameters.MBRThreshold:
+    # case 1: step accepted
+    if currentStep.MBR < C3DParameters.MBRThreshold:
         updateBalance(deltaT)
-        if ((approximation < 3) and (maxCourant < 0.5) 
-        and (currentStep.MBR < (C3DParameters.MBRThreshold * 0.5))):
-                print("Good MBR!")
-                if (deltaT > (C3DParameters.deltaT_min * 2)):
-                    decMBRThreshold()
-                doubleTimeStep()
+        if approximation < 3 and maxCourant < 0.3 and currentStep.MBR < (C3DParameters.MBRThreshold * 0.5):
+            print("Good MBR!")
+            doubleTimeStep()
         return True
-    #case 2: error decreases
-    if (currentStep.MBR < bestMBR):
-        bestMBR = currentStep.MBR
-        if isLastApprox:
-            if (deltaT == C3DParameters.deltaT_min):
-                updateBalance(deltaT)
-                return True
-            else:
-                halveTimeStep()
-                forceExit = True
-                return False 
+    # case 2: continue with next approximation
+    if not isLastApprox:
         return False
-    # case 3: error increases
-    if (deltaT > C3DParameters.deltaT_min):
-        print("Solution is not convergent: decrease time step")
+    # case 3: decrease time step (or increase threshold)
+    else:
+        print("Decrease time step or increase threshold.")
         halveTimeStep()
         forceExit = True
-        return False
-    else:
-        print("Solution is not convergent: increase error tolerance")
-        incMBRThreshold()
-        return False
+        return False 
         
         

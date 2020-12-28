@@ -32,6 +32,8 @@ def computeStep(deltaT):
                 C3DCells[i].k = soil.getHydraulicConductivity(i)
                 dTheta_dH = soil.getdTheta_dH(i)
                 set_C(i, C3DCells[i].volume * dTheta_dH)
+        
+        # boundary
         boundaryConditions.updateBoundary(deltaT)
         
         print ("approximation nr:", approximation)
@@ -58,9 +60,7 @@ def computeStep(deltaT):
         and (deltaT > C3DParameters.deltaT_min)):
             print ("Courant too high:", waterBalance.maxCourant)
             print ("Decrease time step")
-            while (waterBalance.maxCourant > 1.0):
-                waterBalance.halveTimeStep()
-                waterBalance.maxCourant *= 0.5
+            waterBalance.halveTimeStep()
             return False
 
         if not solveMatrix(approximation):
@@ -81,6 +81,7 @@ def computeStep(deltaT):
         isValidStep = waterBalance.waterBalance(deltaT, approximation)
         if (waterBalance.forceExit): return False
         approximation += 1
+        
     return isValidStep
 
 
@@ -92,7 +93,7 @@ def  newMatrixElement(i, link, k, isLateral, deltaT, isFirstApprox):
     value = 0.0
     if C3DCells[i].isSurface:
         if C3DCells[j].isSurface:
-            if (C3DParameters.computeSurfaceFlux):
+            if (C3DParameters.computeSurfaceFlow):
                 value = runoff(i, link, deltaT, isFirstApprox)
             else:
                 value = 0.0

@@ -8,7 +8,7 @@ class C3DStructure:
     gridWidth = 1.0                 # [m] x axis
     gridHeight = 0.5                # [m] y axis
     gridOrigin = 0.0                # [m] z
-    gridStep = 0.1                 # [m]
+    gridStep = 0.1                  # [m]
     nrRectanglesInXAxis = int(gridWidth / gridStep)
     nrRectanglesInYAxis = int(gridHeight / gridStep)
     nrRectangles = nrRectanglesInXAxis * nrRectanglesInYAxis
@@ -41,8 +41,8 @@ class Ccell:
         self.area = NODATA                # [m^3] area (for surface cells)
         self.isSurface = False            # true if the cell is on surface
         self.Se = NODATA                  # [-] degree of saturation
-        self.H = NODATA                   # [m] total water potential
-        self.H0 = NODATA                  # [m] previous total water potential
+        self.H = NODATA                   # [m] current total water potential
+        self.H0 = NODATA                  # [m] total water potential 
         self.k = NODATA                   # [m s^-1] hydraulic conductivity
         self.sinkSource = NODATA          # [m^3 s^-1] water sink/source
         self.flow = NODATA                # [m^3 s^-1] sink/source + boundary
@@ -51,18 +51,32 @@ class Ccell:
         self.downLink = Clink()
         self.lateralLink = [Clink(), Clink(), Clink(), Clink()]
         
-# user choices
+# model parameters
 class C3DParameters:
+    # water retention and conductivity
+    initialWaterPotential = -2.0                # [m]
     waterRetentionCurve = IPPISCH_VG
     meanType = LOGARITHMIC
-    computeSurfaceFlux = False
-    initialWaterPotential = -3.0                # [m]
-    isFreeDrainage = True
-    minThickness = 0.1                         # [m]
-    maxThickness = 0.1                          # [m]
-    geometricFactor = 1.0
+    conductivityHVRatio = 5.0
+    # soil layers
+    minThickness = 0.01                         # [m]
+    maxThickness = 0.02                         # [m]
+    geometricFactor = 1.2
+    # sink-source
+    assignIrrigation = True
+    computeEvaporation = True
+    computeTranspiration = True
+    # surface flow
+    computeSurfaceFlow = True
     roughness = 0.24                            # [s m^0.33]
-    pond = 0.01                                 # [m]
+    pond = 0.002                                # [m]                   
+    # boundary
+    isSurfaceRunoff = True
+    isFreeLateralDrainage = True
+    isFreeDrainage = True
+    isWaterTable = True
+    waterTableDepth = -1.5                      # [m]
+    # numerical solution
     currentDeltaT = 16.0                        # [s]
     deltaT_min = 1.0                            # [s]
     deltaT_max = 600.0                          # [s]
@@ -70,7 +84,6 @@ class C3DParameters:
     maxApproximationsNr = 10
     residualTolerance = 1E-12
     MBRThreshold = 1E-2
-    conductivityHVRatio = 4.0
 
 #global
 C3DCells = []

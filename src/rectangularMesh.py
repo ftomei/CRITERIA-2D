@@ -35,7 +35,7 @@ class Crectangle:
 
         self.neighbours, self.boundarySides, self.boundarySlopes  = boundaryProperties(self.index, self.v, self.centroid)
         
-        if len(self.neighbours) < C3DStructure.nrVerticesPerRectangle:
+        if NOLINK in self.neighbours:
             self.isBoundary = True
             self.boundarySide = np.max(self.boundarySides)
             self.boundarySlope = np.max(self.boundarySlopes)
@@ -176,9 +176,7 @@ def getHeader(rectangleList):
         
     dx = header.xMax - header.xMin
     dy = header.yMax - header.yMin
-    header.dz = header.zMax - header.zMin
-    ratio = sqrt(dx*dy) / max(header.dz, 1)
-    header.magnify = max(1., min(10., ratio / 5.))
+    header.magnify = max(1, 1/sqrt(max(dx,dy)))
     return(header)
 
 def distance2D(v1, v2):

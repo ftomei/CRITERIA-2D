@@ -6,7 +6,7 @@ exportIndeces = []
 outputDirectory = os.path.join("data", "fondo_1", "output")
 outputFile = os.path.join(outputDirectory, "output.csv")
 #nrDetections = -1
-heightSlice = C3DStructure.gridHeight/2
+heightSlice = C3DStructure.gridHeight * 0.5
 oneTimestampPerRow = False
 
 def createExportFile():
@@ -28,7 +28,7 @@ def createExportFile():
 
 
 def takeSlice():
-    offset = C3DStructure.nrRectanglesInYAxis / (C3DStructure.gridHeight / heightSlice)
+    offset = C3DStructure.nrRectanglesInYAxis / (C3DStructure.gridHeight / heightSlice)-1
     i = offset * C3DStructure.nrRectanglesInXAxis
     for layer in range(C3DStructure.nrLayers):
         for j in range(C3DStructure.nrRectanglesInXAxis):

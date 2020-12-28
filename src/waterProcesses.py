@@ -21,10 +21,9 @@ def infiltration(surf, sub, link, deltaT, isFirstApprox):
         Havg = (C3DCells[surf].H + C3DCells[surf].H0) * 0.5
         Hs = Havg - C3DCells[surf].z
         if isFirstApprox:
-            rain =  (C3DCells[surf].sinkSource 
-                     / C3DCells[surf].area) * (deltaT / 2.0)
+            rain = (C3DCells[surf].sinkSource / C3DCells[surf].area) * (deltaT * 0.5)
             Hs += rain
-        if (Hs < 1E-12): return 0.0
+        if (Hs < EPSILON): return 0.0
         
         interfaceK = soil.meanK(C3DParameters.meanType, 
                                 C3DCells[sub].k, soil.C3DSoil.Ks)
@@ -44,14 +43,13 @@ def runoff(i, link, deltaT, isFirstApprox):
     Hmax = max((C3DCells[i].H + C3DCells[i].H0)/ 2.0, 
                (C3DCells[j].H + C3DCells[j].H0)/ 2.0)
     Hs = Hmax - (zmax + C3DParameters.pond) 
-
-    if isFirstApprox:
-        rain = (C3DCells[i].sinkSource / C3DCells[i].area) * (deltaT / 2.0)
-        Hs += rain
     if (Hs <= EPSILON_METER): return 0.
     
     dH = fabs(C3DCells[i].H - C3DCells[j].H)
     if (dH < EPSILON_METER): return 0.
+    
+    # pond
+    Hs = min(Hs, dH)
     
     # [m/s] Manning equation
     v = (pow(Hs, 2.0 / 3.0) * sqrt(dH/link.distance)) / C3DParameters.roughness

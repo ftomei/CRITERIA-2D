@@ -3,6 +3,7 @@
 import vpython as visual
 from dataStructures import *
 from color import *
+import fileUtilities
 import waterBalance
 import rectangularMesh
 import soil
@@ -17,9 +18,9 @@ subSurfaceRectangles = []
 visualizedLayer = 0
 visualizedSlice = C3DStructure.nrRectanglesInXAxis * int(C3DStructure.nrRectanglesInYAxis / 2)
 nrColorLevels = 10
-degreeMaximum = 1
+degreeMaximum = 1.0
 degreeMinimum = 0.5
-waterLevelMaximum = 0.1    # [m]
+waterLevelMaximum = max(0.005, C3DParameters.pond)
 isPause = False
   
 
@@ -35,13 +36,19 @@ def initialize(totalWidth):
     interfaceWidth = int(totalWidth * 0.2)
     dx = int((totalWidth-interfaceWidth) / 2.0)
     dy = int(dx * 0.8)
-    h = int(dy / 30)
+    h  = int(dy / 30)
     
     #CENTER
     cX = (rectangularMesh.header.xMin + rectangularMesh.header.xMax) * 0.5
     cY = (rectangularMesh.header.yMin + rectangularMesh.header.yMax) * 0.5
     cZ = rectangularMesh.header.zMin * rectangularMesh.header.magnify
-    Zlabel = (rectangularMesh.header.zMax + rectangularMesh.header.dz*0.75 + 0.2) * rectangularMesh.header.magnify
+    #RANGE
+    rx = rectangularMesh.header.xMax - rectangularMesh.header.xMin 
+    ry = rectangularMesh.header.yMax - rectangularMesh.header.yMin
+    rangeXY = max(rx, ry) * rectangularMesh.header.magnify
+    lastLayer = C3DStructure.nrLayers-1
+    rz = soil.depth[lastLayer] + soil.thickness[lastLayer]*0.5
+    rangeZ = rz * rectangularMesh.header.magnify
 
     #INTERFACE CANVAS
     interface = visual.canvas(width = interfaceWidth, height = dy, align="left")
@@ -69,12 +76,12 @@ def initialize(totalWidth):
     #SURFACE CANVAS
     soilCanvas = visual.canvas(width = dx, height = dy, align="left")
     soilCanvas.background = visual.color.white
-    soilCanvas.center = visual.vector(cX, cY, cZ+0.2)
+    soilCanvas.center = visual.vector(cX, cY, cZ+(rangeXY*0.2))
     soilCanvas.ambient = visual.vector(0.33, 0.33, 0.33)
     soilCanvas.up = visual.vector(0,0,1)
     soilCanvas.forward = visual.vector(0, 0.01,-1.0)
-    soilCanvas.range = (rectangularMesh.header.xMax - rectangularMesh.header.xMin) * 0.55
-    layerLabel = visual.label(canvas = soilCanvas, height = h, pos=visual.vector(cX, cY, Zlabel))
+    soilCanvas.range = rangeXY
+    layerLabel = visual.label(canvas = soilCanvas, height = h, pos=visual.vector(cX, cY+rangeXY*0.8, cZ))
     
     drawColorScale()
     drawSubSurface(True)
@@ -82,17 +89,18 @@ def initialize(totalWidth):
     #SLICE CANVAS
     sliceCanvas = visual.canvas(width = dx, height = dy, align="left")
     sliceCanvas.background = visual.color.white
-    sliceCanvas.center = visual.vector(cX, cY, cZ-0.2)
+    sliceCanvas.center = visual.vector(cX, cY, cZ-(rangeZ*0.5))
     sliceCanvas.ambient = visual.vector(0.33, 0.33, 0.33)
-    sliceCanvas.up = visual.vector(0,0,1)
-    sliceCanvas.forward = visual.vector(0, 1.0, 0)
-    sliceCanvas.range = (rectangularMesh.header.xMax - rectangularMesh.header.xMin) * 0.55
+    sliceCanvas.up = visual.vector(0, 0, 1)
+    sliceCanvas.forward = visual.vector(0, 1, 0)
+    sliceCanvas.range = rangeZ
+    sliceLabel = visual.label(canvas = sliceCanvas, height = h, pos=visual.vector(cX, cY, cZ+(rangeZ*0.2)))
     
     sliceCanvas.caption = " *** COMMANDS ***\n\n 'r': run simulation \n 'p': pause "
-    sliceCanvas.caption += "\n 'w': move up (soil layer) \n 's': move down (soil layer) "
-    sliceCanvas.caption += "\n 'a': move left (soil slice) \n 'd': move right (soil slice) "
+    sliceCanvas.caption += "\n '^': move up (soil layer) \n 'v': move down (soil layer) "
+    sliceCanvas.caption += "\n '<': move left (soil slice) \n '>': move right (soil slice) "
+    sliceCanvas.caption += "\n 's': save state \n 'l': load state "
     sliceCanvas.caption += "\n 'c': colorscale range"
-    sliceLabel = visual.label(canvas = sliceCanvas, height = h, pos=visual.vector(cX, cY, Zlabel))
     
     drawSlice(True)
     updateInterface()
@@ -129,10 +137,10 @@ def updateColorScale():
 def updateLayer(s):
     global visualizedLayer
     
-    if s == 's':
+    if s == 'down':
         if (visualizedLayer < C3DStructure.nrLayers-1):
             visualizedLayer += 1
-    elif s == 'w':
+    elif s == 'up':
         if (visualizedLayer > 0):
             visualizedLayer -= 1
              
@@ -142,10 +150,10 @@ def updateLayer(s):
 def updateSlice(s):
     global visualizedSlice
     
-    if s == 'a':
+    if s == 'left':
         if (visualizedSlice < (C3DStructure.nrRectangles - C3DStructure.nrRectanglesInXAxis)):
             visualizedSlice += C3DStructure.nrRectanglesInXAxis
-    elif s == 'd':
+    elif s == 'right':
         if (visualizedSlice > 0):
             visualizedSlice -= C3DStructure.nrRectanglesInXAxis
              
@@ -161,10 +169,20 @@ def keyInput(evt):
     elif s == 'p':
         isPause = True
         print ("Pause...")
-    elif s == 's' or s == 'w':
+    elif s == 'up' or s == 'down':
         updateLayer(s)
-    elif s == 'a' or s == 'd':
+    elif s == 'left' or s == 'right':
         updateSlice(s)
+    elif s == 's':
+        isPause = True
+        print ("Save State...")
+        fileUtilities.saveState()
+    elif s == 'l':
+        isPause = True
+        print ("Load State...")
+        if fileUtilities.loadState(""):
+            waterBalance.initializeBalance()
+            redraw()
     elif s == "c":
         if (isPause):
             updateColorScale()
@@ -242,9 +260,9 @@ def drawSubSurface(isFirst):
     
     
 def updateInterface():       
-    timeLabel.text = "Time: " + str(int(waterBalance.totalTime)) + " [s]"
-    precLabel.text = "Precipitation: " + str(waterBalance.currentPrec) + " [mm/hour]"
-    irrLabel.text = "Irrigation: " + str(waterBalance.currentIrr) + " [l/hour]"
+    timeLabel.text = "Time: " + format(waterBalance.totalTime / 3600.0, ".3f") + " [h]"
+    precLabel.text = "Rainfall: " + format(waterBalance.currentPrec,".1f") + " [mm/hour]"
+    irrLabel.text = "Irrigation: " + format(waterBalance.currentIrr,".3f") + " [l/hour]"
     storage = waterBalance.currentStep.waterStorage
     flow = waterBalance.currentStep.waterFlow
     timeStep = C3DParameters.currentDeltaT

@@ -76,7 +76,7 @@ def setLayers(totalDepth, minThickness, maxThickness, factor):
             else:
                 thickness[i] = min(maxThickness, thickness[i-1] * factor)
         z[i] = top + thickness[i] * 0.5
-    return(nrLayers, z, thickness)
+    return nrLayers, z, thickness
 
 def getVolumetricWaterContent(i):
     if C3DCells[i].isSurface: return NODATA
@@ -198,4 +198,17 @@ def meanK(meanType, k1, k2):
     elif (meanType == GEOMETRIC): 
         k = sqrt(k1 * k2)
     return k
+
+# [m3 m-3] water content at field capacity
+def getFieldCapacityWC():
+    curve = C3DParameters.waterRetentionCurve
+    FC = -2.0        # [m]
+    return thetaFromPsi(curve, FC)
+
+# [m3 m-3] water content at wilting point
+def getWiltingPointWC():
+    curve = C3DParameters.waterRetentionCurve
+    WP = -160.0       # [m]
+    return thetaFromPsi(curve, WP)
+
 
