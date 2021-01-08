@@ -77,14 +77,14 @@ def getSEColor(degreeSaturation, minimum, maximum):
     return(colorRangeSE[index])
 
 def getMatricPotentialColor(signPsi):
-    signPsi *= 9.81                     #[hPa]
+    signPsi *= 9.81                     #[kPa]
     if (signPsi > -30):
         return (0, 0, 1)
     if (signPsi > -100):
         return (0, 1, 1)
     if (signPsi > -300):
         return (1, 0.75, 0)
-    if (signPsi > -1000):
+    if (signPsi > -1500):
         return (1, 0.25, 0)
     else:
         return (1, 0 ,0)

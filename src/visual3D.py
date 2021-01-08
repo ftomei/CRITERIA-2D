@@ -114,19 +114,19 @@ def drawColorScale():
         i = nrColorLevels
         c = getMatricPotentialColor(-3)
         colorScale[i].background = visual.vector(c[0], c[1], c[2])
-        colorScale[i].text = "-3 m"
+        colorScale[i].text = "-30kPa"
         c = getMatricPotentialColor(-10)
         colorScale[i-1].background = visual.vector(c[0], c[1], c[2])
-        colorScale[i-1].text = "-10  "
+        colorScale[i-1].text = "-100   "
         c = getMatricPotentialColor(-30)
         colorScale[i-2].background = visual.vector(c[0], c[1], c[2])
-        colorScale[i-2].text = "-30  "
+        colorScale[i-2].text = "-300   "
         c = getMatricPotentialColor(-100)
         colorScale[i-3].background = visual.vector(c[0], c[1], c[2])
-        colorScale[i-3].text = "-100"
+        colorScale[i-3].text = "-1500 "
         c = getMatricPotentialColor(-300)
         colorScale[i-4].background = visual.vector(c[0], c[1], c[2])
-        colorScale[i-4].text = "-300"
+        colorScale[i-4].text = "<-1500"
         for j in range (i-4):
             colorScale[j].visible = False
     else:  
