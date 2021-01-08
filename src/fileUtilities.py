@@ -37,6 +37,7 @@ def saveState():
         for i in range(C3DStructure.nrRectangles):
             for layer in range(C3DStructure.nrLayers):
                 index = i + C3DStructure.nrRectangles * layer
+                # matric potential [m]
                 h = C3DCells[index].H - C3DCells[index].z
                 if fabs(h) < 1E-12: h = 0.0
                 f.write(str(h))

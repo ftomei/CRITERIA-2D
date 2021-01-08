@@ -50,12 +50,12 @@ grass = Ccrop()
 
 
 def initializeCrop():
-    global rootDensityGrass, rootDensityKiwi, LAI_kiwi, LAI_grass
+    global rootDensityGrass, rootDensityKiwi, LAI_kiwi, LAI_grass, surfaceEvaporation
     # kiwifruit
     kiwi.setKiwifruit()
     kiwi.currentLAI = 2.0
     rootDensityKiwi = computeRootDensity(kiwi, C3DStructure.nrLayers)
-    #grass
+    # grass
     grass.setGrass()
     grass.currentLAI = 1.0
     rootDensityGrass = computeRootDensity(grass, C3DStructure.nrLayers)
@@ -69,6 +69,8 @@ def initializeCrop():
         # assign grass to right area
         if (x >= 0.8):
             LAI_grass[i] = grass.currentLAI
+    # initialize surface evaporation
+    surfaceEvaporation = np.zeros(C3DStructure.nrRectangles)
             
     
 def getCropSurfaceCover(currentLAI):
@@ -311,8 +313,13 @@ def setEvaporation(surfaceIndex, maxEvaporation):
 
 
 def setEvapotranspiration(ET0):
+    global surfaceEvaporation
+    
+    # clean sinkSource and surface evaporation
     for i in range(C3DStructure.nrCells):
         C3DCells[i].sinkSource = 0 
+    for i in range(C3DStructure.nrRectangles):
+        surfaceEvaporation[i] = 0
         
     if C3DParameters.computeTranspiration:
         for i in range(C3DStructure.nrRectangles):

@@ -6,7 +6,7 @@ class C3DStructure:
     nrDimensions = 3
     nrVerticesPerRectangle = 4
     gridWidth = 1.0                 # [m] x axis
-    gridHeight = 1.0                # [m] y axis
+    gridHeight = 0.1                # [m] y axis
     gridOrigin = 0.0                # [m] z
     gridStep = 0.1                  # [m]
     nrRectanglesInXAxis = int(gridWidth / gridStep)
@@ -63,7 +63,7 @@ class C3DParameters:
     maxThickness = 0.02                         # [m]
     geometricFactor = 1.2
     # sink-source
-    assignIrrigation = True
+    assignIrrigation = False
     computeEvaporation = True
     computeTranspiration = True
     # surface flow
@@ -75,7 +75,7 @@ class C3DParameters:
     isFreeLateralDrainage = True
     isFreeDrainage = True
     isWaterTable = True
-    waterTableDepth = -1.5                      # [m]
+    waterTableDepth = -2.0                      # [m]
     # numerical solution
     currentDeltaT = 16.0                        # [s]
     deltaT_min = 1.0                            # [s]

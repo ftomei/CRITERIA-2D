@@ -7,6 +7,8 @@ import waterBalance
 import visual3D
 import soil
 import time
+import crop
+
 
 CYTHON = True
 if CYTHON:
@@ -96,9 +98,9 @@ def setMatricPotential (i, signPsi):
     return OK
 
 
-def cleanSurfaceSinkSource():        
+def resetSurfaceSinkSource():        
     for i in range(C3DStructure.nrRectangles):
-        C3DCells[i].sinkSource = 0
+        C3DCells[i].sinkSource = crop.surfaceEvaporation[i]
                 
 #-----------------------------------------------------------
 # set uniform rainfall rate

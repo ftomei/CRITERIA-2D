@@ -110,7 +110,7 @@ def computeBalanceError(deltaT):
     currentStep.MBE = deltaStorage - currentStep.waterFlow
     
     sumFlow = sumWaterFlow(deltaT, True)
-    minimumFlow = C3DStructure.totalArea * 0.001 * (deltaT / 3600.0)
+    minimumFlow = C3DStructure.totalArea * 0.0001 * (deltaT / 3600.0)
     if (sumFlow < minimumFlow):
         currentStep.MBR = fabs(currentStep.MBE) / minimumFlow
     else:
