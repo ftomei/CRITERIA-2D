@@ -50,12 +50,12 @@ grass = Ccrop()
 
 
 def initializeCrop():
-    global rootDensityGrass, rootDensityKiwi, LAI_kiwi, LAI_grass
+    global rootDensityGrass, rootDensityKiwi, LAI_kiwi, LAI_grass, surfaceEvaporation
     # kiwifruit
     kiwi.setKiwifruit()
-    kiwi.currentLAI = 2.0
+    kiwi.currentLAI = 3.0
     rootDensityKiwi = computeRootDensity(kiwi, C3DStructure.nrLayers)
-    #grass
+    # grass
     grass.setGrass()
     grass.currentLAI = 1.0
     rootDensityGrass = computeRootDensity(grass, C3DStructure.nrLayers)
@@ -69,6 +69,8 @@ def initializeCrop():
         # assign grass to right area
         if (x >= 0.8):
             LAI_grass[i] = grass.currentLAI
+    # initialize surface evaporation
+    surfaceEvaporation = np.zeros(C3DStructure.nrRectangles)
             
     
 def getCropSurfaceCover(currentLAI):
@@ -259,60 +261,68 @@ def setEvaporation(surfaceIndex, maxEvaporation):
         return actualEvaporation
     
     # soil evaporation
-    '''
-    lastLayerEvap = unsigned(floor(MAX_EVAPORATION_DEPTH / soilLayers[1].thickness)) +1
-    double* coeffEvap = new double[lastLayerEvap];
-    double layerDepth, coeffDepth;
+    FC = soil.getFieldCapacityWC()                 # [m3 m-3] water content at field capacity
+    HH = soil.getHygroscopicWC()                   # [m3 m-3] water content at Hygroscopic moisture
+    half_FC = HH + (FC - HH) * 0.5
+    index = 0
+    while (index < len(soil.depth)) and (soil.depth[index] <= MAX_EVAPORATION_DEPTH):
+        index += 1
+        
+    nrEvapLayers = index
+    lastlayer = nrEvapLayers-1
+    coeffEvap = np.zeros(nrEvapLayers, np.float64)
+    layerEvaporation = np.zeros(nrEvapLayers, np.float64)
+    
+    sumCoeff = 0
+    # coeffEvap: 1 at first layer, ~0.1 at MAX_EVAPORATION_DEPTH
+    for i in range (1, nrEvapLayers):
+        coeffDepth = max((soil.depth[i] - soil.depth[1]) / (MAX_EVAPORATION_DEPTH - soil.depth[1]), 0)
+        coeffEvap[i] = math.exp(-coeffDepth * math.e)
+        sumCoeff += (coeffEvap[i] * soil.thickness[i])
 
-    double sumCoeff = 0;
-    double minDepth = soilLayers[1].depth + soilLayers[1].thickness / 2;
-    for (unsigned int i=1; i <= lastLayerEvap; i++)
-    {
-        layerDepth = soilLayers[i].depth + soilLayers[i].thickness / 2.0;
-
-        coeffDepth = MAXVALUE((layerDepth - minDepth) / (MAX_EVAPORATION_DEPTH - minDepth), 0);
-        # coeffEvap: 1 at depthMin, ~0.1 at MAX_EVAPORATION_DEPTH
-        coeffEvap[i-1] = exp(-2 * coeffDepth);
-
-        coeffEvap[i-1] = MINVALUE(1.0, exp((-layerDepth * 2.0) / MAX_EVAPORATION_DEPTH));
-        sumCoeff += coeffEvap[i-1];
-    }
-
-    bool isWaterSupply = true;
-    double sumEvap, evapLayerThreshold, evapLayer;
-    while ((residualEvaporation > EPSILON) && (isWaterSupply == true))
-    {
-        isWaterSupply = false;
+    isWaterSupply = True
+    while (residualEvaporation > EPSILON) and (isWaterSupply == True):
+        isWaterSupply = False
         sumEvap = 0.0;
+        
+        for layer in range (1, nrEvapLayers):
+            index = surfaceIndex + C3DStructure.nrRectangles * layer
+            theta = soil.getVolumetricWaterContent(index)                       # [m3 m-3]
+            evapThreshold = half_FC - coeffEvap[layer] * (half_FC - HH)         # [m3 m-3]
+            evaporation = residualEvaporation * ((coeffEvap[layer] 
+                                       * soil.thickness[layer]) / sumCoeff)     # [mm]
 
-        for (unsigned int i=1; i<=lastLayerEvap; i++)
-        {
-            evapLayerThreshold = soilLayers[i].FC - coeffEvap[i-1] * (soilLayers[i].FC - soilLayers[i].HH);
-            evapLayer = (coeffEvap[i-1] / sumCoeff) * residualEvaporation;
+            if theta < evapThreshold:
+                evaporation = 0.0
+            else:
+                availableWC = (theta - evapThreshold) * soil.thickness[layer] * 1000.    # [mm]
+                if availableWC <= evaporation:
+                    evaporation = availableWC
+                else:
+                    isWaterSupply = True
 
-            if (soilLayers[i].waterContent > (evapLayerThreshold + evapLayer))
-                isWaterSupply = true;
-            else if (soilLayers[i].waterContent > evapLayerThreshold)
-                evapLayer = soilLayers[i].waterContent - evapLayerThreshold;
-            else
-                evapLayer = 0.0;
+            sumEvap += evaporation
+            
+            rate = (evaporation * 0.001) / 3600.                                # [m s-1]
+            if (C3DCells[index].sinkSource == NODATA):
+                C3DCells[index].sinkSource = -rate * C3DCells[index].area       # [m3 s-1]
+            else:
+                C3DCells[index].sinkSource -= rate * C3DCells[index].area       # [m3 s-1]
 
-            soilLayers[i].waterContent -= evapLayer;
-            sumEvap += evapLayer;
-        }
+        residualEvaporation -= sumEvap
+        actualEvaporation  += sumEvap
 
-        residualEvaporation -= sumEvap;
-        actualEvaporation  += sumEvap;
-    }
-
-    delete[] coeffEvap;
-    '''
     return actualEvaporation
 
 
 def setEvapotranspiration(ET0):
+    global surfaceEvaporation
+    
+    # clean sinkSource and surface evaporation
     for i in range(C3DStructure.nrCells):
         C3DCells[i].sinkSource = 0 
+    for i in range(C3DStructure.nrRectangles):
+        surfaceEvaporation[i] = 0
         
     if C3DParameters.computeTranspiration:
         for i in range(C3DStructure.nrRectangles):

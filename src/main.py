@@ -119,32 +119,32 @@ def main():
     waterBalance.initializeBalance()
     print("Initial water storage [m^3]:", format(waterBalance.currentStep.waterStorage, ".3f"))
 
-    print("Read arpae data...")
-    arpaeFolder = "arpae"
-    arpaePath = os.path.join(dataPath, arpaeFolder)
-    stationInfo, arpaeData = importUtils.readArpaeData(arpaePath)
+    print("Read weather data...")
+    weatherDataFolder = "arpae"
+    weatherDataPath = os.path.join(dataPath, weatherDataFolder)
+    stationInfo, weatherData = importUtils.readArpaeData(weatherDataPath)
     height = stationInfo.iloc[0]["Altezza (Metri sul livello del mare)"]
 
     print("Read irrigations data...")
     waterFolder = "water"
     waterPath = os.path.join(dataPath, waterFolder)
-    irrigationsConfigurations, waterData = importUtils.readWaterData(waterPath, arpaeData.iloc[0]["start"], arpaeData.iloc[-1]["start"])
+    irrigationsConfigurations, waterData = importUtils.readWaterData(waterPath, weatherData.iloc[0]["start"], weatherData.iloc[-1]["start"])
     criteria3D.setDripIrrigationPositions(irrigationsConfigurations)
 
-    #arpaeData, waterData = importUtils.transformDates(arpaeData, waterData)
+    #weatherData, waterData = importUtils.transformDates(weatherData, waterData)
     
     crop.initializeCrop()
 
     # TIME LENGHT
-    arpaeTimeLength = (arpaeData.iloc[0]["end"] - arpaeData.iloc[0]["start"])        # [s]
-    waterTimeLength = (waterData.iloc[0]["end"] - waterData.iloc[0]["start"])        # [s]
-    print("Arpae relevations time lenght [s]:", arpaeTimeLength)
-    print("Water relevations time lenght [s]:", arpaeTimeLength)
-    if (arpaeTimeLength % waterTimeLength) != 0:
-        raise Exception("Water time lenght is not a divider of Arpae time lenght")
+    weatherTimeLength = (weatherData.iloc[0]["end"] - weatherData.iloc[0]["start"])       # [s]
+    waterTimeLength = (waterData.iloc[0]["end"] - waterData.iloc[0]["start"])           # [s]
+    print("Weather relevations time lenght [s]:", weatherTimeLength)
+    print("Water relevations time lenght [s]:", waterTimeLength)
+    if (weatherTimeLength % waterTimeLength) != 0:
+        raise Exception("Water time lenght is not a divider of weather data time lenght")
     else:
-        nrWaterEventsInArpaeTimeLength = int(arpaeTimeLength / waterTimeLength)
-    print("Total simulation time [s]:", len(arpaeData) * arpaeTimeLength)
+        nrWaterEventsInWeatherTimeLength = int(weatherTimeLength / waterTimeLength)
+    print("Total simulation time [hours]:", len(weatherData) * weatherTimeLength / 3600)
 
     visual3D.initialize(1280)
     visual3D.isPause = True
@@ -156,30 +156,29 @@ def main():
     longitude = stationInfo.iloc[0]["Longitudine (Gradi Centesimali)"]
 
     # main cycle
-    extendedArpaeData, extendedWaterData = importUtils.setDataIndeces(arpaeData, waterData)
-    arpaeData, waterData = extendedArpaeData.iloc[12:-12], extendedWaterData.iloc[12:-12]
+    extendedWeatherData, extendedWaterData = importUtils.setDataIndeces(weatherData, waterData)
+    weatherData, waterData = extendedWeatherData.iloc[12:-12], extendedWaterData.iloc[12:-12]
     dailyET0 = 0
-    for arpaeIndex, arpaeRelevation in arpaeData.iterrows():
+    for weatherIndex, obsWeather in weatherData.iterrows():
 
-        airTemperature = arpaeRelevation["temperature"]
-        globalSWRadiation = arpaeRelevation["radiations"]
-        airRelHumidity = arpaeRelevation["humidity"]
-        windSpeed_10m = arpaeRelevation["wind"]
+        airTemperature = obsWeather["temperature"]
+        globalSWRadiation = obsWeather["radiations"]
+        airRelHumidity = obsWeather["humidity"]
+        windSpeed_10m = obsWeather["wind"]
 
         # evapotranspiration
-        currentDateTime = pd.to_datetime(arpaeRelevation["end"], unit='s')
-        normTransmissivity = computeNormTransmissivity(extendedArpaeData, currentDateTime, latitude, longitude)
+        currentDateTime = pd.to_datetime(obsWeather["end"], unit='s')
+        normTransmissivity = computeNormTransmissivity(extendedWeatherData, currentDateTime, latitude, longitude)
         ET0 = computeHourlyET0(height, airTemperature, globalSWRadiation, airRelHumidity, windSpeed_10m, normTransmissivity) # mm m^-2
         print (currentDateTime, "ET0:", format(ET0, ".2f"))
         
         crop.setEvapotranspiration(ET0)
 
-        for i in range(nrWaterEventsInArpaeTimeLength):
+        for i in range(nrWaterEventsInWeatherTimeLength):
 
-            criteria3D.cleanSurfaceSinkSource()
-            # todo restore evaporation
+            criteria3D.resetSurfaceSinkSource()
 
-            waterIndex = arpaeIndex + (i * waterTimeLength)
+            waterIndex = weatherIndex + (i * waterTimeLength)
             waterEvent = waterData.loc[waterIndex]
 
             waterBalance.currentPrec = waterEvent["precipitations"] / waterTimeLength * 3600   #[mm m-2 hour-1]

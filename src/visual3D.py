@@ -21,6 +21,7 @@ nrColorLevels = 10
 degreeMaximum = 1.0
 degreeMinimum = 0.5
 waterLevelMaximum = max(0.005, C3DParameters.pond)
+isWaterPotential = False
 isPause = False
   
 
@@ -101,19 +102,42 @@ def initialize(totalWidth):
     sliceCanvas.caption += "\n '<': move left (soil slice) \n '>': move right (soil slice) "
     sliceCanvas.caption += "\n 's': save state \n 'l': load state "
     sliceCanvas.caption += "\n 'c': colorscale range"
+    sliceCanvas.caption += "\n 'w': switch water content/potential"
     
     drawSlice(True)
     updateInterface()
     interface.bind('keydown', keyInput)
 
 
-def drawColorScale():   
-    step = (degreeMaximum - degreeMinimum) / nrColorLevels
-    for i in range (nrColorLevels+1):
-        degree = degreeMinimum + step * i
-        c = getSEColor(degree, degreeMinimum, degreeMaximum)
+def drawColorScale():
+    if (isWaterPotential):
+        i = nrColorLevels
+        c = getMatricPotentialColor(-3)
         colorScale[i].background = visual.vector(c[0], c[1], c[2])
-        colorScale[i].text = format(degree,".2f")
+        colorScale[i].text = "-30kPa"
+        c = getMatricPotentialColor(-10)
+        colorScale[i-1].background = visual.vector(c[0], c[1], c[2])
+        colorScale[i-1].text = "-100   "
+        c = getMatricPotentialColor(-30)
+        colorScale[i-2].background = visual.vector(c[0], c[1], c[2])
+        colorScale[i-2].text = "-300   "
+        c = getMatricPotentialColor(-100)
+        colorScale[i-3].background = visual.vector(c[0], c[1], c[2])
+        colorScale[i-3].text = "-1500 "
+        c = getMatricPotentialColor(-300)
+        colorScale[i-4].background = visual.vector(c[0], c[1], c[2])
+        colorScale[i-4].text = "<-1500"
+        for j in range (i-4):
+            colorScale[j].visible = False
+    else:  
+        for i in range (nrColorLevels):
+            colorScale[i].visible = True 
+        step = (degreeMaximum - degreeMinimum) / nrColorLevels
+        for i in range (nrColorLevels+1):
+            degree = degreeMinimum + step * i
+            c = getSEColor(degree, degreeMinimum, degreeMaximum)
+            colorScale[i].background = visual.vector(c[0], c[1], c[2])
+            colorScale[i].text = format(degree,".2f")
 
 
 def updateColorScale():
@@ -162,7 +186,7 @@ def updateSlice(s):
           
                 
 def keyInput(evt):
-    global isPause
+    global isPause, isWaterPotential
     s = evt.key
     if s == 'r':
         isPause = False
@@ -186,6 +210,10 @@ def keyInput(evt):
     elif s == "c":
         if (isPause):
             updateColorScale()
+    elif s == "w":
+        isWaterPotential = not isWaterPotential
+        drawColorScale()
+        redraw()
 
 
 def getNewRectangle(myColor, myCanvas, v):
@@ -201,13 +229,20 @@ def drawSlice(isFirst):
     global sliceRectangles
     
     posY = (visualizedSlice / C3DStructure.nrRectanglesInXAxis) * C3DStructure.gridStep + C3DStructure.gridStep*0.5
-    sliceLabel.text = "Degree of saturation, slice at " + format(posY*100,".1f")+"cm"
+    if (isWaterPotential):
+        var = "Water potential"
+    else:
+        var = "Degree of saturation"
+    sliceLabel.text =  var + " - slice at " + format(posY*100,".1f")+"cm"
     
     for z in range(C3DStructure.nrLayers):
         for x in range(C3DStructure.nrRectanglesInXAxis):
             index = visualizedSlice + x + (z * C3DStructure.nrRectangles)
             i = z * C3DStructure.nrRectanglesInXAxis + x
-            c = getSEColor(C3DCells[index].Se, degreeMinimum, degreeMaximum)
+            if (isWaterPotential):
+                c = getMatricPotentialColor(C3DCells[index].H - C3DCells[index].z)
+            else:
+                c = getSEColor(C3DCells[index].Se, degreeMinimum, degreeMaximum)
             myColor = visual.vector(c[0], c[1], c[2])
             
             if (isFirst):
@@ -239,7 +274,10 @@ def drawSubSurface(isFirst):
             maxWaterlevel = max(waterLevel, maxWaterlevel)
             c = getSurfaceWaterColor(waterLevel, waterLevelMaximum)
         else:
-            c = getSEColor(C3DCells[index].Se, degreeMinimum, degreeMaximum)
+            if (isWaterPotential):
+                c = getMatricPotentialColor(C3DCells[index].H - C3DCells[index].z)
+            else:
+                c = getSEColor(C3DCells[index].Se, degreeMinimum, degreeMaximum)
             
         myColor = visual.vector(c[0], c[1], c[2])
         
@@ -256,7 +294,11 @@ def drawSubSurface(isFirst):
         layerLabel.text = "Surface water level - max:" + format(maxWaterlevel * 1000,".1f")+"mm"
     else:
         depth = soil.depth[visualizedLayer] * 100
-        layerLabel.text = "Degree of saturation, layer at " + format(depth,".1f")+"cm"
+        if (isWaterPotential):
+            var = "Water potential"
+        else:
+            var = "Degree of saturation"
+        layerLabel.text = var  + " - layer at " + format(depth,".1f")+"cm"
     
     
 def updateInterface():       
