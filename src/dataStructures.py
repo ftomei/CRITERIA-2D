@@ -5,8 +5,8 @@ from commonConst import  *
 class C3DStructure:
     nrDimensions = 3
     nrVerticesPerRectangle = 4
-    gridWidth = 1.0                 # [m] x axis
-    gridHeight = 0.1                # [m] y axis
+    gridWidth = 2.0                 # [m] x axis
+    gridHeight = 2.0                # [m] y axis
     gridOrigin = 0.0                # [m] z
     gridStep = 0.1                  # [m]
     nrRectanglesInXAxis = int(gridWidth / gridStep)
@@ -63,7 +63,7 @@ class C3DParameters:
     maxThickness = 0.02                         # [m]
     geometricFactor = 1.2
     # sink-source
-    assignIrrigation = False
+    assignIrrigation = True
     computeEvaporation = True
     computeTranspiration = True
     # surface flow
