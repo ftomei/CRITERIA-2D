@@ -62,7 +62,7 @@ def takeScreenshot(timestamp):
             f.write(row)
     else:
         for index in exportIndeces:
-            if C3DCells[index].z != 0.0:
+            if C3DCells[index].z != 0.0 and C3DCells[index].x >= 1.0:
                 row = str(int(timestamp))
                 row += "," + '{:.3f}'.format(C3DCells[index].x)
                 row += "," + '{:.3f}'.format(C3DCells[index].y)
