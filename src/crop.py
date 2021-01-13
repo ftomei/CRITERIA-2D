@@ -66,9 +66,8 @@ def initializeCrop():
         [x, y, z] = rectangularMesh.C3DRM[i].centroid
         # assign kiwi to whole  area
         LAI_kiwi[i] = kiwi.currentLAI
-        # assign grass to right area
-        if (x >= 0.8):
-            LAI_grass[i] = grass.currentLAI
+        # disable grass
+        LAI_grass[i] = 0
     # initialize surface evaporation
     surfaceEvaporation = np.zeros(C3DStructure.nrRectangles)
             

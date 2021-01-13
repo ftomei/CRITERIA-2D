@@ -57,7 +57,7 @@ class C3DParameters:
     initialWaterPotential = -2.0                # [m]
     waterRetentionCurve = IPPISCH_VG
     meanType = LOGARITHMIC
-    conductivityHVRatio = 5.0
+    conductivityHVRatio = 2.0
     # soil layers
     minThickness = 0.01                         # [m]
     maxThickness = 0.02                         # [m]
