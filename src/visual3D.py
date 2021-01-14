@@ -19,7 +19,7 @@ visualizedLayer = 0
 visualizedSlice = C3DStructure.nrRectanglesInXAxis * int(C3DStructure.nrRectanglesInYAxis / 2)
 nrColorLevels = 10
 degreeMaximum = 1.0
-degreeMinimum = 0.5
+degreeMinimum = 0.4
 waterLevelMaximum = max(0.005, C3DParameters.pond)
 isWaterPotential = False
 isPause = False
@@ -112,22 +112,30 @@ def initialize(totalWidth):
 def drawColorScale():
     if (isWaterPotential):
         i = nrColorLevels
-        c = getMatricPotentialColor(-3)
+        c = getMatricPotentialColor(-2)
         colorScale[i].background = visual.vector(c[0], c[1], c[2])
-        colorScale[i].text = "-30kPa"
+        colorScale[i].text = "-20kPa"
+        i -= 1
+        c = getMatricPotentialColor(-5)
+        colorScale[i].background = visual.vector(c[0], c[1], c[2])
+        colorScale[i].text = "-50    "
+        i -= 1
         c = getMatricPotentialColor(-10)
-        colorScale[i-1].background = visual.vector(c[0], c[1], c[2])
-        colorScale[i-1].text = "-100   "
+        colorScale[i].background = visual.vector(c[0], c[1], c[2])
+        colorScale[i].text = "-100  "
+        i -= 1
         c = getMatricPotentialColor(-30)
-        colorScale[i-2].background = visual.vector(c[0], c[1], c[2])
-        colorScale[i-2].text = "-300   "
+        colorScale[i].background = visual.vector(c[0], c[1], c[2])
+        colorScale[i].text = "-300  "
+        i -= 1
         c = getMatricPotentialColor(-100)
-        colorScale[i-3].background = visual.vector(c[0], c[1], c[2])
-        colorScale[i-3].text = "-1500 "
+        colorScale[i].background = visual.vector(c[0], c[1], c[2])
+        colorScale[i].text = "-1500"
+        i -= 1
         c = getMatricPotentialColor(-300)
-        colorScale[i-4].background = visual.vector(c[0], c[1], c[2])
-        colorScale[i-4].text = "<-1500"
-        for j in range (i-4):
+        colorScale[i].background = visual.vector(c[0], c[1], c[2])
+        colorScale[i].text = "<-1500"
+        for j in range (i):
             colorScale[j].visible = False
     else:  
         for i in range (nrColorLevels):
