@@ -31,7 +31,7 @@ def main():
     # SOIL
     print ("Load soil...")
     soilFolder = "soil"
-    soilFile = "soil.txt"
+    soilFile = "loam.txt"
     soilPath = os.path.join(dataPath, soilFolder, soilFile)
     soil.C3DSoil = soil.readHorizon(soilPath, 1)
     totalDepth = soil.C3DSoil.lowerDepth
