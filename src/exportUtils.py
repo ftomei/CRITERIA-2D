@@ -68,7 +68,8 @@ def takeScreenshot(timestamp):
                 row += "," + '{:.3f}'.format(C3DCells[index].y)
                 row += "," + '{:.3f}'.format(C3DCells[index].z)
                 row += "," + '{:.3f}'.format(C3DCells[index].Se)
-                row += "," + '{:.3f}'.format(C3DCells[index].H * 100/10.2)
+                psi = (C3DCells[index].H - C3DCells[index].z) * 9.81    # water potential [kPa] equivalent to [centibar]
+                row += "," + '{:.3f}'.format(psi)
                 row += "\n"
 
                 with open(outputFile, "a") as f:

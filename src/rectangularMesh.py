@@ -173,6 +173,12 @@ def getHeader(rectangleList):
         header.xMax = max(header.xMax, x)
         header.yMax = max(header.yMax, y)
         header.zMax = max(header.zMax, z)
+    
+    halfStep = C3DStructure.gridStep*0.5    
+    header.xMin -= halfStep
+    header.xMax += halfStep
+    header.yMin -= halfStep
+    header.yMax += halfStep
         
     dx = header.xMax - header.xMin
     dy = header.yMax - header.yMin

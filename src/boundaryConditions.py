@@ -46,7 +46,6 @@ def updateBoundary(deltaT):
                 boundarySe = soil.degreeOfSaturation(curve, boundaryPsi)
                 boundaryK = soil.hydraulicConductivity(curve, boundarySe)
                 k = soil.meanK(C3DParameters.meanType, C3DCells[i].k, boundaryK)
-                dz = C3DCells[i].volume / C3DCells[i].area
                 dH = prescribedH - C3DCells[i].H
                 C3DCells[i].boundary.flow = k * dH * C3DCells[i].area
                 
