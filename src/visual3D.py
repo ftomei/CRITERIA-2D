@@ -22,6 +22,7 @@ degreeMaximum = 1.0
 degreeMinimum = 0.4
 waterLevelMaximum = max(0.005, C3DParameters.pond)
 isWaterPotential = False
+isLAIvisualization = False
 isPause = False
   
 
@@ -103,6 +104,7 @@ def initialize(totalWidth):
     sliceCanvas.caption += "\n 's': save state \n 'l': load state "
     sliceCanvas.caption += "\n 'c': colorscale range"
     sliceCanvas.caption += "\n 'w': switch water content/potential"
+    sliceCanvas.caption += "\n 'q': switch to LAI_kiwi visualization"
     
     drawSlice(True)
     updateInterface()
@@ -110,7 +112,27 @@ def initialize(totalWidth):
 
 
 def drawColorScale():
-    if (isWaterPotential):
+    from crop import kiwi
+    if (isLAIvisualization):
+        i = nrColorLevels
+        c = getSEColor(kiwi.laiMax, kiwi.laiMin, kiwi.laiMax)
+        colorScale[i].background = visual.vector(c[0], c[1], c[2])
+        colorScale[i].text = str(kiwi.laiMax)
+        i -= 1
+        c = getSEColor(((kiwi.laiMax - kiwi.laiMin) / 3 * 2) + kiwi.laiMin, kiwi.laiMin, kiwi.laiMax)
+        colorScale[i].background = visual.vector(c[0], c[1], c[2])
+        colorScale[i].text = str(((kiwi.laiMax - kiwi.laiMin) / 3 * 2) + kiwi.laiMin)
+        i -= 1
+        c = getSEColor(((kiwi.laiMax - kiwi.laiMin) / 3) + kiwi.laiMin, kiwi.laiMin, kiwi.laiMax)
+        colorScale[i].background = visual.vector(c[0], c[1], c[2])
+        colorScale[i].text = str(((kiwi.laiMax - kiwi.laiMin) / 3) + kiwi.laiMin)
+        i -= 1
+        c = getSEColor(kiwi.laiMin, kiwi.laiMin, kiwi.laiMax)
+        colorScale[i].background = visual.vector(c[0], c[1], c[2])
+        colorScale[i].text = str(kiwi.laiMin)
+        for j in range (i):
+            colorScale[j].visible = False
+    elif (isWaterPotential):
         i = nrColorLevels
         c = getMatricPotentialColor(-2)
         colorScale[i].background = visual.vector(c[0], c[1], c[2])
@@ -194,7 +216,7 @@ def updateSlice(s):
           
                 
 def keyInput(evt):
-    global isPause, isWaterPotential
+    global isPause, isWaterPotential, isLAIvisualization
     s = evt.key
     if s == 'r':
         isPause = False
@@ -220,6 +242,10 @@ def keyInput(evt):
             updateColorScale()
     elif s == "w":
         isWaterPotential = not isWaterPotential
+        drawColorScale()
+        redraw()
+    elif s == "q":
+        isLAIvisualization = not isLAIvisualization
         drawColorScale()
         redraw()
 
@@ -272,15 +298,19 @@ def drawSlice(isFirst):
  
 def drawSubSurface(isFirst):
     global subSurfaceRectangles
-    
+
+    from crop import LAI_kiwi, kiwi
     maxWaterlevel = 0
     for i in range(C3DStructure.nrRectangles):
         index = visualizedLayer * C3DStructure.nrRectangles + i
         #color
         if (visualizedLayer == 0):
-            waterLevel = max(C3DCells[i].H - C3DCells[i].z, 0.0)
-            maxWaterlevel = max(waterLevel, maxWaterlevel)
-            c = getSurfaceWaterColor(waterLevel, waterLevelMaximum)
+            if (isLAIvisualization):
+                c = getSEColor(LAI_kiwi[i], kiwi.laiMin, kiwi.laiMax)
+            else:
+                waterLevel = max(C3DCells[i].H - C3DCells[i].z, 0.0)
+                maxWaterlevel = max(waterLevel, maxWaterlevel)
+                c = getSurfaceWaterColor(waterLevel, waterLevelMaximum)
         else:
             if (isWaterPotential):
                 c = getMatricPotentialColor(C3DCells[index].H - C3DCells[index].z)
@@ -299,7 +329,10 @@ def drawSubSurface(isFirst):
             subSurfaceRectangles[i].v3.color = myColor 
     # label
     if (visualizedLayer == 0):
-        layerLabel.text = "Surface water level - max:" + format(maxWaterlevel * 1000,".1f")+"mm"
+        if isLAIvisualization:
+            layerLabel.text = "LAI visualization"
+        else:
+            layerLabel.text = "Surface water level - max:" + format(maxWaterlevel * 1000,".1f")+"mm"
     else:
         depth = soil.depth[visualizedLayer] * 100
         if (isWaterPotential):

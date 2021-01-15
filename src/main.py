@@ -132,8 +132,9 @@ def main():
     criteria3D.setDripIrrigationPositions(irrigationsConfigurations)
 
     #weatherData, waterData = importUtils.transformDates(weatherData, waterData)
-    
-    crop.initializeCrop()
+    soilPath = os.path.join(dataPath, "soil")
+    soilConfiguration = pd.read_csv(os.path.join(soilPath, "plant_configuration.csv"))
+    crop.initializeCrop(soilConfiguration)
 
     # TIME LENGHT
     weatherTimeLength = (weatherData.iloc[0]["end"] - weatherData.iloc[0]["start"])       # [s]
