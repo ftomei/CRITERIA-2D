@@ -71,8 +71,10 @@ def getTINColor(z, header):
     return(colorScaleTIN[index])
 
 def getSEColor(degreeSaturation, minimum, maximum):
+    if (degreeSaturation == 0):
+        return (0, 0, 0)
     perc = (degreeSaturation-minimum) / (maximum-minimum)
-    perc = min(1.0, max(0.0, perc))
+    perc = min(1.0, max(perc, 0.0))
     index = int(perc * (len(colorRangeSE)-1))
     return(colorRangeSE[index])
 

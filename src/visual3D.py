@@ -130,6 +130,10 @@ def drawColorScale():
         c = getSEColor(kiwi.laiMin, kiwi.laiMin, kiwi.laiMax)
         colorScale[i].background = visual.vector(c[0], c[1], c[2])
         colorScale[i].text = str(kiwi.laiMin)
+        i -= 1
+        c = getSEColor(0, kiwi.laiMin, kiwi.laiMax)
+        colorScale[i].background = visual.vector(c[0], c[1], c[2])
+        colorScale[i].text = str(0.0)
         for j in range (i):
             colorScale[j].visible = False
     elif (isWaterPotential):
