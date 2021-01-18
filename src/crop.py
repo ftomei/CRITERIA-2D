@@ -26,9 +26,9 @@ class Ccrop:
         
     def setKiwifruit(self):
         self.laiMin = 1.0                        # [m2 m-2]
-        self.laiMax = 3.5                        # [m2 m-2]
+        self.laiMax = 4.0                        # [m2 m-2]
         self.rootDepthZero = 0.1                 # [m]
-        self.rootDepthMax = 1.0                  # [m]
+        self.rootDepthMax = 0.8                  # [m]
         self.rootDeformation = 1.0               # [-]
         self.kcMax = 1.1                         # [-]
         self.fRAW = 0.55                         # [-]
@@ -49,7 +49,7 @@ kiwi = Ccrop()
 grass = Ccrop()
 
 
-def initializeCrop():
+def initializeCrop(soilConfiguration):
     global rootDensityGrass, rootDensityKiwi, LAI_kiwi, LAI_grass, surfaceEvaporation
     # kiwifruit
     kiwi.setKiwifruit()
@@ -62,10 +62,30 @@ def initializeCrop():
     # assign LAI
     LAI_kiwi = np.zeros(C3DStructure.nrRectangles)
     LAI_grass = np.zeros(C3DStructure.nrRectangles)
+    
+    if soilConfiguration.iloc[0]['plant_x'] == 0.0:
+        xOffset = 0
+    else:
+        xOffset = int(C3DStructure.nrRectanglesInXAxis / (C3DStructure.gridWidth / soilConfiguration.iloc[0]['plant_x'])-1)
+    if soilConfiguration.iloc[0]['plant_y'] == 0.0:
+        yOffset = 0
+    else:
+        yOffset = int(C3DStructure.nrRectanglesInYAxis / (C3DStructure.gridHeight / soilConfiguration.iloc[0]['plant_y'])-1)
+    plant_index = C3DStructure.nrRectanglesInXAxis * yOffset + xOffset
+    [plant_x, plant_y, plant_z] = rectangularMesh.C3DRM[plant_index].centroid
+    max_distance = soilConfiguration.iloc[0]['max_distance']
+
     for i in range(C3DStructure.nrRectangles):
         [x, y, z] = rectangularMesh.C3DRM[i].centroid
+        plant_cell_distance = rectangularMesh.distance2D(rectangularMesh.C3DRM[plant_index].centroid, rectangularMesh.C3DRM[i].centroid)
+        if plant_cell_distance > max_distance:
+            cell_LAI = 0.0
+        else:
+            impact_factor = 1 - (plant_cell_distance / max_distance) 
+            cell_LAI = (impact_factor * (kiwi.laiMax - kiwi.laiMin)) + kiwi.laiMin
+        
         # assign kiwi to whole  area
-        LAI_kiwi[i] = kiwi.currentLAI
+        LAI_kiwi[i] = cell_LAI
         # disable grass
         LAI_grass[i] = 0
     # initialize surface evaporation
