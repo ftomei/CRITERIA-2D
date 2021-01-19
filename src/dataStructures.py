@@ -63,7 +63,7 @@ class C3DParameters:
     maxThickness = 0.02                         # [m]
     geometricFactor = 1.2
     # sink-source
-    assignIrrigation = True
+    assignIrrigation = False
     computeEvaporation = True
     computeTranspiration = True
     # surface flow
