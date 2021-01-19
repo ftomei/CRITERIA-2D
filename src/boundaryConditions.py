@@ -40,14 +40,18 @@ def updateBoundary(deltaT):
                 C3DCells[i].boundary.flow = -C3DCells[i].k * C3DCells[i].upLink.area
             
             elif (C3DCells[i].boundary.type == BOUNDARY_PRESCRIBEDTOTALPOTENTIAL):
-                curve = C3DParameters.waterRetentionCurve
                 prescribedH = C3DParameters.waterTableDepth
+                dH = prescribedH - C3DCells[i].H
+                '''
+                curve = C3DParameters.waterRetentionCurve
                 boundaryPsi = prescribedH - C3DCells[i].z
                 boundarySe = soil.degreeOfSaturation(curve, boundaryPsi)
                 boundaryK = soil.hydraulicConductivity(curve, boundarySe)
                 k = soil.meanK(C3DParameters.meanType, C3DCells[i].k, boundaryK)
-                dH = prescribedH - C3DCells[i].H
                 C3DCells[i].boundary.flow = k * dH * C3DCells[i].area
+                '''
+                dz = max(abs(C3DCells[i].z - C3DParameters.waterTableDepth), 0.1)
+                C3DCells[i].boundary.flow = C3DCells[i].k * (dH/dz) * C3DCells[i].area
                 
             C3DCells[i].flow += C3DCells[i].boundary.flow
             
