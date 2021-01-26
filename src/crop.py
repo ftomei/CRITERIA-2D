@@ -28,7 +28,7 @@ class Ccrop:
         self.laiMin = 1.0                        # [m2 m-2]
         self.laiMax = 4.0                        # [m2 m-2]
         self.rootDepthZero = 0.1                 # [m]
-        self.rootDepthMax = 0.8                  # [m]
+        self.rootDepthMax = 0.6                  # [m]
         self.rootDeformation = 1.0               # [-]
         self.kcMax = 1.1                         # [-]
         self.fRAW = 0.55                         # [-]
