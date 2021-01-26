@@ -28,7 +28,7 @@ def createExportFile():
 
 
 def takeSlice():
-    offset = C3DStructure.nrRectanglesInYAxis / (C3DStructure.gridHeight / heightSlice)-1
+    offset = C3DStructure.nrRectanglesInYAxis / (C3DStructure.gridHeight / heightSlice)
     i = offset * C3DStructure.nrRectanglesInXAxis
     for layer in range(C3DStructure.nrLayers):
         for j in range(C3DStructure.nrRectanglesInXAxis):
