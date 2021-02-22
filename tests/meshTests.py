@@ -155,4 +155,4 @@ def rectangularMeshCreationTest():
 if __name__ == "__main__":
     rectangularMesh.rectangularMeshCreation()
     rectangularMeshCreationTest()
-    print("Everything passed")
+    #print("Everything passed")

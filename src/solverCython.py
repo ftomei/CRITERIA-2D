@@ -36,8 +36,8 @@ def computeStep(deltaT):
         # boundary
         boundaryConditions.updateBoundary(deltaT)
         
-        print ("approximation nr:", approximation)
-        print ("Sum flows (abs) [l]:", format(waterBalance.sumWaterFlow(deltaT, True) * 1000.,".5f"))  
+        #print ("approximation nr:", approximation)
+        #print ("Sum flows (abs) [l]:", format(waterBalance.sumWaterFlow(deltaT, True) * 1000.,".5f"))  
         
         for i in range(C3DStructure.nrCells):
             k = 0
@@ -58,14 +58,14 @@ def computeStep(deltaT):
             
         if ((waterBalance.maxCourant > 1.0) 
         and (deltaT > C3DParameters.deltaT_min)):
-            print ("Courant too high:", waterBalance.maxCourant)
-            print ("Decrease time step")
+            #print ("Courant too high:", waterBalance.maxCourant)
+            #print ("Decrease time step")
             waterBalance.halveTimeStep()
             return False
 
         if not solveMatrix(approximation):
             waterBalance.halveTimeStep()
-            print("System not convergent.")
+            #print("System not convergent.")
             return False
        
         # new hydraulic head

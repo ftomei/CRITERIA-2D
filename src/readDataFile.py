@@ -31,7 +31,7 @@ def readDataFile(myFile, nrHeaderFields, delimiter, isPrintScreen):
     reader = csv.reader(open(myFile, "r"), delimiter=delimiter)
     i = 0    
     for row in reader:
-        if (isPrintScreen): print(row)
+        #if (isPrintScreen): print(row)
         if (nrRows == 1):
             #for rows
             for j in range(nrHeaderFields, len(row)):
@@ -49,7 +49,7 @@ def readDataFile(myFile, nrHeaderFields, delimiter, isPrintScreen):
 # multi-columns generic data (text, date, etc)
 def readGenericDataFile(myFile, nrHeaderRows, delimiter, isPrintScreen):
     nrRows, nrCols, isFileOK = scanDataFile(myFile, delimiter)
-    if (isPrintScreen): print ('nrRows =', nrRows, ' nrCols =', nrCols)
+    #if (isPrintScreen): print ('nrRows =', nrRows, ' nrCols =', nrCols)
     
     if (isFileOK == False): return (nrRows, False)
     myReader = csv.reader(open(myFile, "rt"), delimiter=delimiter)
@@ -57,7 +57,7 @@ def readGenericDataFile(myFile, nrHeaderRows, delimiter, isPrintScreen):
     A = []
     i = 0
     for myRow in myReader:
-        if (isPrintScreen): print(myRow)
+        #if (isPrintScreen): print(myRow)
         if (i >= nrHeaderRows):
             A.append(myRow)
         i += 1     

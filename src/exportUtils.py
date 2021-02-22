@@ -3,7 +3,7 @@ import os
 from dataStructures import *
 
 exportIndeces = []
-outputFile = os.path.join("data", "fondo_1", "output", "output.csv")
+outputFile = os.path.join("data", "fondo_1_tuning", "output", "output.csv")
 #nrDetections = -1
 heightSlice = C3DStructure.gridHeight * 0.5
 oneTimestampPerRow = False

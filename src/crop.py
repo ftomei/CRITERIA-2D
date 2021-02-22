@@ -49,11 +49,15 @@ kiwi = Ccrop()
 grass = Ccrop()
 
 
-def initializeCrop(soilConfiguration):
+def initializeCrop(soilConfiguration, plant_max_distance, LAI, roots_depth, roots_deformation, kc_max):
     global rootDensityGrass, rootDensityKiwi, LAI_kiwi, LAI_grass, surfaceEvaporation
     # kiwifruit
     kiwi.setKiwifruit()
     kiwi.currentLAI = 3.0
+    kiwi.laiMax = LAI
+    kiwi.rootDepthMax = roots_depth
+    kiwi.rootDeformation = roots_deformation
+    kiwi.kcMax = kc_max
     rootDensityKiwi = computeRootDensity(kiwi, C3DStructure.nrLayers)
     # grass
     grass.setGrass()
@@ -62,7 +66,7 @@ def initializeCrop(soilConfiguration):
     
     # plant position
     plant_xy = [soilConfiguration.iloc[0]['plant_x'], soilConfiguration.iloc[0]['plant_y']]
-    max_distance = soilConfiguration.iloc[0]['max_distance']
+    max_distance = plant_max_distance
     
     # initialize LAI
     LAI_kiwi = np.zeros(C3DStructure.nrRectangles)

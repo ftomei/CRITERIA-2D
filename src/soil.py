@@ -27,7 +27,7 @@ depth = np.array([], np.float64)
 thickness = np.array([], np.float64)
 C3DSoil = CsoilHorizon()
 
-def readHorizon(soilFileName, i):
+def readHorizon(soilFileName, i, k_sat, theta_sat, alpha, n):
     A, isFileOk = readDataFile(soilFileName,1,',', False)
     if ((not isFileOk) or (len(A[0]) < 10)):
         print("warning: wrong soil file.")
@@ -40,14 +40,14 @@ def readHorizon(soilFileName, i):
     horizon.Campbell_b = A[i,3]
     horizon.Campbell_n = 2.0 + (3.0 / horizon.Campbell_b)
     horizon.VG_he = -A[i,4]
-    horizon.VG_alpha = A[i,5]
-    horizon.VG_n = A[i,6]
+    horizon.VG_alpha = alpha
+    horizon.VG_n = n
     horizon.VG_m =  1. - (1. / horizon.VG_n)
     horizon.VG_Sc = pow(1. + pow(horizon.VG_alpha * fabs(horizon.VG_he), 
                                 horizon.VG_n), -horizon.VG_m)
     horizon.VG_thetaR = A[i,7]
-    horizon.thetaS = A[i,8]
-    horizon.Ks = A[i,9]  
+    horizon.thetaS = theta_sat
+    horizon.Ks = k_sat
     horizon.Mualem_L = 0.5
     return horizon
 
