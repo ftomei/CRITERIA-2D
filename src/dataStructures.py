@@ -81,9 +81,9 @@ class C3DParameters:
     deltaT_min = 1.0                            # [s]
     deltaT_max = 600.0                          # [s]
     maxIterationsNr = 100
-    maxApproximationsNr = 10
+    maxApproximationsNr = 5
     residualTolerance = 1E-12
-    MBRThreshold = 1E-2
+    MBRThreshold = 1E-1
 
 #global
 C3DCells = []
