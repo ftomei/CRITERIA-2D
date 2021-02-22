@@ -259,6 +259,9 @@ def objective(params):
     simulated_data_columns.sort()
     simulated_data = simulated_data[simulated_data_columns]
 
+    #print(original_data)
+    #print(simulated_data)
+
     original_data = original_data.iloc[:, :-1].to_numpy()
     simulated_data = simulated_data.iloc[:, :-1].to_numpy()
 
@@ -267,6 +270,7 @@ def objective(params):
     return {'loss': total_rmse, 'status': STATUS_OK}
 
 def main():
+    dataPath = os.path.join("data", "fondo_1_tuning")
     space = {
         'k_sat': hp.uniform('k_sat', 0.0000001, 0.001),
         'theta_sat': hp.uniform('theta_sat', 0.2, 0.7),
@@ -287,15 +291,13 @@ def main():
                 trials=trials,
                 show_progressbar=True)
 
-    best_parameters = pd.DataFrame.from_dict(best)
-    best_parameters.to_csv('best_parameters.csv', index=False)
+    best_parameters = pd.DataFrame.from_records([best])
+    best_parameters.to_csv(os.path.join(dataPath, 'best_parameters.csv'), index=False)
 
     all_trials = pd.DataFrame(trials.trials)
-    all_trials.to_json('all_trials.json', indent=True)
+    all_trials.to_json(os.path.join(dataPath, 'all_trials.json'), indent=True)
 
-    best_trials = pd.DataFrame(trials.best_trial)
-    best_trials.to_json('best_trials.json', indent=True)
-
-    trials.best_trial
+    best_trial = pd.DataFrame(trials.best_trial)
+    best_trial.to_json(os.path.join(dataPath,'best_trial.json'), indent=True)
 
 main()
