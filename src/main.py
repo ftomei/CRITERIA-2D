@@ -6,7 +6,7 @@ import soil
 import waterBalance
 import rectangularMesh
 import criteria3D
-import visual3D
+#import visual3D
 import os
 from PenmanMonteith import computeHourlyET0
 from transmissivity import computeNormTransmissivity
@@ -147,8 +147,8 @@ def main():
         nrWaterEventsInWeatherTimeLength = int(weatherTimeLength / waterTimeLength)
     print("Total simulation time [hours]:", len(weatherData) * weatherTimeLength / 3600)
 
-    visual3D.initialize(1280)
-    visual3D.isPause = True
+    #visual3D.initialize(1280)
+    #visual3D.isPause = True
 
     # initialize export
     exportUtils.createExportFile()
@@ -159,6 +159,8 @@ def main():
     # main cycle
     extendedWeatherData, extendedWaterData = importUtils.setDataIndeces(weatherData, waterData)
     weatherData, waterData = extendedWeatherData.iloc[12:-12], extendedWaterData.iloc[12:-12]
+    minTimestamp, maxTimestamp = weatherData["end"].min(), weatherData["end"].max()
+
     dailyET0 = 0
     for weatherIndex, obsWeather in weatherData.iterrows():
 
@@ -171,7 +173,7 @@ def main():
         currentDateTime = pd.to_datetime(obsWeather["end"], unit='s')
         normTransmissivity = computeNormTransmissivity(extendedWeatherData, currentDateTime, latitude, longitude)
         ET0 = computeHourlyET0(height, airTemperature, globalSWRadiation, airRelHumidity, windSpeed_10m, normTransmissivity) # mm m^-2
-        print (currentDateTime, "ET0:", format(ET0, ".2f"))
+        #print (currentDateTime, "ET0:", format(ET0, ".2f"))
         
         crop.setEvapotranspiration(ET0)
 
@@ -181,6 +183,11 @@ def main():
 
             waterIndex = weatherIndex + (i * waterTimeLength)
             waterEvent = waterData.loc[waterIndex]
+
+            try:
+                current_timestamp = waterEvent["end"]
+            except:
+                current_timestamp = waterIndex + waterTimeLength
 
             waterBalance.currentPrec = waterEvent["precipitations"] / waterTimeLength * 3600   #[mm m-2 hour-1]
             criteria3D.setRainfall(waterEvent["precipitations"], waterTimeLength)
@@ -196,6 +203,7 @@ def main():
                 C3DParameters.deltaT_max = waterTimeLength
 
             exportUtils.takeScreenshot(waterEvent["end"])
+            print('{:.2f}'.format(((current_timestamp - minTimestamp)/(maxTimestamp - minTimestamp))*100))
 
             criteria3D.compute(waterTimeLength)
 

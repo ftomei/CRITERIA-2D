@@ -4,7 +4,7 @@ from math import fabs
 from dataStructures import *
 from rectangularMesh import distance3D
 import waterBalance
-import visual3D
+#import visual3D
 import soil
 import time
 import crop
@@ -131,14 +131,14 @@ def compute(timeLength):
         residualTime = timeLength - currentTime
         acceptedStep = False
         while (not acceptedStep):
-            if visual3D.isPause:
-                print ("\nPress 'r' to run")
-            while visual3D.isPause:
-                time.sleep(0.00001)
+            #if visual3D.isPause:
+            #    print ("\nPress 'r' to run")
+            #while visual3D.isPause:
+            #    time.sleep(0.00001)
                 
             deltaT = min(C3DParameters.currentDeltaT, residualTime)
-            print ("\ntime step [s]: ", deltaT)
-            print ("sink/source [l]:", format(waterBalance.sumSinkSource(deltaT) * 1000.,".5f")) 
+            #print ("\ntime step [s]: ", deltaT)
+            #print ("sink/source [l]:", format(waterBalance.sumSinkSource(deltaT) * 1000.,".5f")) 
              
             acceptedStep = solver.computeStep(deltaT)  
             if not acceptedStep:
@@ -146,5 +146,5 @@ def compute(timeLength):
                 for i in range(C3DStructure.nrCells):
                     C3DCells[i].H = C3DCells[i].H0        
                 
-        visual3D.redraw()  
+        #visual3D.redraw()  
         currentTime += deltaT
