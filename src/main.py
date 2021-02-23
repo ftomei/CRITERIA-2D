@@ -194,6 +194,7 @@ def objective(params):
     # main cycle
     extendedWeatherData, extendedWaterData = importUtils.setDataIndeces(weatherData, waterData)
     weatherData, waterData = extendedWeatherData.iloc[12:-12], extendedWaterData.iloc[12:-12]
+    minTimestamp, maxTimestamp = weatherData["end"].min(), weatherData["end"].max()
     dailyET0 = 0
     for weatherIndex, obsWeather in weatherData.iterrows():
 
@@ -216,6 +217,12 @@ def objective(params):
 
             waterIndex = weatherIndex + (i * waterTimeLength)
             waterEvent = waterData.loc[waterIndex]
+            try:
+                current_timestamp = waterEvent["end"]
+            except:
+                current_timestamp = waterIndex + waterTimeLength
+            
+            print('{:.2f}'.format(((current_timestamp - minTimestamp)/(maxTimestamp - minTimestamp))*100))
 
             waterBalance.currentPrec = waterEvent["precipitations"] / waterTimeLength * 3600   #[mm m-2 hour-1]
             criteria3D.setRainfall(waterEvent["precipitations"], waterTimeLength)
