@@ -3,7 +3,7 @@ import os
 from dataStructures import *
 
 exportIndeces = []
-outputFile = os.path.join("data", "fondo_1_tuning", "output", "output.csv")
+outputFile = os.path.join("..", "data", "fondo_1_tuning", "output", "output.csv")
 #nrDetections = -1
 heightSlice = C3DStructure.gridHeight * 0.5
 oneTimestampPerRow = False
@@ -74,3 +74,12 @@ def takeScreenshot(timestamp):
 
                 with open(outputFile, "a") as f:
                     f.write(row)
+
+def getScreenshot(timestamp):
+    records = []
+    for index in exportIndeces:
+        if C3DCells[index].z != 0.0 and C3DCells[index].x >= 1.0:
+            records.append({'timestamp': timestamp, 'z': round(C3DCells[index].z, 2), 'x': round(C3DCells[index].x, 2), 'H': ((C3DCells[index].H - C3DCells[index].z) * 9.81)})
+    return records 
+            
+            

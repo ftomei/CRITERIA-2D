@@ -22,17 +22,17 @@ from hyperopt.pyll.base import dfs, as_apply
 from hyperopt.pyll.stochastic import implicit_stochastic_symbols
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 
-SIMULATED_TOP_DEPTH = -0.250
-SIMULATED_CENTER_DEPTH = -0.450
-SIMULATED_BOTTOM_DEPTH = -0.650
+SIMULATED_TOP_DEPTH = -0.25
+SIMULATED_CENTER_DEPTH = -0.45
+SIMULATED_BOTTOM_DEPTH = -0.65
 REAL_TOP_DEPTH = -20
 REAL_CENTER_DEPTH = -40
 REAL_BOTTOM_DEPTH = -60
 
-SIMULATED_ZERO_DISTANCE = 1.050
-SIMULATED_LEFT_DISTANCE = 1.350
-SIMULATED_CENTER_DISTANCE = 1.650
-SIMULATED_RIGHT_DISTANCE = 1.950
+SIMULATED_ZERO_DISTANCE = 1.05
+SIMULATED_LEFT_DISTANCE = 1.35
+SIMULATED_CENTER_DISTANCE = 1.65
+SIMULATED_RIGHT_DISTANCE = 1.95
 REAL_ZERO_DISTANCE = 0
 REAL_LEFT_DISTANCE = 30
 REAL_CENTER_DISTANCE = 60
@@ -54,7 +54,7 @@ distances = {
 def objective(params):
     C3DParameters.waterTableDepth = params["water_table"]
     #print (os.getcwd())
-    dataPath = os.path.join("data", "fondo_1_tuning")
+    dataPath = os.path.join("..", "data", "fondo_1_tuning")
 
     #print("Building rectangle mesh...")
     rectangularMesh.rectangularMeshCreation()
@@ -196,6 +196,7 @@ def objective(params):
     weatherData, waterData = extendedWeatherData.iloc[12:-12], extendedWaterData.iloc[12:-12]
     minTimestamp, maxTimestamp = weatherData["end"].min(), weatherData["end"].max()
     dailyET0 = 0
+    simulated_data = pd.DataFrame()
     for weatherIndex, obsWeather in weatherData.iterrows():
 
         airTemperature = obsWeather["temperature"]
@@ -238,6 +239,8 @@ def objective(params):
                 C3DParameters.deltaT_max = waterTimeLength
 
             exportUtils.takeScreenshot(waterEvent["end"])
+            for elem in exportUtils.getScreenshot(waterEvent["end"]):
+                simulated_data = simulated_data.append(elem, ignore_index=True)
 
             criteria3D.compute(waterTimeLength)
 
@@ -247,8 +250,8 @@ def objective(params):
     original_data.columns = ["_".join((str(z), str(x))) for z, x in original_data.columns]
     original_data = original_data.reset_index()
 
-    simulated_data = pd.read_csv(os.path.join(os.path.join(dataPath, 'output'), 'output.csv'))
-    simulated_data = simulated_data.drop(['y', 'Se'], axis=1)
+    #simulated_data = pd.read_csv(os.path.join(os.path.join(dataPath, 'output'), 'output.csv'))
+    #simulated_data = simulated_data.drop(['y', 'Se'], axis=1)
     simulated_data = simulated_data[(simulated_data["z"] == SIMULATED_TOP_DEPTH) | (simulated_data["z"] == SIMULATED_CENTER_DEPTH) | (simulated_data["z"] == SIMULATED_BOTTOM_DEPTH)]
     simulated_data = simulated_data[(simulated_data["x"] == SIMULATED_ZERO_DISTANCE) | (simulated_data["x"] == SIMULATED_LEFT_DISTANCE) | (simulated_data["x"] == SIMULATED_CENTER_DISTANCE) | (simulated_data["x"] == SIMULATED_RIGHT_DISTANCE)]
     simulated_data = simulated_data.pivot(index='timestamp', columns=['z', 'x'], values='H')
@@ -294,7 +297,7 @@ def main():
     best = fmin(fn=objective,
                 space=space,
                 algo=tpe.suggest,
-                max_evals=1,
+                max_evals=150,
                 trials=trials,
                 show_progressbar=True)
 
