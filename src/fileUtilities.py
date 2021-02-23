@@ -4,8 +4,8 @@ from math import fabs
 from readDataFile import *
 from dataStructures import NODATA, C3DStructure, C3DCells
 import soil
-import tkinter
-import tkinter.filedialog
+#import tkinter
+#import tkinter.filedialog
 import criteria3D
     
     
