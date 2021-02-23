@@ -54,7 +54,7 @@ class Ccell:
 # model parameters
 class C3DParameters:
     # water retention and conductivity
-    initialWaterPotential = -2.0                # [m]
+    initialWaterPotential = -90 * 10.2 / 100   # [m]
     waterRetentionCurve = IPPISCH_VG
     meanType = LOGARITHMIC
     conductivityHVRatio = 2.0
