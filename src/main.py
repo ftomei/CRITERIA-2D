@@ -290,7 +290,7 @@ def main():
         'roots_deformation': hp.uniform('roots_deformation', 0, 2),
         'kc_max': hp.uniform('kc_max', 0.8, 1.3)
         }
-    trials = Trials()
+    trials = SparkTrials()
     best = fmin(fn=objective,
                 space=space,
                 algo=tpe.suggest,
