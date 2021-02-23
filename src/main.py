@@ -223,7 +223,7 @@ def objective(params):
             except:
                 current_timestamp = waterIndex + waterTimeLength
             
-            print('{:.2f}'.format(((current_timestamp - minTimestamp)/(maxTimestamp - minTimestamp))*100))
+            #print('{:.2f}'.format(((current_timestamp - minTimestamp)/(maxTimestamp - minTimestamp))*100))
 
             waterBalance.currentPrec = waterEvent["precipitations"] / waterTimeLength * 3600   #[mm m-2 hour-1]
             criteria3D.setRainfall(waterEvent["precipitations"], waterTimeLength)
@@ -274,6 +274,9 @@ def objective(params):
 
     original_data = original_data.iloc[:, :-1].to_numpy()
     simulated_data = simulated_data.iloc[:, :-1].to_numpy()
+    
+    original_data = np.nan_to_num(original_data)
+    simulated_data = np.nan_to_num(simulated_data)
 
     total_rmse = mean_squared_error(simulated_data, original_data, squared=False)
     
