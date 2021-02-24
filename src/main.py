@@ -313,4 +313,6 @@ def main():
     best_trial = pd.DataFrame(trials.best_trial)
     best_trial.to_json(os.path.join(dataPath,'best_trial.json'), indent=True)
 
+    objective(best)
+
 main()
