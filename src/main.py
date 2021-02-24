@@ -52,7 +52,7 @@ distances = {
 
 
 def objective(params):
-    C3DParameters.waterTableDepth = params["water_table"]
+    C3DParameters.waterTableDepth = -params["water_table"]
     #print (os.getcwd())
     dataPath = os.path.join("..", "data", "fondo_1_tuning")
 
