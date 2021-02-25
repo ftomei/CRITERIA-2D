@@ -53,6 +53,7 @@ distances = {
 
 def objective(params):
     C3DParameters.waterTableDepth = -params["water_table"]
+    C3DParameters.conductivityHVRatio = params["conductivityHVRatio"]
     #print (os.getcwd())
     dataPath = os.path.join("..", "data", "fondo_1_tuning")
 
@@ -68,7 +69,8 @@ def objective(params):
     soilFolder = "soil"
     soilFile = "loam.txt"
     soilPath = os.path.join(dataPath, soilFolder, soilFile)
-    soil.C3DSoil = soil.readHorizon(soilPath, 1, 1.4e-6, 0.43, 1.6, 1.25)
+    #soil.C3DSoil = soil.readHorizon(soilPath, 1, 1.4e-6, 0.43, 1.6, 1.25)
+    soil.C3DSoil = soil.readHorizon(soilPath, 1, params["k_sat"], params["theta_sat"], params["alpha"], params["n"])
     totalDepth = soil.C3DSoil.lowerDepth
     #print("Soil depth [m]:", totalDepth)
 
@@ -285,11 +287,12 @@ def objective(params):
 def main():
     dataPath = os.path.join("..", "data", "fondo_1_tuning")
     space = {
-        #'k_sat': hp.uniform('k_sat', 0.0000001, 0.001),
-        #'theta_sat': hp.uniform('theta_sat', 0.2, 0.7),
-        #'alpha': hp.uniform('alpha', 0.5, 5),
-        #'n': hp.uniform('n', 1, 2),
-        'water_table': hp.uniform('water_table', 1.5, 5),
+        'k_sat': hp.loguniform('k_sat', -14.5, -9),
+        'theta_sat': hp.uniform('theta_sat', 0.2, 0.7),
+        'alpha': hp.uniform('alpha', 1, 3),
+        'n': hp.uniform('n', 1.01, 1.5),
+        'conductivityHVRatio': hp.uniform('conductivityHVRatio', 1, 10),
+        'water_table': hp.uniform('water_table', 1.5, 4),
         'plant_max_distance': hp.uniform('plant_max_distance', 1, 3),
         'LAI': hp.uniform('LAI', 3, 5),
         'roots_depth': hp.uniform('roots_depth', 0.5, 1.2),
