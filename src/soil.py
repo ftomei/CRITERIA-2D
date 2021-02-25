@@ -29,7 +29,7 @@ C3DSoil = CsoilHorizon()
 
 def readHorizon(soilFileName, i):
     A, isFileOk = readDataFile(soilFileName,1,',', False)
-    if ((not isFileOk) or (len(A[0]) < 10)):
+    if (not isFileOk) or (len(A[0]) < 10):
         print("warning: wrong soil file.")
         return False
     horizon = CsoilHorizon()
@@ -55,28 +55,28 @@ def readHorizon(soilFileName, i):
 def setLayers(totalDepth, minThickness, maxThickness, factor):
     nrLayers = 1
     prevThickness = minThickness
-    depth = minThickness * 0.5
-    while (depth < totalDepth):
+    currentDepth = minThickness * 0.5
+    while currentDepth < totalDepth:
         nextThickness = min(maxThickness, prevThickness * factor)
-        depth = depth + (prevThickness + nextThickness) * 0.5
+        currentDepth += (prevThickness + nextThickness) * 0.5
         prevThickness = nextThickness
         nrLayers += 1
         
     z = np.zeros(nrLayers, np.float64)
-    thickness = np.zeros(nrLayers, np.float64)    
+    thick = np.zeros(nrLayers, np.float64)
     z[0] = 0.0
-    thickness[0] = 0.0
+    thick[0] = 0.0
     for i in range(1, nrLayers):
-        top = z[i-1] + thickness[i-1] * 0.5
-        if (i == 1):
-            thickness[i] = minThickness
+        top = z[i-1] + thick[i - 1] * 0.5
+        if i == 1:
+            thick[i] = minThickness
         else:
-            if (i == nrLayers-1):
-                thickness[i] = totalDepth - top
+            if i == (nrLayers-1):
+                thick[i] = totalDepth - top
             else:
-                thickness[i] = min(maxThickness, thickness[i-1] * factor)
-        z[i] = top + thickness[i] * 0.5
-    return nrLayers, z, thickness
+                thick[i] = min(maxThickness, thick[i - 1] * factor)
+        z[i] = top + thick[i] * 0.5
+    return nrLayers, z, thick
 
 def getVolumetricWaterContent(i):
     if C3DCells[i].isSurface: return NODATA
@@ -86,7 +86,7 @@ def getVolumetricWaterContent(i):
 
 def getDegreeOfSaturation(i):
     if C3DCells[i].isSurface:
-        if  (C3DCells[i].H > C3DCells[i].z): return 1.0
+        if C3DCells[i].H > C3DCells[i].z: return 1.0
         else: return 0.0
     curve = C3DParameters.waterRetentionCurve
     signPsi = C3DCells[i].H - C3DCells[i].z
@@ -98,49 +98,49 @@ def getHydraulicConductivity(i):
     return hydraulicConductivity(curve, C3DCells[i].Se)
 
 def airEntryPotential(curve): 
-    if (curve == CAMPBELL):
+    if curve == CAMPBELL:
         return C3DSoil.Campbell_he
-    elif (curve == IPPISCH_VG):
+    elif curve == IPPISCH_VG:
         return C3DSoil.VG_he
     else: return NODATA
     
 def waterPotential(curve, Se):
-    if (curve == CAMPBELL):
+    if curve == CAMPBELL:
         return C3DSoil.Campbell_he * Se**(-C3DSoil.Campbell_b)
-    elif (curve == IPPISCH_VG):
+    elif curve == IPPISCH_VG:
         return -(1./C3DSoil.VG_alpha)*((1./(Se*C3DSoil.VG_Sc))
                  **(1./C3DSoil.VG_m)-1.)**(1./C3DSoil.VG_n)
     else: return NODATA
     
 def waterContent(curve, Se):
-    if (curve == CAMPBELL):
+    if curve == CAMPBELL:
         return Se * C3DSoil.thetaS 
-    elif (curve == IPPISCH_VG):
-        return (Se * (C3DSoil.thetaS - C3DSoil.VG_thetaR) + C3DSoil.VG_thetaR)
+    elif curve == IPPISCH_VG:
+        return Se * (C3DSoil.thetaS - C3DSoil.VG_thetaR) + C3DSoil.VG_thetaR
     else: return NODATA
     
 def degreeOfSaturation(curve, signPsi):
     airEntry = airEntryPotential(curve)
-    if (signPsi >= airEntry): return 1.0
+    if signPsi >= airEntry: return 1.0
     
     Se = NODATA
-    if (curve == CAMPBELL):
+    if curve == CAMPBELL:
         Se = pow(signPsi / C3DSoil.Campbell_he, -1. / C3DSoil.Campbell_b)
-    elif (curve == IPPISCH_VG):
+    elif curve == IPPISCH_VG:
         Se = (1./C3DSoil.VG_Sc) * pow(1. + pow(C3DSoil.VG_alpha 
                   * fabs(signPsi), C3DSoil.VG_n), -C3DSoil.VG_m)
     return Se
 
 def hydraulicConductivity(curve, Se): 
     k = NODATA    
-    if (curve == CAMPBELL):
+    if curve == CAMPBELL:
         psi = C3DSoil.Campbell_he * Se**(-C3DSoil.Campbell_b)
         k = C3DSoil.Ks * (C3DSoil.Campbell_he / psi)**C3DSoil.Campbell_n  
-    if (curve == IPPISCH_VG):
+    if curve == IPPISCH_VG:
         num   = 1. - pow(1. - pow(Se * C3DSoil.VG_Sc, 1./ C3DSoil.VG_m), C3DSoil.VG_m)
-        denom = 1. - pow(1. - pow(C3DSoil.VG_Sc, 1./ C3DSoil.VG_m), C3DSoil.VG_m)
-        k = C3DSoil.Ks * pow(Se, C3DSoil.Mualem_L) * pow((num / denom), 2.)
-    return(k)
+        den = 1. - pow(1. - pow(C3DSoil.VG_Sc, 1./ C3DSoil.VG_m), C3DSoil.VG_m)
+        k = C3DSoil.Ks * pow(Se, C3DSoil.Mualem_L) * pow((num / den), 2.)
+    return k
     
 def psiFromTheta(curve, theta):
     Se = SeFromTheta(curve, theta)
@@ -151,20 +151,20 @@ def thetaFromPsi(curve, signPsi):
     return waterContent(curve, Se)
     
 def SeFromTheta(curve, theta):
-    if (theta >= C3DSoil.thetaS): return(1.)
-    if (curve == CAMPBELL):
+    if theta >= C3DSoil.thetaS: return 1.
+    if curve == CAMPBELL:
         return theta / C3DSoil.thetaS
-    elif (curve == IPPISCH_VG):
+    elif curve == IPPISCH_VG:
         return (theta - C3DSoil.VG_thetaR) / (C3DSoil.thetaS - C3DSoil.VG_thetaR)
     else: return NODATA 
 
 def dTheta_dPsi(curve, signPsi):
     airEntry = airEntryPotential(curve)
-    if (signPsi > airEntry): return 0.0
-    if (curve == CAMPBELL):
+    if signPsi > airEntry: return 0.0
+    if curve == CAMPBELL:
         theta = C3DSoil.thetaS * degreeOfSaturation(curve, signPsi) 
         return -theta / (C3DSoil.Campbell_b * signPsi)
-    elif (curve == IPPISCH_VG):
+    elif curve == IPPISCH_VG:
         dSe_dpsi = C3DSoil.VG_alpha * C3DSoil.VG_n * (C3DSoil.VG_m 
                 * pow(1. + pow(C3DSoil.VG_alpha * fabs(signPsi), C3DSoil.VG_n), 
                 -(C3DSoil.VG_m + 1.)) * pow(C3DSoil.VG_alpha * fabs(signPsi), 
@@ -180,22 +180,23 @@ def getdTheta_dH(i):
 def dTheta_dH(curve, H0, H1, z): 
     psi0 = H0 - z
     psi1 = H1 - z
-    if (fabs(psi1-psi0) < EPSILON_METER):
+    if fabs(psi1 - psi0) < EPSILON_METER:
         return dTheta_dPsi(curve, psi0)
     else:
         theta0 = thetaFromPsi(curve, psi0)
         theta1 = thetaFromPsi(curve, psi1)
-        return ((theta1 - theta0) / (psi1 - psi0))
+        return (theta1 - theta0) / (psi1 - psi0)
     
 def meanK(meanType, k1, k2):
-    if (meanType == LOGARITHMIC):
-        if (k1 != k2):
+    k = NODATA
+    if meanType == LOGARITHMIC:
+        if k1 != k2:
             k = (k1-k2) / log(k1/k2)
         else:
             k = k1
-    elif (meanType == HARMONIC): 
+    elif meanType == HARMONIC:
         k = 2.0 / (1.0 / k1 + 1.0 / k2)
-    elif (meanType == GEOMETRIC): 
+    elif meanType == GEOMETRIC:
         k = sqrt(k1 * k2)
     return k
 
