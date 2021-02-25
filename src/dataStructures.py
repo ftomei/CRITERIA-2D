@@ -8,7 +8,7 @@ class C3DStructure:
     gridWidth = 2.0                 # [m] x axis
     gridHeight = 2.0                # [m] y axis
     gridOrigin = 0.0                # [m] z
-    gridStep = 0.05                 # [m]
+    gridStep = 0.1                  # [m]
     nrRectanglesInXAxis = int(gridWidth / gridStep)
     nrRectanglesInYAxis = int(gridHeight / gridStep)
     nrRectangles = nrRectanglesInXAxis * nrRectanglesInYAxis
@@ -83,7 +83,7 @@ class C3DParameters:
     maxIterationsNr = 100
     maxApproximationsNr = 10
     residualTolerance = 1E-12
-    MBRThreshold = 1E-2
+    MBRThreshold = 1E-1
 
 #global
 C3DCells = []
