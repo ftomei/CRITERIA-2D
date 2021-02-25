@@ -283,7 +283,7 @@ def objective(params):
     return {'loss': total_rmse, 'status': STATUS_OK}
 
 def main():
-    dataPath = os.path.join("data", "fondo_1_tuning")
+    dataPath = os.path.join("..", "data", "fondo_1_tuning")
     space = {
         #'k_sat': hp.uniform('k_sat', 0.0000001, 0.001),
         #'theta_sat': hp.uniform('theta_sat', 0.2, 0.7),
