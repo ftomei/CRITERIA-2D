@@ -67,7 +67,7 @@ class C3DParameters:
     computeEvaporation = True
     computeTranspiration = True
     # surface flow
-    computeSurfaceFlow = True
+    computeSurfaceFlow = False
     roughness = 0.24                            # [s m^0.33]
     pond = 0.002                                # [m]                   
     # boundary

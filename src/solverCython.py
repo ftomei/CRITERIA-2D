@@ -37,7 +37,7 @@ def computeStep(deltaT):
         boundaryConditions.updateBoundary(deltaT)
         
         print ("approximation nr:", approximation)
-        print ("Sum flows (abs) [l]:", format(waterBalance.sumWaterFlow(deltaT, True) * 1000.,".5f"))  
+        #print ("Sum flows (abs) [l]:", format(waterBalance.sumWaterFlow(deltaT, True) * 1000.,".5f"))  
         
         for i in range(C3DStructure.nrCells):
             k = 0
