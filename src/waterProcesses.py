@@ -2,13 +2,19 @@
 
 from math import fabs, sqrt
 from dataStructures import *
-import soil
 import waterBalance
+import soil
+
+CYTHON = True
+if CYTHON:
+    from solverC import meanK
+else:
+    from soil import meanK
 
 
 def redistribution(i, link, isLateral, deltaT):
     j = link.index
-    k = soil.meanK(C3DParameters.meanType, C3DCells[i].k, C3DCells[j].k)
+    k = meanK(C3DParameters.meanType, C3DCells[i].k, C3DCells[j].k)
     if (isLateral):
         k *= C3DParameters.conductivityHVRatio
         
@@ -19,16 +25,15 @@ def infiltration(surf, sub, link, deltaT, isFirstApprox):
     if (C3DCells[surf].z > C3DCells[sub].H):
         #unsaturated
         Havg = (C3DCells[surf].H + C3DCells[surf].H0) * 0.5
-        Hs = Havg - C3DCells[surf].z
+        psi = Havg - C3DCells[surf].z
         if isFirstApprox:
             rain = (C3DCells[surf].sinkSource / C3DCells[surf].area) * (deltaT * 0.5)
-            Hs += rain
-        if (Hs < EPSILON): return 0.0
+            psi += rain
+        if (psi < EPSILON): return 0.0
         
-        interfaceK = soil.meanK(C3DParameters.meanType, 
-                                C3DCells[sub].k, soil.C3DSoil.Ks)
+        interfaceK = meanK(C3DParameters.meanType, C3DCells[sub].k, soil.C3DSoil.Ks)
         dH = C3DCells[surf].H - C3DCells[sub].H
-        maxK = (Hs / deltaT) * (link.distance / dH)
+        maxK = (psi / deltaT) * (link.distance / dH)
         k = min(interfaceK , maxK)
     else:
         #saturated

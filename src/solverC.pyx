@@ -7,9 +7,14 @@
 
 
 from libc.stdlib cimport malloc, free
-from libc.math cimport fabs
+from libc.math cimport fabs, sqrt, log
+
+cdef int LOGARITHMIC = 0
+cdef int HARMONIC = 1
+cdef int GEOMETRIC = 2
 
 cdef int NOLINK = -1
+
 cdef double *x
 cdef double *b
 cdef double *C
@@ -83,4 +88,17 @@ def set_indices(int i, short int j, int index):
     
 def set_A(int i, short int j, double value):
     A[i * nrLinks + j] = value
+    
+    
+def meanK(meanType, double k1, double k2):
+    if (meanType == LOGARITHMIC):
+        if (k1 != k2):
+            k = (k1-k2) / log(k1/k2)
+        else:
+            k = k1
+    elif (meanType == HARMONIC): 
+        k = 2.0 / (1.0 / k1 + 1.0 / k2)
+    elif (meanType == GEOMETRIC): 
+        k = sqrt(k1 * k2)
+    return k
 
