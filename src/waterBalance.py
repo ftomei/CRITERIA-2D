@@ -110,12 +110,12 @@ def computeBalanceError(deltaT):
     currentStep.MBE = deltaStorage - currentStep.waterFlow
     
     sumFlow = sumWaterFlow(deltaT, True)
-    minimumFlow = C3DStructure.totalArea * 0.001 * (deltaT / 3600.0)
+    minimumFlow = ((C3DStructure.totalArea * 0.0005) / 3600.0) * deltaT
     if (sumFlow < minimumFlow):
         currentStep.MBR = fabs(currentStep.MBE) / minimumFlow
     else:
         currentStep.MBR = fabs(currentStep.MBE) / sumFlow
-    print ("Mass Balance Error [l]:", format(currentStep.MBE * 1000,".5f"))
+    #print ("Mass Balance Error [l]:", format(currentStep.MBE * 1000,".5f"))
     print ("Mass Balance Ratio:", format(currentStep.MBR,".5f"))
     
 def waterBalance(deltaT, approximation):
