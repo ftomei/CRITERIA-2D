@@ -274,8 +274,8 @@ def objective(params):
     #print(original_data)
     #print(simulated_data)
 
-    original_data = original_data.iloc[:, :-1].to_numpy()
-    simulated_data = simulated_data.iloc[:, :-1].to_numpy()
+    original_data = original_data.iloc[:, :-1].to_numpy() * -1
+    simulated_data = simulated_data.iloc[:, :-1].to_numpy() * -1
     
     original_data = np.nan_to_num(np.log(original_data))
     simulated_data = np.nan_to_num(np.log(simulated_data))
