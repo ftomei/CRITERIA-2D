@@ -171,7 +171,7 @@ def objective(params):
     #weatherData, waterData = importUtils.transformDates(weatherData, waterData)
     soilPath = os.path.join(dataPath, "soil")
     soilConfiguration = pd.read_csv(os.path.join(soilPath, "plant_configuration.csv"))
-    crop.initializeCrop(soilConfiguration, params['plant_max_distance'], params['LAI'], params['roots_depth'], params['roots_deformation'], params['kc_max'])
+    crop.initializeCrop(soilConfiguration, 2.0, params['LAI'], params['roots_depth'], params['roots_deformation'], params['kc_max'])
 
     # TIME LENGHT
     weatherTimeLength = (weatherData.iloc[0]["end"] - weatherData.iloc[0]["start"])       # [s]
@@ -277,8 +277,8 @@ def objective(params):
     original_data = original_data.iloc[:, :-1].to_numpy()
     simulated_data = simulated_data.iloc[:, :-1].to_numpy()
     
-    original_data = np.nan_to_num(original_data)
-    simulated_data = np.nan_to_num(simulated_data)
+    original_data = np.nan_to_num(np.log(original_data))
+    simulated_data = np.nan_to_num(np.log(simulated_data))
 
     total_rmse = mean_squared_error(simulated_data, original_data, squared=False)
     
@@ -293,7 +293,6 @@ def main():
         'n': hp.uniform('n', 1.01, 1.5),
         'conductivityHVRatio': hp.uniform('conductivityHVRatio', 1, 10),
         'water_table': hp.uniform('water_table', 1.5, 4),
-        'plant_max_distance': hp.uniform('plant_max_distance', 1, 3),
         'LAI': hp.uniform('LAI', 3, 5),
         'roots_depth': hp.uniform('roots_depth', 0.5, 1.2),
         'roots_deformation': hp.uniform('roots_deformation', 0, 2),
