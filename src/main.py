@@ -55,7 +55,7 @@ def objective(params):
     C3DParameters.waterTableDepth = -params["water_table"]
     C3DParameters.conductivityHVRatio = params["conductivityHVRatio"]
     #print (os.getcwd())
-    dataPath = os.path.join("..", "data", "fondo_1_tuning_2")
+    dataPath = os.path.join("..", "data", "fondo_1_tuning_3")
 
     #print("Building rectangle mesh...")
     rectangularMesh.rectangularMeshCreation()
@@ -285,7 +285,7 @@ def objective(params):
     return {'loss': total_rmse, 'status': STATUS_OK}
 
 def main():
-    dataPath = os.path.join("..", "data", "fondo_1_tuning_2")
+    dataPath = os.path.join("..", "data", "fondo_1_tuning_3")
     space = {
         'k_sat': hp.loguniform('k_sat', -14.5, -9),
         'theta_sat': hp.uniform('theta_sat', 0.2, 0.7),
