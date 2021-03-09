@@ -56,7 +56,7 @@ def main():
             volume = float(rectangularMesh.C3DRM[i].area * soil.thickness[layer])
             criteria3D.setCellGeometry(index, x, y,
                                        elevation, volume, rectangularMesh.C3DRM[i].area)
-            if (layer == 0):
+            if layer == 0:
                 # surface
                 if rectangularMesh.C3DRM[i].isBoundary and C3DParameters.isSurfaceRunoff:
                     criteria3D.setCellProperties(index, True, BOUNDARY_RUNOFF)
@@ -68,7 +68,7 @@ def main():
 
                 criteria3D.setMatricPotential(index, 0.0)
 
-            elif (layer == (C3DStructure.nrLayers - 1)):
+            elif layer == (C3DStructure.nrLayers - 1):
                 # last layer
                 if C3DParameters.isWaterTable:
                     criteria3D.setCellProperties(index, False, BOUNDARY_PRESCRIBEDTOTALPOTENTIAL)
@@ -100,10 +100,10 @@ def main():
             criteria3D.SetCellLink(index, linkIndex, UP, exchangeArea)
         # LATERAL
         for neighbour in rectangularMesh.C3DRM[i].neighbours:
-            if (neighbour != NOLINK):
+            if neighbour != NOLINK:
                 linkSide = rectangularMesh.getAdjacentSide(i, neighbour)
                 for layer in range(C3DStructure.nrLayers):
-                    if (layer == 0):
+                    if layer == 0:
                         # surface: boundary length [m]
                         exchangeArea = linkSide
                     else:
@@ -131,16 +131,16 @@ def main():
     print("Read irrigations data...")
     waterFolder = "water"
     waterPath = os.path.join(dataPath, waterFolder)
-    irrigationsConfigurations, waterData = importUtils.readWaterData(waterPath, weatherData.iloc[0]["start"],
+    irrigationConfigurations, waterData = importUtils.readWaterData(waterPath, weatherData.iloc[0]["start"],
                                                                      weatherData.iloc[-1]["start"])
-    criteria3D.setDripIrrigationPositions(irrigationsConfigurations)
+    criteria3D.setDripIrrigationPositions(irrigationConfigurations)
 
     # weatherData, waterData = importUtils.transformDates(weatherData, waterData)
     soilPath = os.path.join(dataPath, "soil")
     plantConfiguration = pd.read_csv(os.path.join(soilPath, "plant_configuration.csv"))
-    crop.initializeCrop(plantConfiguration, irrigationsConfigurations)
+    crop.initializeCrop(plantConfiguration, irrigationConfigurations)
 
-    # TIME LENGHT
+    # TIME LENGTH
     weatherTimeLength = (weatherData.iloc[0]["end"] - weatherData.iloc[0]["start"])  # [s]
     waterTimeLength = (waterData.iloc[0]["end"] - waterData.iloc[0]["start"])  # [s]
     print("Weather relevations time lenght [s]:", weatherTimeLength)

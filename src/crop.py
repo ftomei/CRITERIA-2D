@@ -30,7 +30,7 @@ class CCrop:
         self.laiMax = 4.0           # [m2 m-2]
         self.rootDepthZero = 0.1    # [m]
         self.rootDepthMax = 0.8     # [m]
-        self.rootDeformation = 0.5  # [-]
+        self.rootDeformation = 0.5  # [-] 0: symmetric 1: cardioid 2: cardioid more accentuated
         self.kcMax = 1.5            # [-]
         self.fRAW = 0.6             # [-]
         self.setMaxValues()
@@ -249,12 +249,14 @@ def setTranspiration(surfaceIndex, crop, rootDensity, maxTranspiration):
 
 
 def setEvaporation(surfaceIndex, maxEvaporation):
-    # surface evaporation
+    # disable surface evaporation per numerical problem
+    """
     surfaceWater = (C3DCells[surfaceIndex].H - C3DCells[surfaceIndex].z)    # [m]
     surfaceEvaporation = min(maxEvaporation, surfaceWater * 1000.0)         # [mm]
     rate = (surfaceEvaporation * 0.001) / 3600.0                            # [m s-1]
     C3DCells[surfaceIndex].sinkSource -= rate * C3DCells[surfaceIndex].area     # [m3 s-1]
-
+    """
+    surfaceEvaporation = 0
     actualEvaporation = surfaceEvaporation
     residualEvaporation = maxEvaporation - surfaceEvaporation
 

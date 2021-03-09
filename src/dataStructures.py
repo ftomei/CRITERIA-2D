@@ -9,7 +9,7 @@ class C3DStructure:
     gridWidth = 2.0     # [m] x axis
     gridHeight = 2.0    # [m] y axis
     gridOrigin = 0.0    # [m] z
-    gridStep = 0.1      # [m]
+    gridStep = 0.2      # [m]
     nrRectanglesInXAxis = int(gridWidth / gridStep)
     nrRectanglesInYAxis = int(gridHeight / gridStep)
     nrRectangles = nrRectanglesInXAxis * nrRectanglesInYAxis
@@ -68,7 +68,7 @@ class C3DParameters:
     maxThickness = 0.04         # [m]
     geometricFactor = 1.2
     # sink-source
-    assignIrrigation = True
+    assignIrrigation = False
     computeEvaporation = True
     computeTranspiration = True
     # surface flow

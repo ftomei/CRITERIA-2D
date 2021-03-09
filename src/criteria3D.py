@@ -134,8 +134,8 @@ def compute(timeLength):
                 time.sleep(0.00001)
                 
             deltaT = min(C3DParameters.currentDeltaT, residualTime)
-            print ("\ntime step [s]: ", deltaT)
-            print ("sink/source [l]:", format(waterBalance.sumSinkSource(deltaT) * 1000.,".5f")) 
+            print("\ntime step [s]: ", deltaT)
+            # print("sink/source [l]:", format(waterBalance.sumSinkSource(deltaT) * 1000., ".5f"))
              
             acceptedStep = solver.computeStep(deltaT)  
             if not acceptedStep:
