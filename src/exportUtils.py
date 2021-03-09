@@ -1,18 +1,21 @@
 import waterBalance
 import os
 from dataStructures import *
+import soil
 
 exportIndeces = []
 outputFile = os.path.join("data", "fondo_1", "output", "output.csv")
-#nrDetections = -1
+# nrDetections = -1
 heightSlice = C3DStructure.gridHeight * 0.5
-oneTimestampPerRow = False
+oneTimestampPerRow = True
 
-def createExportFile():
-    if heightSlice == None:
-        takeAll()
-    else:
-        takeSlice()
+
+def createExportFile(observedPoints):
+    takeSelected(observedPoints)
+    # if heightSlice == None:
+    #    takeAll()
+    # else:
+    #    takeSlice()
     
     if oneTimestampPerRow:
         header = "timestamp," + ",".join(map(lambda index: str(index), exportIndeces)) + "\n"
@@ -26,6 +29,28 @@ def createExportFile():
         f.write(header)
 
 
+def takeSelected(observedPoints):
+    for _, position in observedPoints.iterrows():
+        xOffset = position['x'] / C3DStructure.gridStep
+        yOffset = position['y'] / C3DStructure.gridStep
+        depth = position['z']
+        if 0 <= xOffset < C3DStructure.nrRectanglesInXAxis and 0 <= yOffset < C3DStructure.nrRectanglesInYAxis:
+            i = 1
+            zOffset = NODATA
+            isFound = False
+            while i < C3DStructure.nrLayers and not isFound:
+                top = soil.depth[i] - (soil.thickness[i] * 0.5)
+                bottom = soil.depth[i] + (soil.thickness[i] * 0.5)
+                if top < depth <= bottom:
+                    zOffset = i
+                    isFound = True
+                i += 1
+            if isFound:
+                # index
+                index = C3DStructure.nrRectangles * zOffset + int(C3DStructure.nrRectanglesInXAxis * yOffset + xOffset)
+                exportIndeces.append(index)
+
+
 def takeSlice():
     offset = C3DStructure.nrRectanglesInYAxis / (C3DStructure.gridHeight / heightSlice)
     i = offset * C3DStructure.nrRectanglesInXAxis
@@ -34,6 +59,7 @@ def takeSlice():
             z = C3DStructure.nrRectangles * layer
             index = i + j + z
             exportIndeces.append(int(index))
+
 
 def takeAll():
     for index in range(C3DStructure.nrCells):
@@ -55,7 +81,8 @@ def takeScreenshot(timestamp):
     if oneTimestampPerRow:
         row = str(int(timestamp))
         for index in exportIndeces:
-            row += "," + '{:.3f}'.format(C3DCells[index].Se)
+            psi = (C3DCells[index].H - C3DCells[index].z) * 9.81
+            row += "," + '{:.3f}'.format(psi)
         row += "\n"
 
         with open(outputFile, "a") as f:

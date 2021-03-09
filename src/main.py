@@ -155,7 +155,8 @@ def main():
     visual3D.isPause = True
 
     # initialize export
-    exportUtils.createExportFile()
+    observedPoints = pd.read_csv(os.path.join(waterPath, "observed_points.csv"))
+    exportUtils.createExportFile(observedPoints)
 
     latitude = stationInfo.iloc[0]["Latitudine (Gradi Centesimali)"]
     longitude = stationInfo.iloc[0]["Longitudine (Gradi Centesimali)"]
@@ -200,6 +201,9 @@ def main():
                 C3DParameters.deltaT_max = waterTimeLength
 
             exportUtils.takeScreenshot(waterEvent["end"])
+            # todo: waterTable data
+            if waterEvent["end"] > 1590886800:
+                C3DParameters.waterTableDepth = -3.0
 
             criteria3D.compute(waterTimeLength)
 

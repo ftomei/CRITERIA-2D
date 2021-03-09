@@ -12,7 +12,7 @@ import exportUtils
 from copy import copy
 
 
-#surfaceRectangles = []
+# surfaceRectangles = []
 sliceRectangles = []
 subSurfaceRectangles = []
 visualizedLayer = 0
@@ -180,7 +180,6 @@ def updateColorScale():
     drawSlice(False)
 
 
-
 def updateLayer(s):
     global visualizedLayer
     
@@ -193,6 +192,7 @@ def updateLayer(s):
              
     updateInterface()
     drawSubSurface(False)
+
 
 def updateSlice(s):
     global visualizedSlice
@@ -252,11 +252,12 @@ def getNewRectangle(myColor, myCanvas, v):
     newRectangle = visual.quad(canvas = myCanvas, vs=[vert[0],vert[1],vert[3],vert[2]])
     return newRectangle 
 
+
 def drawSlice(isFirst):
     global sliceRectangles
     
     posY = (visualizedSlice / C3DStructure.nrRectanglesInXAxis) * C3DStructure.gridStep + C3DStructure.gridStep*0.5
-    if (isWaterPotential):
+    if isWaterPotential:
         var = "Water potential"
     else:
         var = "Degree of saturation"
@@ -266,13 +267,13 @@ def drawSlice(isFirst):
         for x in range(C3DStructure.nrRectanglesInXAxis):
             index = visualizedSlice + x + (z * C3DStructure.nrRectangles)
             i = z * C3DStructure.nrRectanglesInXAxis + x
-            if (isWaterPotential):
+            if isWaterPotential:
                 c = getMatricPotentialColor(C3DCells[index].H - C3DCells[index].z)
             else:
                 c = getSEColor(C3DCells[index].Se, degreeMinimum, degreeMaximum)
             myColor = visual.vector(c[0], c[1], c[2])
             
-            if (isFirst):
+            if isFirst:
                 vertices = copy(rectangularMesh.C3DRM[visualizedSlice + x].v)
                 for v in vertices[:2]:
                     v[2] = v[2] - soil.depth[z] + (soil.thickness[z] * 0.5)
@@ -293,26 +294,26 @@ def drawSubSurface(isFirst):
     global subSurfaceRectangles
 
     from crop import kiwi, k_root
-    maxWaterlevel = 0
+    maxWaterLevel = 0
     for i in range(C3DStructure.nrRectangles):
         index = visualizedLayer * C3DStructure.nrRectangles + i
-        #color
-        if (visualizedLayer == 0):
-            if (isRootVisualization):
+        # color
+        if visualizedLayer == 0:
+            if isRootVisualization:
                 c = getSEColor(k_root[i], 0, 1)
             else:
                 waterLevel = max(C3DCells[i].H - C3DCells[i].z, 0.0)
-                maxWaterlevel = max(waterLevel, maxWaterlevel)
+                maxWaterLevel = max(waterLevel, maxWaterLevel)
                 c = getSurfaceWaterColor(waterLevel, waterLevelMaximum)
         else:
-            if (isWaterPotential):
+            if isWaterPotential:
                 c = getMatricPotentialColor(C3DCells[index].H - C3DCells[index].z)
             else:
                 c = getSEColor(C3DCells[index].Se, degreeMinimum, degreeMaximum)
             
         myColor = visual.vector(c[0], c[1], c[2])
         
-        if (isFirst):
+        if isFirst:
             newRectangle = getNewRectangle(myColor, soilCanvas, rectangularMesh.C3DRM[i].v)
             subSurfaceRectangles.append(newRectangle)
         else:
@@ -321,18 +322,18 @@ def drawSubSurface(isFirst):
             subSurfaceRectangles[i].v2.color = myColor  
             subSurfaceRectangles[i].v3.color = myColor 
     # label
-    if (visualizedLayer == 0):
+    if visualizedLayer == 0:
         if isRootVisualization:
             layerLabel.text = "Root factor"
         else:
-            layerLabel.text = "Surface water level - max:" + format(maxWaterlevel * 1000,".1f")+"mm"
+            layerLabel.text = "Surface water level - max:" + format(maxWaterLevel * 1000,".1f")+"mm"
     else:
         depth = soil.depth[visualizedLayer] * 100
-        if (isWaterPotential):
+        if isWaterPotential:
             var = "Water potential"
         else:
             var = "Degree of saturation"
-        layerLabel.text = var  + " - layer at " + format(depth,".1f")+"cm"
+        layerLabel.text = var + " - layer at " + format(depth, ".1f")+"cm"
     
     
 def updateInterface():       
@@ -355,5 +356,3 @@ def redraw():
     updateInterface()
     drawSlice(False)
     drawSubSurface(False)
-      
-    
