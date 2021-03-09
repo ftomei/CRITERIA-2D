@@ -10,8 +10,8 @@ heightSlice = C3DStructure.gridHeight * 0.5
 oneTimestampPerRow = True
 
 
-def createExportFile(observedPoints):
-    takeSelected(observedPoints)
+def createExportFile(outputPoints):
+    takeSelected(outputPoints)
     # if heightSlice == None:
     #    takeAll()
     # else:
@@ -29,8 +29,8 @@ def createExportFile(observedPoints):
         f.write(header)
 
 
-def takeSelected(observedPoints):
-    for _, position in observedPoints.iterrows():
+def takeSelected(outputPoints):
+    for _, position in outputPoints.iterrows():
         xOffset = position['x'] / C3DStructure.gridStep
         yOffset = position['y'] / C3DStructure.gridStep
         depth = position['z']

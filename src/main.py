@@ -155,8 +155,9 @@ def main():
     visual3D.isPause = True
 
     # initialize export
-    observedPoints = pd.read_csv(os.path.join(waterPath, "observed_points.csv"))
-    exportUtils.createExportFile(observedPoints)
+    outputPath = os.path.join(dataPath, "output")
+    outputPoints = pd.read_csv(os.path.join(outputPath, "output_points.csv"))
+    exportUtils.createExportFile(outputPoints)
 
     latitude = stationInfo.iloc[0]["Latitudine (Gradi Centesimali)"]
     longitude = stationInfo.iloc[0]["Longitudine (Gradi Centesimali)"]
