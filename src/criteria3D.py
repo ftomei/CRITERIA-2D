@@ -44,15 +44,16 @@ def setBoundaryProperties(i, area, slope):
     
 def setDripIrrigationPositions(irrigationsConfigurations):
     for _, position in irrigationsConfigurations.iterrows():
-        if position['x'] == 0.0:
-            xOffset = 0
-        else:
-            xOffset = int(C3DStructure.nrRectanglesInXAxis / (C3DStructure.gridWidth / position['x'])-1)
-        if position['y'] == 0.0:
-            yOffset = 0
-        else:
-            yOffset = int(C3DStructure.nrRectanglesInYAxis / (C3DStructure.gridHeight / position['y'])-1)
-        index = C3DStructure.nrRectanglesInXAxis * yOffset + xOffset
+        # x
+        xOffset = position['x'] / C3DStructure.gridStep
+        if (xOffset < 0): xOffset = 0
+        if (xOffset >= C3DStructure.nrRectanglesInXAxis): xOffset = C3DStructure.nrRectanglesInXAxis - 1
+        # y
+        yOffset = position['y'] / C3DStructure.gridStep
+        if (yOffset < 0): yOffset = 0
+        if (yOffset >= C3DStructure.nrRectanglesInYAxis): yOffset = C3DStructure.nrRectanglesInYAxis - 1
+        # index
+        index = int(C3DStructure.nrRectanglesInXAxis * yOffset + xOffset)
         irrigationIndeces.append(index)
 
 def getCellDistance(i, j):
@@ -97,10 +98,6 @@ def setMatricPotential (i, signPsi):
     C3DCells[i].H0 = C3DCells[i].H
     return OK
 
-
-def resetSurfaceSinkSource():        
-    for i in range(C3DStructure.nrRectangles):
-        C3DCells[i].sinkSource = crop.surfaceEvaporation[i]
                 
 #-----------------------------------------------------------
 # set uniform rainfall rate

@@ -18,28 +18,29 @@ import crop
 
 
 def main():
-    print (os.getcwd())
+    print(os.getcwd())
     dataPath = os.path.join("data", "fondo_1")
 
     print("Building rectangle mesh...")
     rectangularMesh.rectangularMeshCreation()
-    print ("Nr. of rectangles:", C3DStructure.nrRectangles)
-    print ("Total area [m^2]:", C3DStructure.totalArea)
+    print("Nr. of rectangles:", C3DStructure.nrRectangles)
+    print("Total area [m^2]:", C3DStructure.totalArea)
 
     rectangularMesh.header = rectangularMesh.getHeader(rectangularMesh.C3DRM)
 
     # SOIL
-    print ("Load soil...")
+    print("Load soil...")
     soilFolder = "soil"
-    soilFile = "loam.txt"
+    soilFile = "soil_fitting.txt"
     soilPath = os.path.join(dataPath, soilFolder, soilFile)
     soil.C3DSoil = soil.readHorizon(soilPath, 1)
     totalDepth = soil.C3DSoil.lowerDepth
     print("Soil depth [m]:", totalDepth)
 
     C3DStructure.nrLayers, soil.depth, soil.thickness = soil.setLayers(totalDepth,
-                     C3DParameters.minThickness, C3DParameters.maxThickness,
-                     C3DParameters.geometricFactor)
+                                                                       C3DParameters.minThickness,
+                                                                       C3DParameters.maxThickness,
+                                                                       C3DParameters.geometricFactor)
     print("Nr. of layers:", C3DStructure.nrLayers)
 
     # Initialize memory
@@ -54,19 +55,20 @@ def main():
             elevation = z - soil.depth[layer]
             volume = float(rectangularMesh.C3DRM[i].area * soil.thickness[layer])
             criteria3D.setCellGeometry(index, x, y,
-                                elevation, volume, rectangularMesh.C3DRM[i].area)
+                                       elevation, volume, rectangularMesh.C3DRM[i].area)
             if (layer == 0):
                 # surface
                 if rectangularMesh.C3DRM[i].isBoundary and C3DParameters.isSurfaceRunoff:
                     criteria3D.setCellProperties(index, True, BOUNDARY_RUNOFF)
                     criteria3D.setBoundaryProperties(index,
-                                  rectangularMesh.C3DRM[i].boundarySide, rectangularMesh.C3DRM[i].boundarySlope)
+                                                     rectangularMesh.C3DRM[i].boundarySide,
+                                                     rectangularMesh.C3DRM[i].boundarySlope)
                 else:
                     criteria3D.setCellProperties(index, True, BOUNDARY_NONE)
-                    
+
                 criteria3D.setMatricPotential(index, 0.0)
 
-            elif (layer == (C3DStructure.nrLayers-1)):
+            elif (layer == (C3DStructure.nrLayers - 1)):
                 # last layer
                 if C3DParameters.isWaterTable:
                     criteria3D.setCellProperties(index, False, BOUNDARY_PRESCRIBEDTOTALPOTENTIAL)
@@ -78,9 +80,10 @@ def main():
                 criteria3D.setMatricPotential(index, C3DParameters.initialWaterPotential)
 
             else:
-                if  rectangularMesh.C3DRM[i].isBoundary and C3DParameters.isFreeLateralDrainage:
+                if rectangularMesh.C3DRM[i].isBoundary and C3DParameters.isFreeLateralDrainage:
                     criteria3D.setCellProperties(index, False, BOUNDARY_FREELATERALDRAINAGE)
-                    criteria3D.setBoundaryProperties(index, rectangularMesh.C3DRM[i].boundarySide * soil.thickness[layer],
+                    criteria3D.setBoundaryProperties(index,
+                                                     rectangularMesh.C3DRM[i].boundarySide * soil.thickness[layer],
                                                      rectangularMesh.C3DRM[i].boundarySlope)
                 else:
                     criteria3D.setCellProperties(index, False, BOUNDARY_NONE)
@@ -101,16 +104,16 @@ def main():
                 linkSide = rectangularMesh.getAdjacentSide(i, neighbour)
                 for layer in range(C3DStructure.nrLayers):
                     if (layer == 0):
-                        #surface: boundary length [m]
+                        # surface: boundary length [m]
                         exchangeArea = linkSide
                     else:
-                        #sub-surface: boundary area [m2]
+                        # sub-surface: boundary area [m2]
                         exchangeArea = soil.thickness[layer] * linkSide
                     index = C3DStructure.nrRectangles * layer + i
                     linkIndex = C3DStructure.nrRectangles * layer + neighbour
                     criteria3D.SetCellLink(index, linkIndex, LATERAL, exchangeArea)
         # DOWN
-        for layer in range(C3DStructure.nrLayers-1):
+        for layer in range(C3DStructure.nrLayers - 1):
             exchangeArea = rectangularMesh.C3DRM[i].area
             index = C3DStructure.nrRectangles * layer + i
             linkIndex = index + C3DStructure.nrRectangles
@@ -128,17 +131,18 @@ def main():
     print("Read irrigations data...")
     waterFolder = "water"
     waterPath = os.path.join(dataPath, waterFolder)
-    irrigationsConfigurations, waterData = importUtils.readWaterData(waterPath, weatherData.iloc[0]["start"], weatherData.iloc[-1]["start"])
+    irrigationsConfigurations, waterData = importUtils.readWaterData(waterPath, weatherData.iloc[0]["start"],
+                                                                     weatherData.iloc[-1]["start"])
     criteria3D.setDripIrrigationPositions(irrigationsConfigurations)
 
-    #weatherData, waterData = importUtils.transformDates(weatherData, waterData)
+    # weatherData, waterData = importUtils.transformDates(weatherData, waterData)
     soilPath = os.path.join(dataPath, "soil")
-    soilConfiguration = pd.read_csv(os.path.join(soilPath, "plant_configuration.csv"))
-    crop.initializeCrop(soilConfiguration)
+    plantConfiguration = pd.read_csv(os.path.join(soilPath, "plant_configuration.csv"))
+    crop.initializeCrop(plantConfiguration, irrigationsConfigurations)
 
     # TIME LENGHT
-    weatherTimeLength = (weatherData.iloc[0]["end"] - weatherData.iloc[0]["start"])       # [s]
-    waterTimeLength = (waterData.iloc[0]["end"] - waterData.iloc[0]["start"])           # [s]
+    weatherTimeLength = (weatherData.iloc[0]["end"] - weatherData.iloc[0]["start"])  # [s]
+    waterTimeLength = (waterData.iloc[0]["end"] - waterData.iloc[0]["start"])  # [s]
     print("Weather relevations time lenght [s]:", weatherTimeLength)
     print("Water relevations time lenght [s]:", waterTimeLength)
     if (weatherTimeLength % waterTimeLength) != 0:
@@ -170,23 +174,23 @@ def main():
         # evapotranspiration
         currentDateTime = pd.to_datetime(obsWeather["end"], unit='s')
         normTransmissivity = computeNormTransmissivity(extendedWeatherData, currentDateTime, latitude, longitude)
-        ET0 = computeHourlyET0(height, airTemperature, globalSWRadiation, airRelHumidity, windSpeed_10m, normTransmissivity) # mm m^-2
-        print (currentDateTime, "ET0:", format(ET0, ".2f"))
-        
+        ET0 = computeHourlyET0(height, airTemperature, globalSWRadiation, airRelHumidity, windSpeed_10m,
+                               normTransmissivity)  # mm m^-2
+        print(currentDateTime, "ET0:", format(ET0, ".2f"))
+
         crop.setEvapotranspiration(ET0)
 
         for i in range(nrWaterEventsInWeatherTimeLength):
 
-            criteria3D.resetSurfaceSinkSource()
-
             waterIndex = weatherIndex + (i * waterTimeLength)
             waterEvent = waterData.loc[waterIndex]
 
-            waterBalance.currentPrec = waterEvent["precipitations"] / waterTimeLength * 3600   #[mm m-2 hour-1]
+            waterBalance.currentPrec = waterEvent["precipitations"] / waterTimeLength * 3600  # [mm m-2 hour-1]
             criteria3D.setRainfall(waterEvent["precipitations"], waterTimeLength)
 
-            if (C3DParameters.assignIrrigation):
-                waterBalance.currentIrr = (len(criteria3D.irrigationIndeces) * waterEvent["irrigations"]) / waterTimeLength * 3600  #[l hour-1]
+            if C3DParameters.assignIrrigation:
+                waterBalance.currentIrr = (len(criteria3D.irrigationIndeces) * waterEvent[
+                    "irrigations"]) / waterTimeLength * 3600  # [l hour-1]
                 criteria3D.setDripIrrigation(waterEvent["irrigations"], waterTimeLength)
 
             if (waterBalance.currentIrr > 0) or (waterBalance.currentPrec > 0):
@@ -199,5 +203,7 @@ def main():
 
             criteria3D.compute(waterTimeLength)
 
-    print ("\nEnd simulation.")
+    print("\nEnd simulation.")
+
+
 main()
