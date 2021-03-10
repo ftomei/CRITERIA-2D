@@ -83,7 +83,7 @@ class C3DParameters:
     waterTableDepth = -2.0      # [m]
     # numerical solution
     currentDeltaT = 16.0        # [s]
-    deltaT_min = 1.0            # [s]
+    deltaT_min = 60.0           # [s]
     deltaT_max = 600.0          # [s]
     maxIterationsNr = 100
     maxApproximationsNr = 10

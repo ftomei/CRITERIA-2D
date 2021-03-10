@@ -2,24 +2,27 @@ import waterBalance
 import os
 from dataStructures import *
 import soil
+import pandas as pd
 
 exportIndeces = []
-outputFile = os.path.join("data", "fondo_1", "output", "output.csv")
-# nrDetections = -1
+outputFile = ""
 heightSlice = C3DStructure.gridHeight * 0.5
 oneTimestampPerRow = True
 
 
-def createExportFile(outputPoints):
-    takeSelected(outputPoints)
-    # if heightSlice == None:
-    #    takeAll()
-    # else:
-    #    takeSlice()
-    
+def createExportFile(outputPath):
+    global outputFile
+    outputFile = os.path.join(outputPath, "output.csv")
+
     if oneTimestampPerRow:
+        outputPoints = pd.read_csv(os.path.join(outputPath, "output_points.csv"))
+        takeSelected(outputPoints)
         header = "timestamp," + ",".join(map(lambda index: str(index), exportIndeces)) + "\n"
     else:
+        if heightSlice == 0:
+            takeAll()
+        else:
+            takeSlice()
         header = "timestamp,x,y,z,Se,H\n"
 
     if not os.path.exists(outputFile):
@@ -67,21 +70,10 @@ def takeAll():
 
 
 def takeScreenshot(timestamp):
-    #global nrDetections
-    
-    #print("_______________________________")
-    #print(waterBalance.totalTime)
-    #print(int(waterBalance.totalTime / 60), nrDetections)
-    #print("_______________________________")
-    
-    #if int(waterBalance.totalTime / 60) > nrDetections:
-        #nrDetections += 1
-        #anche tutto il resto andrebbe sotto l'if, se lo scommento
-
     if oneTimestampPerRow:
         row = str(int(timestamp))
         for index in exportIndeces:
-            psi = (C3DCells[index].H - C3DCells[index].z) * 9.81
+            psi = (C3DCells[index].H - C3DCells[index].z) * 9.81    # water potential [kPa] equivalent to [centibar]
             row += "," + '{:.3f}'.format(psi)
         row += "\n"
 

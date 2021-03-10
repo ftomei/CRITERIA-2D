@@ -130,7 +130,7 @@ def computeBalanceError(deltaT):
     else:
         currentStep.MBR = abs(currentStep.MBE) / sumFlowAbs
     # print ("Mass Balance Error [l]:", format(currentStep.MBE * 1000,".5f"))
-    print("Mass Balance Ratio:", format(currentStep.MBR, ".5f"))
+    # print("Mass Balance Ratio:", format(currentStep.MBR, ".5f"))
 
 
 def waterBalance(deltaT, approximation):
@@ -146,7 +146,7 @@ def waterBalance(deltaT, approximation):
     if currentStep.MBR < C3DParameters.MBRThreshold:
         updateBalance(deltaT)
         if approximation < 3 and maxCourant < 0.3 and currentStep.MBR < (C3DParameters.MBRThreshold * 0.5):
-            print("Good MBR!")
+            # print("Good MBR!")
             doubleTimeStep()
         return True
 
@@ -159,7 +159,7 @@ def waterBalance(deltaT, approximation):
     # case 3: decrease time step (or increase threshold)
     isLastApprox = (approximation == C3DParameters.maxApproximationsNr)
     if isLastApprox or nrMBRWrong > 0:
-        print("Decrease time step or increase threshold.")
+        # print("Decrease time step or increase threshold.")
         halveTimeStep()
         forceExit = True
 

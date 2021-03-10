@@ -181,22 +181,22 @@ def SeFromTheta(curve, theta):
 
 def dTheta_dPsi(curve, signPsi):
     airEntry = airEntryPotential(curve)
-    if signPsi > airEntry: return 0.0
+    if signPsi > airEntry:
+        return 0.0
     if curve == CAMPBELL:
         theta = C3DSoil.thetaS * degreeOfSaturation(curve, signPsi)
         return -theta / (C3DSoil.Campbell_b * signPsi)
     elif curve == IPPISCH_VG:
-        dSe_dpsi = C3DSoil.VG_alpha * C3DSoil.VG_n * (C3DSoil.VG_m
-                                                      * pow(1. + pow(C3DSoil.VG_alpha * fabs(signPsi), C3DSoil.VG_n),
-                                                            -(C3DSoil.VG_m + 1.)) * pow(
-                    C3DSoil.VG_alpha * fabs(signPsi),
-                    C3DSoil.VG_n - 1.))
-        dSe_dpsi *= (1. / C3DSoil.VG_Sc)
-        return dSe_dpsi * (C3DSoil.thetaS - C3DSoil.VG_thetaR)
+        dSe_dPsi = C3DSoil.VG_alpha * C3DSoil.VG_n * \
+                (C3DSoil.VG_m * pow(1. + pow(C3DSoil.VG_alpha * fabs(signPsi), C3DSoil.VG_n), -(C3DSoil.VG_m + 1.)) * \
+                pow(C3DSoil.VG_alpha * fabs(signPsi), C3DSoil.VG_n - 1.))
+        dSe_dPsi *= (1. / C3DSoil.VG_Sc)
+        return dSe_dPsi * (C3DSoil.thetaS - C3DSoil.VG_thetaR)
 
 
-def getdTheta_dH(i):
-    if C3DCells[i].isSurface: return NODATA
+def get_dTheta_dH(i):
+    if C3DCells[i].isSurface:
+        return NODATA
     curve = C3DParameters.waterRetentionCurve
     return dTheta_dH(curve, C3DCells[i].H0, C3DCells[i].H, C3DCells[i].z)
 

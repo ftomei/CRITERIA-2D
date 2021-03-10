@@ -156,8 +156,7 @@ def main():
 
     # initialize export
     outputPath = os.path.join(dataPath, "output")
-    outputPoints = pd.read_csv(os.path.join(outputPath, "output_points.csv"))
-    exportUtils.createExportFile(outputPoints)
+    exportUtils.createExportFile(outputPath)
 
     latitude = stationInfo.iloc[0]["Latitudine (Gradi Centesimali)"]
     longitude = stationInfo.iloc[0]["Longitudine (Gradi Centesimali)"]
@@ -196,8 +195,7 @@ def main():
                 criteria3D.setDripIrrigation(waterEvent["irrigations"], waterTimeLength)
 
             if (waterBalance.currentIrr > 0) or (waterBalance.currentPrec > 0):
-                C3DParameters.currentDeltaT = min(C3DParameters.currentDeltaT, 16)
-                C3DParameters.deltaT_max = 256
+                C3DParameters.deltaT_max = 600
             else:
                 C3DParameters.deltaT_max = waterTimeLength
 
