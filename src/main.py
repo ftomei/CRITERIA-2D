@@ -164,8 +164,13 @@ def main():
     # main cycle
     extendedWeatherData, extendedWaterData = importUtils.setDataIndeces(weatherData, waterData)
     weatherData, waterData = extendedWeatherData.iloc[12:-12], extendedWaterData.iloc[12:-12]
-    dailyET0 = 0
+    waterTableDate, waterTableDepth = importUtils.readWaterTable(waterPath)
+
     for weatherIndex, obsWeather in weatherData.iterrows():
+        currentDateTime = pd.to_datetime(obsWeather["end"], unit='s')
+        for i in range(len(waterTableDepth)):
+            if currentDateTime > waterTableDate[i]:
+                C3DParameters.waterTableDepth = waterTableDepth[i]
 
         airTemperature = obsWeather["temperature"]
         globalSWRadiation = obsWeather["radiations"]
@@ -173,7 +178,6 @@ def main():
         windSpeed_10m = obsWeather["wind"]
 
         # evapotranspiration
-        currentDateTime = pd.to_datetime(obsWeather["end"], unit='s')
         normTransmissivity = computeNormTransmissivity(extendedWeatherData, currentDateTime, latitude, longitude)
         ET0 = computeHourlyET0(height, airTemperature, globalSWRadiation, airRelHumidity, windSpeed_10m,
                                normTransmissivity)  # mm m^-2
@@ -200,9 +204,6 @@ def main():
                 C3DParameters.deltaT_max = waterTimeLength
 
             exportUtils.takeScreenshot(waterEvent["end"])
-            # todo: waterTable data
-            if waterEvent["end"] > 1590886800:
-                C3DParameters.waterTableDepth = -3.0
 
             criteria3D.compute(waterTimeLength)
 

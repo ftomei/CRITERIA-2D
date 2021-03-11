@@ -1,2 +1,2 @@
 upper_depth, lower_depth,  Campbell_he, Campbell_b, VG_he,  VG_alpha, VG_n, thetaR, thetaS, Ks
-0.0,	     1.0,          0.23,	    5.4,	    0.23,   2.23,     1.28,	0.03,   0.42,   2.3e-6
+0.0,	     1.0,          0.23,	    5.4,	    0.23,   2.23,     1.28,	0.03,   0.46,   3.0e-6
