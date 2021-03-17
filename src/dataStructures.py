@@ -59,13 +59,13 @@ class Ccell:
 # model parameters
 class C3DParameters:
     # water retention and conductivity
-    initialWaterPotential = -2.0  # [m]
+    initialWaterPotential = -1.5  # [m]
     waterRetentionCurve = IPPISCH_VG
     meanType = LOGARITHMIC
     conductivityHVRatio = 1.0
     # soil layers
     minThickness = 0.01         # [m]
-    maxThickness = 0.04         # [m]
+    maxThickness = 0.05         # [m]
     geometricFactor = 1.2
     # sink-source
     assignIrrigation = True
@@ -80,10 +80,10 @@ class C3DParameters:
     isFreeLateralDrainage = True
     isFreeDrainage = True
     isWaterTable = True
-    waterTableDepth = -2.0      # [m]
+    waterTableDepth = -1.7      # [m]
     # numerical solution
     currentDeltaT = 60.0        # [s]
-    deltaT_min = 60.0           # [s]
+    deltaT_min = 30.0           # [s]
     deltaT_max = 600.0          # [s]
     maxIterationsNr = 100
     maxApproximationsNr = 10

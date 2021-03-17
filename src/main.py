@@ -168,9 +168,9 @@ def main():
 
     for weatherIndex, obsWeather in weatherData.iterrows():
         currentDateTime = pd.to_datetime(obsWeather["end"], unit='s')
-        for i in range(len(waterTableDepth)):
-            if currentDateTime > waterTableDate[i]:
-                C3DParameters.waterTableDepth = waterTableDepth[i]
+        # for i in range(len(waterTableDepth)):
+        #    if currentDateTime > waterTableDate[i]:
+        #        C3DParameters.waterTableDepth = waterTableDepth[i]
 
         airTemperature = obsWeather["temperature"]
         globalSWRadiation = obsWeather["radiations"]
@@ -199,13 +199,14 @@ def main():
                 criteria3D.setDripIrrigation(waterEvent["irrigations"], waterTimeLength)
 
             if (waterBalance.currentIrr > 0) or (waterBalance.currentPrec > 0):
-                C3DParameters.deltaT_max = 600
+                C3DParameters.deltaT_max = 300
+                C3DParameters.currentDeltaT = min(C3DParameters.currentDeltaT, C3DParameters.deltaT_max)
             else:
                 C3DParameters.deltaT_max = waterTimeLength
 
-            exportUtils.takeScreenshot(waterEvent["end"])
-
             criteria3D.compute(waterTimeLength)
+
+            exportUtils.takeScreenshot(waterEvent["end"])
 
     print("\nEnd simulation.")
 

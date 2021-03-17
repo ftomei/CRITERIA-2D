@@ -29,8 +29,8 @@ class CCrop:
         self.laiMin = 1.0           # [m2 m-2]
         self.laiMax = 4.0           # [m2 m-2]
         self.rootDepthZero = 0.05   # [m]
-        self.rootDepthMax = 0.8     # [m]
-        self.rootDeformation = 0.6  # [-] 0: symmetric 1: cardioid 2: cardioid more accentuated
+        self.rootDepthMax = 0.85    # [m]
+        self.rootDeformation = 0.5  # [-] 0: symmetric 1: cardioid 2: cardioid more accentuated
         self.kcMax = 2.0            # [-]
         self.fRAW = 0.6             # [-]
         self.setMaxValues()
@@ -71,6 +71,8 @@ def initializeCrop(plantConfiguration, irrigationConfigurations):
                 k_root[i] = 0.0
             else:
                 k_root[i] = 1 - (line_distance / max_distance)
+    else:
+        kiwi.currentLAI = 0
 
     # set root density
     for i in range(C3DStructure.nrRectangles):
@@ -145,7 +147,7 @@ def cardioidDistribution(deformationFactor, nrLayersWithRoot):
 def computeRootDensity(crop, nrLayers, rootFactor):
     # initialize
     rootDensity = np.zeros(nrLayers, np.float64)
-    if crop.currentRootLength <= 0:
+    if crop.currentRootLength <= 0 or rootFactor == 0:
         return rootDensity
 
     rootLength = crop.currentRootLength * rootFactor

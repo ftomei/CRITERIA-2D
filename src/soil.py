@@ -101,9 +101,10 @@ def getDegreeOfSaturation(i):
 
 
 def getHydraulicConductivity(i):
-    if C3DCells[i].isSurface: return NODATA
+    if C3DCells[i].isSurface:
+        return NODATA
     curve = C3DParameters.waterRetentionCurve
-    return hydraulicConductivity(curve, C3DCells[i].Se)
+    return hydraulicConductivity(curve, C3DCells[i].Se, C3DCells[i].z)
 
 
 def airEntryPotential(curve):
@@ -147,15 +148,22 @@ def degreeOfSaturation(curve, signPsi):
     return Se
 
 
-def hydraulicConductivity(curve, Se):
+def hydraulicConductivity(curve, Se, z):
     k = NODATA
+    # soil compaction
+    if abs(z) > 0.5:
+        ks = C3DSoil.Ks * 0.25
+    else:
+        ks = C3DSoil.Ks
+
     if curve == CAMPBELL:
         psi = C3DSoil.Campbell_he * Se ** (-C3DSoil.Campbell_b)
-        k = C3DSoil.Ks * (C3DSoil.Campbell_he / psi) ** C3DSoil.Campbell_n
+        k = ks * (C3DSoil.Campbell_he / psi) ** C3DSoil.Campbell_n
+
     if curve == IPPISCH_VG:
         num = 1. - pow(1. - pow(Se * C3DSoil.VG_Sc, 1. / C3DSoil.VG_m), C3DSoil.VG_m)
         den = 1. - pow(1. - pow(C3DSoil.VG_Sc, 1. / C3DSoil.VG_m), C3DSoil.VG_m)
-        k = C3DSoil.Ks * pow(Se, C3DSoil.Mualem_L) * pow((num / den), 2.)
+        k = ks * pow(Se, C3DSoil.Mualem_L) * pow((num / den), 2.)
     return k
 
 
