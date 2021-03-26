@@ -64,8 +64,8 @@ class C3DParameters:
     meanType = LOGARITHMIC
     conductivityHVRatio = 1.0
     # soil layers
-    minThickness = 0.01         # [m]
-    maxThickness = 0.05         # [m]
+    minThickness = 0.02         # [m]
+    maxThickness = 0.1         # [m]
     geometricFactor = 1.2
     # sink-source
     assignIrrigation = True
