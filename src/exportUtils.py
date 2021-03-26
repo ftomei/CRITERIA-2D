@@ -34,6 +34,8 @@ def createExportFile(outputPath):
 
 
 def takeSelected(outputPoints):
+    global exportIndeces
+    exportIndeces = []
     for _, position in outputPoints.iterrows():
         xOffset = position['x'] / C3DStructure.gridStep
         yOffset = position['y'] / C3DStructure.gridStep
@@ -56,6 +58,8 @@ def takeSelected(outputPoints):
 
 
 def takeSlice():
+    global exportIndeces
+    exportIndeces = []
     offset = C3DStructure.nrRectanglesInYAxis / (C3DStructure.gridHeight / heightSlice)
     i = offset * C3DStructure.nrRectanglesInXAxis
     for layer in range(C3DStructure.nrLayers):
@@ -66,6 +70,8 @@ def takeSlice():
 
 
 def takeAll():
+    global exportIndeces
+    exportIndeces = []
     for index in range(C3DStructure.nrCells):
         exportIndeces.append(index)
 
