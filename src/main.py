@@ -22,9 +22,9 @@ from hyperopt.pyll.base import dfs, as_apply
 from hyperopt.pyll.stochastic import implicit_stochastic_symbols
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 
-SIMULATED_TOP_DEPTH = -0.174
-SIMULATED_CENTER_DEPTH = -0.373
-SIMULATED_BOTTOM_DEPTH = -0.566
+SIMULATED_TOP_DEPTH = -0.17
+SIMULATED_CENTER_DEPTH = -0.37
+SIMULATED_BOTTOM_DEPTH = -0.57
 REAL_TOP_DEPTH = -20
 REAL_CENTER_DEPTH = -40
 REAL_BOTTOM_DEPTH = -60
