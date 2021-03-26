@@ -34,19 +34,18 @@ def computeStep(deltaT):
         if  (C3DCells[i].isSurface): 
             C[i] = C3DCells[i].area
     
-    while ((not isValidStep) 
-    and (approximation <= C3DParameters.maxApproximationsNr)):
+    while (not isValidStep) and (approximation <= C3DParameters.maxApproximationsNr):
         isFirstApprox = (approximation == 1)
         waterBalance.maxCourant = 0.0
         for i in range(C3DStructure.nrCells):
-            if (not C3DCells[i].isSurface):
+            if not C3DCells[i].isSurface:
                 C3DCells[i].Se = soil.getDegreeOfSaturation(i)
                 C3DCells[i].k = soil.getHydraulicConductivity(i)
-                C[i] = C3DCells[i].volume * soil.getdTheta_dH(i)
+                C[i] = C3DCells[i].volume * soil.get_dTheta_dH(i)
         boundaryConditions.updateBoundary(deltaT)
         
-        #print ("approximation nr:", approximation)
-        #print ("Sum flows (abs) [l]:", format(waterBalance.sumWaterFlow(deltaT, True) *1000.,".5f"))  
+        #print("approximation nr:", approximation)
+        #print("Sum flows (abs) [l]:", format(waterBalance.sumWaterFlow(deltaT, True) *1000., ".5f"))
         
         for i in range(C3DStructure.nrCells):
             k = 0

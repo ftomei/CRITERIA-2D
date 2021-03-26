@@ -12,7 +12,7 @@ import exportUtils
 from copy import copy
 
 
-#surfaceRectangles = []
+# surfaceRectangles = []
 sliceRectangles = []
 subSurfaceRectangles = []
 visualizedLayer = 0
@@ -22,7 +22,7 @@ degreeMaximum = 1.0
 degreeMinimum = 0.4
 waterLevelMaximum = max(0.005, C3DParameters.pond)
 isWaterPotential = False
-isLAIvisualization = False
+isRootVisualization = False
 isPause = False
   
 
@@ -104,7 +104,7 @@ def initialize(totalWidth):
     sliceCanvas.caption += "\n 's': save state \n 'l': load state "
     sliceCanvas.caption += "\n 'c': colorscale range"
     sliceCanvas.caption += "\n 'w': switch water content/potential"
-    sliceCanvas.caption += "\n 'q': switch to LAI_kiwi visualization"
+    sliceCanvas.caption += "\n 'q': switch to root factor visualization"
     
     drawSlice(True)
     updateInterface()
@@ -112,35 +112,28 @@ def initialize(totalWidth):
 
 
 def drawColorScale():
-    from crop import kiwi
-    if (isLAIvisualization):
-        i = nrColorLevels
-        c = getSEColor(kiwi.laiMax, kiwi.laiMin, kiwi.laiMax)
-        colorScale[i].background = visual.vector(c[0], c[1], c[2])
-        colorScale[i].text = str(kiwi.laiMax)
-        i -= 1
-        c = getSEColor(((kiwi.laiMax - kiwi.laiMin) / 3 * 2) + kiwi.laiMin, kiwi.laiMin, kiwi.laiMax)
-        colorScale[i].background = visual.vector(c[0], c[1], c[2])
-        colorScale[i].text = str(((kiwi.laiMax - kiwi.laiMin) / 3 * 2) + kiwi.laiMin)
-        i -= 1
-        c = getSEColor(((kiwi.laiMax - kiwi.laiMin) / 3) + kiwi.laiMin, kiwi.laiMin, kiwi.laiMax)
-        colorScale[i].background = visual.vector(c[0], c[1], c[2])
-        colorScale[i].text = str(((kiwi.laiMax - kiwi.laiMin) / 3) + kiwi.laiMin)
-        i -= 1
-        c = getSEColor(kiwi.laiMin, kiwi.laiMin, kiwi.laiMax)
-        colorScale[i].background = visual.vector(c[0], c[1], c[2])
-        colorScale[i].text = str(kiwi.laiMin)
-        i -= 1
-        c = getSEColor(0, kiwi.laiMin, kiwi.laiMax)
-        colorScale[i].background = visual.vector(c[0], c[1], c[2])
-        colorScale[i].text = str(0.0)
-        for j in range (i):
-            colorScale[j].visible = False
+    if (isRootVisualization):
+        for i in range (nrColorLevels):
+            colorScale[i].visible = True 
+        step = 1 / nrColorLevels
+        for i in range (nrColorLevels+1):
+            value = step * i
+            c = getSEColor(value, 0, 1)
+            colorScale[i].background = visual.vector(c[0], c[1], c[2])
+            colorScale[i].text = format(value,".2f")
     elif (isWaterPotential):
         i = nrColorLevels
+        c = getMatricPotentialColor(-1)
+        colorScale[i].background = visual.vector(c[0], c[1], c[2])
+        colorScale[i].text = "-10kPa"
+        i -= 1
         c = getMatricPotentialColor(-2)
         colorScale[i].background = visual.vector(c[0], c[1], c[2])
-        colorScale[i].text = "-20kPa"
+        colorScale[i].text = "-20    "
+        i -= 1
+        c = getMatricPotentialColor(-3)
+        colorScale[i].background = visual.vector(c[0], c[1], c[2])
+        colorScale[i].text = "-30    "
         i -= 1
         c = getMatricPotentialColor(-5)
         colorScale[i].background = visual.vector(c[0], c[1], c[2])
@@ -156,11 +149,7 @@ def drawColorScale():
         i -= 1
         c = getMatricPotentialColor(-100)
         colorScale[i].background = visual.vector(c[0], c[1], c[2])
-        colorScale[i].text = "-1500"
-        i -= 1
-        c = getMatricPotentialColor(-300)
-        colorScale[i].background = visual.vector(c[0], c[1], c[2])
-        colorScale[i].text = "<-1500"
+        colorScale[i].text = "-1000"
         for j in range (i):
             colorScale[j].visible = False
     else:  
@@ -191,7 +180,6 @@ def updateColorScale():
     drawSlice(False)
 
 
-
 def updateLayer(s):
     global visualizedLayer
     
@@ -204,6 +192,7 @@ def updateLayer(s):
              
     updateInterface()
     drawSubSurface(False)
+
 
 def updateSlice(s):
     global visualizedSlice
@@ -220,7 +209,7 @@ def updateSlice(s):
           
                 
 def keyInput(evt):
-    global isPause, isWaterPotential, isLAIvisualization
+    global isPause, isWaterPotential, isRootVisualization
     s = evt.key
     if s == 'r':
         isPause = False
@@ -249,7 +238,7 @@ def keyInput(evt):
         drawColorScale()
         redraw()
     elif s == "q":
-        isLAIvisualization = not isLAIvisualization
+        isRootVisualization = not isRootVisualization
         drawColorScale()
         redraw()
 
@@ -263,11 +252,12 @@ def getNewRectangle(myColor, myCanvas, v):
     newRectangle = visual.quad(canvas = myCanvas, vs=[vert[0],vert[1],vert[3],vert[2]])
     return newRectangle 
 
+
 def drawSlice(isFirst):
     global sliceRectangles
     
     posY = (visualizedSlice / C3DStructure.nrRectanglesInXAxis) * C3DStructure.gridStep + C3DStructure.gridStep*0.5
-    if (isWaterPotential):
+    if isWaterPotential:
         var = "Water potential"
     else:
         var = "Degree of saturation"
@@ -277,13 +267,13 @@ def drawSlice(isFirst):
         for x in range(C3DStructure.nrRectanglesInXAxis):
             index = visualizedSlice + x + (z * C3DStructure.nrRectangles)
             i = z * C3DStructure.nrRectanglesInXAxis + x
-            if (isWaterPotential):
+            if isWaterPotential:
                 c = getMatricPotentialColor(C3DCells[index].H - C3DCells[index].z)
             else:
                 c = getSEColor(C3DCells[index].Se, degreeMinimum, degreeMaximum)
             myColor = visual.vector(c[0], c[1], c[2])
             
-            if (isFirst):
+            if isFirst:
                 vertices = copy(rectangularMesh.C3DRM[visualizedSlice + x].v)
                 for v in vertices[:2]:
                     v[2] = v[2] - soil.depth[z] + (soil.thickness[z] * 0.5)
@@ -303,27 +293,27 @@ def drawSlice(isFirst):
 def drawSubSurface(isFirst):
     global subSurfaceRectangles
 
-    from crop import LAI_kiwi, kiwi
-    maxWaterlevel = 0
+    from crop import kiwi, k_root
+    maxWaterLevel = 0
     for i in range(C3DStructure.nrRectangles):
         index = visualizedLayer * C3DStructure.nrRectangles + i
-        #color
-        if (visualizedLayer == 0):
-            if (isLAIvisualization):
-                c = getSEColor(LAI_kiwi[i], kiwi.laiMin, kiwi.laiMax)
+        # color
+        if visualizedLayer == 0:
+            if isRootVisualization:
+                c = getSEColor(k_root[i], 0, 1)
             else:
                 waterLevel = max(C3DCells[i].H - C3DCells[i].z, 0.0)
-                maxWaterlevel = max(waterLevel, maxWaterlevel)
+                maxWaterLevel = max(waterLevel, maxWaterLevel)
                 c = getSurfaceWaterColor(waterLevel, waterLevelMaximum)
         else:
-            if (isWaterPotential):
+            if isWaterPotential:
                 c = getMatricPotentialColor(C3DCells[index].H - C3DCells[index].z)
             else:
                 c = getSEColor(C3DCells[index].Se, degreeMinimum, degreeMaximum)
             
         myColor = visual.vector(c[0], c[1], c[2])
         
-        if (isFirst):
+        if isFirst:
             newRectangle = getNewRectangle(myColor, soilCanvas, rectangularMesh.C3DRM[i].v)
             subSurfaceRectangles.append(newRectangle)
         else:
@@ -332,18 +322,18 @@ def drawSubSurface(isFirst):
             subSurfaceRectangles[i].v2.color = myColor  
             subSurfaceRectangles[i].v3.color = myColor 
     # label
-    if (visualizedLayer == 0):
-        if isLAIvisualization:
-            layerLabel.text = "LAI visualization"
+    if visualizedLayer == 0:
+        if isRootVisualization:
+            layerLabel.text = "Root factor"
         else:
-            layerLabel.text = "Surface water level - max:" + format(maxWaterlevel * 1000,".1f")+"mm"
+            layerLabel.text = "Surface water level - max:" + format(maxWaterLevel * 1000,".1f")+"mm"
     else:
         depth = soil.depth[visualizedLayer] * 100
-        if (isWaterPotential):
+        if isWaterPotential:
             var = "Water potential"
         else:
             var = "Degree of saturation"
-        layerLabel.text = var  + " - layer at " + format(depth,".1f")+"cm"
+        layerLabel.text = var + " - layer at " + format(depth, ".1f")+"cm"
     
     
 def updateInterface():       
@@ -366,5 +356,3 @@ def redraw():
     updateInterface()
     drawSlice(False)
     drawSubSurface(False)
-      
-    

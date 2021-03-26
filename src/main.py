@@ -53,9 +53,8 @@ distances = {
 
 def objective(params):
     C3DParameters.waterTableDepth = -params["water_table"]
-    C3DParameters.conductivityHVRatio = params["conductivityHVRatio"]
     #print (os.getcwd())
-    dataPath = os.path.join("..", "data", "fondo_1_tuning_3")
+    dataPath = os.path.join("..", "data", "fondo_1_tuning_4")
 
     #print("Building rectangle mesh...")
     rectangularMesh.rectangularMeshCreation()
@@ -67,7 +66,7 @@ def objective(params):
     # SOIL
     #print ("Load soil...")
     soilFolder = "soil"
-    soilFile = "loam.txt"
+    soilFile = "soil_fitting.txt"
     soilPath = os.path.join(dataPath, soilFolder, soilFile)
     #soil.C3DSoil = soil.readHorizon(soilPath, 1, 1.4e-6, 0.43, 1.6, 1.25)
     soil.C3DSoil = soil.readHorizon(soilPath, 1, params["k_sat"], params["theta_sat"], params["alpha"], params["n"])
@@ -75,8 +74,9 @@ def objective(params):
     #print("Soil depth [m]:", totalDepth)
 
     C3DStructure.nrLayers, soil.depth, soil.thickness = soil.setLayers(totalDepth,
-                     C3DParameters.minThickness, C3DParameters.maxThickness,
-                     C3DParameters.geometricFactor)
+                                                                       C3DParameters.minThickness,
+                                                                       C3DParameters.maxThickness,
+                                                                       C3DParameters.geometricFactor)
     #print("Nr. of layers:", C3DStructure.nrLayers)
 
     # Initialize memory
@@ -91,19 +91,20 @@ def objective(params):
             elevation = z - soil.depth[layer]
             volume = float(rectangularMesh.C3DRM[i].area * soil.thickness[layer])
             criteria3D.setCellGeometry(index, x, y,
-                                elevation, volume, rectangularMesh.C3DRM[i].area)
-            if (layer == 0):
+                                       elevation, volume, rectangularMesh.C3DRM[i].area)
+            if layer == 0:
                 # surface
                 if rectangularMesh.C3DRM[i].isBoundary and C3DParameters.isSurfaceRunoff:
                     criteria3D.setCellProperties(index, True, BOUNDARY_RUNOFF)
                     criteria3D.setBoundaryProperties(index,
-                                  rectangularMesh.C3DRM[i].boundarySide, rectangularMesh.C3DRM[i].boundarySlope)
+                                                     rectangularMesh.C3DRM[i].boundarySide,
+                                                     rectangularMesh.C3DRM[i].boundarySlope)
                 else:
                     criteria3D.setCellProperties(index, True, BOUNDARY_NONE)
-                    
+
                 criteria3D.setMatricPotential(index, 0.0)
 
-            elif (layer == (C3DStructure.nrLayers-1)):
+            elif layer == (C3DStructure.nrLayers - 1):
                 # last layer
                 if C3DParameters.isWaterTable:
                     criteria3D.setCellProperties(index, False, BOUNDARY_PRESCRIBEDTOTALPOTENTIAL)
@@ -115,9 +116,10 @@ def objective(params):
                 criteria3D.setMatricPotential(index, C3DParameters.initialWaterPotential)
 
             else:
-                if  rectangularMesh.C3DRM[i].isBoundary and C3DParameters.isFreeLateralDrainage:
+                if rectangularMesh.C3DRM[i].isBoundary and C3DParameters.isFreeLateralDrainage:
                     criteria3D.setCellProperties(index, False, BOUNDARY_FREELATERALDRAINAGE)
-                    criteria3D.setBoundaryProperties(index, rectangularMesh.C3DRM[i].boundarySide * soil.thickness[layer],
+                    criteria3D.setBoundaryProperties(index,
+                                                     rectangularMesh.C3DRM[i].boundarySide * soil.thickness[layer],
                                                      rectangularMesh.C3DRM[i].boundarySlope)
                 else:
                     criteria3D.setCellProperties(index, False, BOUNDARY_NONE)
@@ -134,20 +136,20 @@ def objective(params):
             criteria3D.SetCellLink(index, linkIndex, UP, exchangeArea)
         # LATERAL
         for neighbour in rectangularMesh.C3DRM[i].neighbours:
-            if (neighbour != NOLINK):
+            if neighbour != NOLINK:
                 linkSide = rectangularMesh.getAdjacentSide(i, neighbour)
                 for layer in range(C3DStructure.nrLayers):
-                    if (layer == 0):
-                        #surface: boundary length [m]
+                    if layer == 0:
+                        # surface: boundary length [m]
                         exchangeArea = linkSide
                     else:
-                        #sub-surface: boundary area [m2]
+                        # sub-surface: boundary area [m2]
                         exchangeArea = soil.thickness[layer] * linkSide
                     index = C3DStructure.nrRectangles * layer + i
                     linkIndex = C3DStructure.nrRectangles * layer + neighbour
                     criteria3D.SetCellLink(index, linkIndex, LATERAL, exchangeArea)
         # DOWN
-        for layer in range(C3DStructure.nrLayers-1):
+        for layer in range(C3DStructure.nrLayers - 1):
             exchangeArea = rectangularMesh.C3DRM[i].area
             index = C3DStructure.nrRectangles * layer + i
             linkIndex = index + C3DStructure.nrRectangles
@@ -165,17 +167,18 @@ def objective(params):
     #print("Read irrigations data...")
     waterFolder = "water"
     waterPath = os.path.join(dataPath, waterFolder)
-    irrigationsConfigurations, waterData = importUtils.readWaterData(waterPath, weatherData.iloc[0]["start"], weatherData.iloc[-1]["start"])
-    criteria3D.setDripIrrigationPositions(irrigationsConfigurations)
+    irrigationConfigurations, waterData = importUtils.readWaterData(waterPath, weatherData.iloc[0]["start"],
+                                                                     weatherData.iloc[-1]["start"])
+    criteria3D.setDripIrrigationPositions(irrigationConfigurations)
 
-    #weatherData, waterData = importUtils.transformDates(weatherData, waterData)
+    # weatherData, waterData = importUtils.transformDates(weatherData, waterData)
     soilPath = os.path.join(dataPath, "soil")
-    soilConfiguration = pd.read_csv(os.path.join(soilPath, "plant_configuration.csv"))
-    crop.initializeCrop(soilConfiguration, 2.0, params['LAI'], params['roots_depth'], params['roots_deformation'], params['kc_max'])
+    plantConfiguration = pd.read_csv(os.path.join(soilPath, "plant_configuration.csv"))
+    crop.initializeCrop(plantConfiguration, irrigationConfigurations, params['root_max_distance'], params['LAI'], params['roots_depth'], params['roots_deformation'], params['kc_max'])
 
-    # TIME LENGHT
-    weatherTimeLength = (weatherData.iloc[0]["end"] - weatherData.iloc[0]["start"])       # [s]
-    waterTimeLength = (waterData.iloc[0]["end"] - waterData.iloc[0]["start"])           # [s]
+    # TIME LENGTH
+    weatherTimeLength = (weatherData.iloc[0]["end"] - weatherData.iloc[0]["start"])  # [s]
+    waterTimeLength = (waterData.iloc[0]["end"] - waterData.iloc[0]["start"])  # [s]
     #print("Weather relevations time lenght [s]:", weatherTimeLength)
     #print("Water relevations time lenght [s]:", waterTimeLength)
     if (weatherTimeLength % waterTimeLength) != 0:
@@ -188,7 +191,8 @@ def objective(params):
     #visual3D.isPause = True
 
     # initialize export
-    exportUtils.createExportFile()
+    outputPath = os.path.join(dataPath, "output")
+    exportUtils.createExportFile(outputPath)
 
     latitude = stationInfo.iloc[0]["Latitudine (Gradi Centesimali)"]
     longitude = stationInfo.iloc[0]["Longitudine (Gradi Centesimali)"]
@@ -199,7 +203,14 @@ def objective(params):
     minTimestamp, maxTimestamp = weatherData["end"].min(), weatherData["end"].max()
     dailyET0 = 0
     simulated_data = pd.DataFrame()
+    
+    waterTableDate, waterTableDepth = importUtils.readWaterTable(waterPath)
+
     for weatherIndex, obsWeather in weatherData.iterrows():
+        currentDateTime = pd.to_datetime(obsWeather["end"], unit='s')
+        # for i in range(len(waterTableDepth)):
+        #    if currentDateTime > waterTableDate[i]:
+        #        C3DParameters.waterTableDepth = waterTableDepth[i]
 
         airTemperature = obsWeather["temperature"]
         globalSWRadiation = obsWeather["radiations"]
@@ -207,16 +218,14 @@ def objective(params):
         windSpeed_10m = obsWeather["wind"]
 
         # evapotranspiration
-        currentDateTime = pd.to_datetime(obsWeather["end"], unit='s')
         normTransmissivity = computeNormTransmissivity(extendedWeatherData, currentDateTime, latitude, longitude)
-        ET0 = computeHourlyET0(height, airTemperature, globalSWRadiation, airRelHumidity, windSpeed_10m, normTransmissivity) # mm m^-2
-        #print (currentDateTime, "ET0:", format(ET0, ".2f"))
-        
+        ET0 = computeHourlyET0(height, airTemperature, globalSWRadiation, airRelHumidity, windSpeed_10m,
+                               normTransmissivity)  # mm m^-2
+        #print(currentDateTime, "ET0:", format(ET0, ".2f"))
+
         crop.setEvapotranspiration(ET0)
 
         for i in range(nrWaterEventsInWeatherTimeLength):
-
-            criteria3D.resetSurfaceSinkSource()
 
             waterIndex = weatherIndex + (i * waterTimeLength)
             waterEvent = waterData.loc[waterIndex]
@@ -227,24 +236,28 @@ def objective(params):
             
             #print('{:.2f}'.format(((current_timestamp - minTimestamp)/(maxTimestamp - minTimestamp))*100))
 
-            waterBalance.currentPrec = waterEvent["precipitations"] / waterTimeLength * 3600   #[mm m-2 hour-1]
+            waterBalance.currentPrec = waterEvent["precipitations"] / waterTimeLength * 3600  # [mm m-2 hour-1]
             criteria3D.setRainfall(waterEvent["precipitations"], waterTimeLength)
 
-            if (C3DParameters.assignIrrigation):
-                waterBalance.currentIrr = (len(criteria3D.irrigationIndeces) * waterEvent["irrigations"]) / waterTimeLength * 3600  #[l hour-1]
+            if C3DParameters.assignIrrigation:
+                waterBalance.currentIrr = (len(criteria3D.irrigationIndeces) * waterEvent[
+                    "irrigations"]) / waterTimeLength * 3600  # [l hour-1]
                 criteria3D.setDripIrrigation(waterEvent["irrigations"], waterTimeLength)
 
             if (waterBalance.currentIrr > 0) or (waterBalance.currentPrec > 0):
-                C3DParameters.currentDeltaT = min(C3DParameters.currentDeltaT, 16)
-                C3DParameters.deltaT_max = 256
+                C3DParameters.deltaT_max = 300
+                C3DParameters.currentDeltaT = min(C3DParameters.currentDeltaT, C3DParameters.deltaT_max)
             else:
                 C3DParameters.deltaT_max = waterTimeLength
+
+            criteria3D.compute(waterTimeLength)
 
             exportUtils.takeScreenshot(waterEvent["end"])
             for elem in exportUtils.getScreenshot(waterEvent["end"]):
                 simulated_data = simulated_data.append(elem, ignore_index=True)
 
-            criteria3D.compute(waterTimeLength)
+    print("\nEnd simulation.")
+
 
     #print ("\nEnd simulation.")
     original_data = pd.read_csv(os.path.join(dataPath, 'ground_truth.csv'))
@@ -285,18 +298,18 @@ def objective(params):
     return {'loss': total_rmse, 'status': STATUS_OK}
 
 def main():
-    dataPath = os.path.join("..", "data", "fondo_1_tuning_3")
+    dataPath = os.path.join("..", "data", "fondo_1_tuning_4")
     space = {
         'k_sat': hp.loguniform('k_sat', -14.5, -9),
         'theta_sat': hp.uniform('theta_sat', 0.2, 0.7),
         'alpha': hp.uniform('alpha', 1, 3),
         'n': hp.uniform('n', 1.01, 1.5),
-        'conductivityHVRatio': hp.uniform('conductivityHVRatio', 1, 10),
         'water_table': hp.uniform('water_table', 1.5, 4),
-        'LAI': hp.uniform('LAI', 3, 5),
+        'LAI': hp.uniform('LAI', 2, 4),
         'roots_depth': hp.uniform('roots_depth', 0.5, 1.2),
         'roots_deformation': hp.uniform('roots_deformation', 0, 2),
-        'kc_max': hp.uniform('kc_max', 0.8, 1.3)
+        'kc_max': hp.uniform('kc_max', 1.5, 2.5),
+        'root_max_distance': hp.uniform('root_max_distance', 1.5, 2.5)
         }
     trials = SparkTrials()
     best = fmin(fn=objective,

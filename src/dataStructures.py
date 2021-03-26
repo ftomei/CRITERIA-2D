@@ -1,14 +1,15 @@
-#dataStructures.py
+# dataStructures.py
 
-from commonConst import  *
+from commonConst import *
+
 
 class C3DStructure:
     nrDimensions = 3
     nrVerticesPerRectangle = 4
-    gridWidth = 2.0                 # [m] x axis
-    gridHeight = 2.0                # [m] y axis
-    gridOrigin = 0.0                # [m] z
-    gridStep = 0.1                  # [m]
+    gridWidth = 2.0     # [m] x axis
+    gridHeight = 2.0    # [m] y axis
+    gridOrigin = 0.0    # [m] z
+    gridStep = 0.1      # [m]
     nrRectanglesInXAxis = int(gridWidth / gridStep)
     nrRectanglesInYAxis = int(gridHeight / gridStep)
     nrRectangles = nrRectanglesInXAxis * nrRectanglesInYAxis
@@ -19,45 +20,49 @@ class C3DStructure:
     nrMaxLinks = 6
     totalArea = 0
 
+
 class Clink:
     def __init__(self):
-        self.index = NOLINK               # [-] index of linked cell
-        self.area = NODATA                # [m^2] area of interface
-        self.distance = NODATA            # [m]
-    
+        self.index = NOLINK     # [-] index of linked cell
+        self.area = NODATA      # [m^2] area of interface
+        self.distance = NODATA  # [m]
+
+
 class Cboundary:
     def __init__(self):
         self.type = BOUNDARY_NONE
-        self.area = NODATA                # [m^2] area of interface
-        self.slope = NODATA               # [-] slope
-        self.flow = NODATA                # [m^3 s^-1] boundary water flow 
-    
+        self.area = NODATA      # [m^2] area of interface
+        self.slope = NODATA     # [-] slope
+        self.flow = NODATA      # [m^3 s^-1] boundary water flow
+
+
 class Ccell:
     def __init__(self):
-        self.x = NODATA                   # [m]
-        self.y = NODATA                   # [m]            
-        self.z = NODATA                   # [m]
-        self.volume = NODATA              # [m^3] volume
-        self.area = NODATA                # [m^3] area (for surface cells)
-        self.isSurface = False            # true if the cell is on surface
-        self.Se = NODATA                  # [-] degree of saturation
-        self.H = NODATA                   # [m] current total water potential
-        self.H0 = NODATA                  # [m] total water potential 
-        self.k = NODATA                   # [m s^-1] hydraulic conductivity
-        self.sinkSource = NODATA          # [m^3 s^-1] water sink/source
-        self.flow = NODATA                # [m^3 s^-1] sink/source + boundary
-        self.boundary = Cboundary() 
+        self.x = NODATA         # [m]
+        self.y = NODATA         # [m]
+        self.z = NODATA         # [m]
+        self.volume = NODATA    # [m^3] volume
+        self.area = NODATA      # [m^3] area (for surface cells)
+        self.isSurface = False  # true if the cell is on surface
+        self.Se = NODATA        # [-] degree of saturation
+        self.H = NODATA         # [m] current total water potential
+        self.H0 = NODATA        # [m] total water potential
+        self.k = NODATA         # [m s^-1] hydraulic conductivity
+        self.sinkSource = NODATA  # [m^3 s^-1] water sink/source
+        self.flow = NODATA      # [m^3 s^-1] sink/source + boundary
+        self.boundary = Cboundary()
         self.upLink = Clink()
         self.downLink = Clink()
         self.lateralLink = [Clink(), Clink(), Clink(), Clink()]
-        
+
+
 # model parameters
 class C3DParameters:
     # water retention and conductivity
-    initialWaterPotential = -90 * 10.2 / 100   # [m]
+    initialWaterPotential = -1.5  # [m]
     waterRetentionCurve = IPPISCH_VG
     meanType = LOGARITHMIC
-    conductivityHVRatio = 2.0
+    conductivityHVRatio = 1.0
     # soil layers
     minThickness = 0.1                         # [m]
     maxThickness = 0.1                         # [m]
@@ -68,22 +73,23 @@ class C3DParameters:
     computeTranspiration = True
     # surface flow
     computeSurfaceFlow = False
-    roughness = 0.24                            # [s m^0.33]
-    pond = 0.002                                # [m]                   
+    roughness = 0.24            # [s m^0.33]
+    pond = 0.002                # [m]
     # boundary
-    isSurfaceRunoff = True
+    isSurfaceRunoff = False
     isFreeLateralDrainage = True
     isFreeDrainage = True
     isWaterTable = True
-    waterTableDepth = -3.0                      # [m]
+    waterTableDepth = -1.7      # [m]
     # numerical solution
-    currentDeltaT = 16.0                        # [s]
-    deltaT_min = 1.0                            # [s]
-    deltaT_max = 600.0                          # [s]
+    currentDeltaT = 60.0        # [s]
+    deltaT_min = 30.0           # [s]
+    deltaT_max = 600.0          # [s]
     maxIterationsNr = 100
     maxApproximationsNr = 5
     residualTolerance = 1E-12
-    MBRThreshold = 1E-1
+    MBRThreshold = 1E-2
 
-#global
+
+# global
 C3DCells = []
