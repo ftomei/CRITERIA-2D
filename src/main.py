@@ -22,9 +22,9 @@ from hyperopt.pyll.base import dfs, as_apply
 from hyperopt.pyll.stochastic import implicit_stochastic_symbols
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 
-SIMULATED_TOP_DEPTH = -0.25
-SIMULATED_CENTER_DEPTH = -0.45
-SIMULATED_BOTTOM_DEPTH = -0.65
+SIMULATED_TOP_DEPTH = -0.186
+SIMULATED_CENTER_DEPTH = -0.383
+SIMULATED_BOTTOM_DEPTH = -0.583
 REAL_TOP_DEPTH = -20
 REAL_CENTER_DEPTH = -40
 REAL_BOTTOM_DEPTH = -60
@@ -300,11 +300,11 @@ def objective(params):
 def main():
     dataPath = os.path.join("..", "data", "fondo_1_tuning_4")
     space = {
-        'k_sat': hp.loguniform('k_sat', -14.5, -9),
-        'theta_sat': hp.uniform('theta_sat', 0.2, 0.7),
+        'k_sat': hp.loguniform('k_sat', -14.5, -10),
+        'theta_sat': hp.uniform('theta_sat', 0.3, 0.5),
         'alpha': hp.uniform('alpha', 1, 3),
         'n': hp.uniform('n', 1.01, 1.5),
-        'water_table': hp.uniform('water_table', 1.5, 4),
+        'water_table': hp.uniform('water_table', 1.5, 3.5),
         'LAI': hp.uniform('LAI', 2, 4),
         'roots_depth': hp.uniform('roots_depth', 0.5, 1.2),
         'roots_deformation': hp.uniform('roots_deformation', 0, 2),
