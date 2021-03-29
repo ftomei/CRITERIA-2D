@@ -258,76 +258,15 @@ def objective(params):
 
     print("\nEnd simulation.")
 
-
-    #print ("\nEnd simulation.")
-    original_data = pd.read_csv(os.path.join(dataPath, 'ground_truth.csv'))
-    original_data = original_data.pivot(index='timestamp', columns=['z', 'x'], values='H')
-    original_data.columns = ["_".join((str(z), str(x))) for z, x in original_data.columns]
-    original_data = original_data.reset_index()
-
-    #simulated_data = pd.read_csv(os.path.join(os.path.join(dataPath, 'output'), 'output.csv'))
-    #simulated_data = simulated_data.drop(['y', 'Se'], axis=1)
-    simulated_data = simulated_data[(simulated_data["z"] == SIMULATED_TOP_DEPTH) | (simulated_data["z"] == SIMULATED_CENTER_DEPTH) | (simulated_data["z"] == SIMULATED_BOTTOM_DEPTH)]
-    simulated_data = simulated_data[(simulated_data["x"] == SIMULATED_ZERO_DISTANCE) | (simulated_data["x"] == SIMULATED_LEFT_DISTANCE) | (simulated_data["x"] == SIMULATED_CENTER_DISTANCE) | (simulated_data["x"] == SIMULATED_RIGHT_DISTANCE)]
-    simulated_data = simulated_data.pivot(index='timestamp', columns=['z', 'x'], values='H')
-    simulated_data.columns = ["_".join((str(z), str(x))) for z, x in simulated_data.columns]
-    simulated_data = simulated_data.reset_index()
-    for z in depths.keys():
-        for x in distances.keys():
-            simulated_data = simulated_data.rename(columns={"_".join([str(z), str(x)]): "_".join([str(depths[z]), str(distances[x])])})
-
-    original_data_columns = original_data.columns.tolist()
-    original_data_columns.sort()
-    original_data = original_data[original_data_columns]
-
-    simulated_data_columns = simulated_data.columns.tolist()
-    simulated_data_columns.sort()
-    simulated_data = simulated_data[simulated_data_columns]
-
-    #print(original_data)
-    #print(simulated_data)
-
-    original_data = original_data.iloc[:, :-1].to_numpy() * -1
-    simulated_data = simulated_data.iloc[:, :-1].to_numpy() * -1
-    
-    original_data = np.nan_to_num(np.log(original_data))
-    simulated_data = np.nan_to_num(np.log(simulated_data))
-
-    total_rmse = mean_squared_error(simulated_data, original_data, squared=False)
-    
-    return {'loss': total_rmse, 'status': STATUS_OK}
-
-def main():
-    dataPath = os.path.join("..", "data", "fondo_1_tuning_4")
-    space = {
-        'k_sat': hp.loguniform('k_sat', -14.5, -10),
-        'theta_sat': hp.uniform('theta_sat', 0.3, 0.5),
-        'alpha': hp.uniform('alpha', 1, 3),
-        'n': hp.uniform('n', 1.01, 1.5),
-        'water_table': hp.uniform('water_table', 1.5, 3.5),
-        'LAI': hp.uniform('LAI', 2, 4),
-        'roots_depth': hp.uniform('roots_depth', 0.5, 1.2),
-        'roots_deformation': hp.uniform('roots_deformation', 0, 2),
-        'kc_max': hp.uniform('kc_max', 1.5, 2.5),
-        'root_max_distance': hp.uniform('root_max_distance', 1.5, 2.5)
-        }
-    trials = SparkTrials()
-    best = fmin(fn=objective,
-                space=space,
-                algo=tpe.suggest,
-                max_evals=150,
-                trials=trials,
-                show_progressbar=True)
-
-    best_parameters = pd.DataFrame.from_records([best])
-    best_parameters.to_csv(os.path.join(dataPath, 'best_parameters.csv'), index=False)
-
-    all_trials = pd.DataFrame(trials.trials)
-    all_trials.to_json(os.path.join(dataPath, 'all_trials.json'), indent=True)
-
-    best_trial = pd.DataFrame(trials.best_trial)
-    best_trial.to_json(os.path.join(dataPath,'best_trial.json'), indent=True)
-
-    objective(best)
-
-main()
+objective({
+    'k_sat': 0.000004240118827684865,
+    'theta_sat': 0.3252829772809138,
+    'alpha': 2.6449705882553447,
+    'n': 1.4084135909698337,
+    'water_table': 1.5303665217431706,
+    'LAI': 2.896779288103245,
+    'roots_depth': 0.9196773509805085,
+    'roots_deformation': 1.5145837843701035,
+    'kc_max': 1.589369082188781,
+    'root_max_distance': 1.7907858115876607
+    })
