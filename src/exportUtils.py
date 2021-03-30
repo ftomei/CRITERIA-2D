@@ -7,7 +7,7 @@ import pandas as pd
 exportIndeces = []
 outputFile = ""
 heightSlice = C3DStructure.gridHeight * 0.5
-oneTimestampPerRow = True
+oneTimestampPerRow = False
 
 
 def createExportFile(outputPath):

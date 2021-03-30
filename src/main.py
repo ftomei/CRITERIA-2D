@@ -1,12 +1,12 @@
 import numpy as np
 from dataStructures import *
 from readDataFile import readDataFile
-from fileUtilities import loadState
+# from fileUtilities import loadState
 import soil
 import waterBalance
 import rectangularMesh
 import criteria3D
-import visual3D
+# import visual3D
 import os
 from PenmanMonteith import computeHourlyET0
 from transmissivity import computeNormTransmissivity
@@ -151,8 +151,8 @@ def main():
         nrWaterEventsInWeatherTimeLength = int(weatherTimeLength / waterTimeLength)
     print("Total simulation time [hours]:", len(weatherData) * weatherTimeLength / 3600)
 
-    visual3D.initialize(1280)
-    visual3D.isPause = True
+    # visual3D.initialize(1280)
+    # visual3D.isPause = True
 
     # initialize export
     outputPath = os.path.join(dataPath, "output")
@@ -165,6 +165,8 @@ def main():
     extendedWeatherData, extendedWaterData = importUtils.setDataIndeces(weatherData, waterData)
     weatherData, waterData = extendedWeatherData.iloc[12:-12], extendedWaterData.iloc[12:-12]
     waterTableDate, waterTableDepth = importUtils.readWaterTable(waterPath)
+    minTimestamp, maxTimestamp = weatherData["end"].min(), weatherData["end"].max()
+
 
     for weatherIndex, obsWeather in weatherData.iterrows():
         currentDateTime = pd.to_datetime(obsWeather["end"], unit='s')
@@ -181,7 +183,7 @@ def main():
         normTransmissivity = computeNormTransmissivity(extendedWeatherData, currentDateTime, latitude, longitude)
         ET0 = computeHourlyET0(height, airTemperature, globalSWRadiation, airRelHumidity, windSpeed_10m,
                                normTransmissivity)  # mm m^-2
-        print(currentDateTime, "ET0:", format(ET0, ".2f"))
+        # print(currentDateTime, "ET0:", format(ET0, ".2f"))
 
         crop.setEvapotranspiration(ET0)
 
@@ -205,6 +207,7 @@ def main():
                 C3DParameters.deltaT_max = waterTimeLength
 
             criteria3D.compute(waterTimeLength)
+            print('{:.2f}'.format(((waterEvent["end"] - minTimestamp)/(maxTimestamp - minTimestamp))*100))
 
             exportUtils.takeScreenshot(waterEvent["end"])
 
