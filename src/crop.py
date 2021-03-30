@@ -29,12 +29,12 @@ class CCrop:
         self.laiMin = 1.0           # [m2 m-2]
         self.laiMax = 4.0           # [m2 m-2]
         self.rootDepthZero = 0.05   # [m]
-        self.rootDepthMax = 0.85    # [m]
-        self.rootDeformation = 0.5  # [-] 0: symmetric 1: cardioid 2: cardioid more accentuated
-        self.kcMax = 2.0            # [-]
+        self.rootDepthMax = 0.92    # [m]
+        self.rootDeformation = 1.51 # [-] 0: symmetric 1: cardioid 2: cardioid more accentuated
+        self.kcMax = 1.59           # [-]
         self.fRAW = 0.6             # [-]
         self.setMaxValues()
-        self.currentLAI = 3.0       # [m2 m-2]
+        self.currentLAI = 2.89      # [m2 m-2]
 
 
 kiwi = CCrop()

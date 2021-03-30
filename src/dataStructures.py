@@ -59,7 +59,7 @@ class Ccell:
 # model parameters
 class C3DParameters:
     # water retention and conductivity
-    initialWaterPotential = -1.5  # [m]
+    initialWaterPotential = -2  # [m]
     waterRetentionCurve = IPPISCH_VG
     meanType = LOGARITHMIC
     conductivityHVRatio = 1.0
@@ -80,7 +80,7 @@ class C3DParameters:
     isFreeLateralDrainage = True
     isFreeDrainage = True
     isWaterTable = True
-    waterTableDepth = -1.7      # [m]
+    waterTableDepth = -1.53      # [m]
     # numerical solution
     currentDeltaT = 60.0        # [s]
     deltaT_min = 30.0           # [s]
