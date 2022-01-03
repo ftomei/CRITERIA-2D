@@ -6,10 +6,11 @@ from commonConst import *
 class C3DStructure:
     nrDimensions = 3
     nrVerticesPerRectangle = 4
+    z0 = 0.0            # [m] z
+    slope = 0.2         # [-] slope
     gridWidth = 2.0     # [m] x axis
     gridHeight = 2.0    # [m] y axis
-    gridOrigin = 0.0    # [m] z
-    gridStep = 0.1      # [m]
+    gridStep = 0.2      # [m]
     nrRectanglesInXAxis = int(gridWidth / gridStep)
     nrRectanglesInYAxis = int(gridHeight / gridStep)
     nrRectangles = nrRectanglesInXAxis * nrRectanglesInYAxis
@@ -72,15 +73,15 @@ class C3DParameters:
     computeEvaporation = True
     computeTranspiration = True
     # surface flow
-    computeSurfaceFlow = False
+    computeSurfaceFlow = True
     roughness = 0.24            # [s m^0.33]
-    pond = 0.002                # [m]
+    pond = 0.001                # [m]
     # boundary
-    isSurfaceRunoff = False
+    isSurfaceRunoff = True
     isFreeLateralDrainage = True
     isFreeDrainage = True
     isWaterTable = True
-    waterTableDepth = -1.53      # [m]
+    waterTableDepth = -2        # [m]
     # numerical solution
     currentDeltaT = 60.0        # [s]
     deltaT_min = 30.0           # [s]

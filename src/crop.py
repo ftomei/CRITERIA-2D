@@ -29,21 +29,21 @@ class CCrop:
         self.laiMin = 1.0           # [m2 m-2]
         self.laiMax = 4.0           # [m2 m-2]
         self.rootDepthZero = 0.05   # [m]
-        self.rootDepthMax = 0.92    # [m]
-        self.rootDeformation = 1.51 # [-] 0: symmetric 1: cardioid 2: cardioid more accentuated
-        self.kcMax = 1.59           # [-]
+        self.rootDepthMax = 0.7     # [m]
+        self.rootDeformation = 1.5  # [-] 0: symmetric 1: cardioid 2: cardioid more accentuated
+        self.kcMax = 1.6            # [-]
         self.fRAW = 0.6             # [-]
         self.setMaxValues()
-        self.currentLAI = 2.89      # [m2 m-2]
+        self.currentLAI = 2.9       # [m2 m-2]
 
 
 kiwi = CCrop()
-rootDensityKiwi = []
+rootDensity = []
 k_root = np.array
 
 
 def initializeCrop(plantConfiguration, irrigationConfigurations):
-    global rootDensityKiwi, k_root
+    global rootDensity, k_root
 
     # initialize kiwifruit
     kiwi.setKiwifruit()
@@ -76,8 +76,7 @@ def initializeCrop(plantConfiguration, irrigationConfigurations):
 
     # set root density
     for i in range(C3DStructure.nrRectangles):
-        rootDensity = computeRootDensity(kiwi, C3DStructure.nrLayers, k_root[i])
-        rootDensityKiwi.append(rootDensity)
+        rootDensity.append(computeRootDensity(kiwi, C3DStructure.nrLayers, k_root[i]))
 
 
 def getCropSurfaceCover(currentLAI):
@@ -146,11 +145,13 @@ def cardioidDistribution(deformationFactor, nrLayersWithRoot):
 
 def computeRootDensity(crop, nrLayers, rootFactor):
     # initialize
-    rootDensity = np.zeros(nrLayers, np.float64)
+    myRootDensity = np.zeros(nrLayers, np.float64)
     if crop.currentRootLength <= 0 or rootFactor == 0:
-        return rootDensity
+        return myRootDensity
 
-    rootLength = crop.currentRootLength * rootFactor
+    rootLength = crop.currentRootLength * math.sqrt(rootFactor)
+    if rootLength < 0.001:
+        return myRootDensity
 
     # smallest unit of computation (1 mm)
     atoms = np.zeros(nrLayers, np.int16)
@@ -166,17 +167,17 @@ def computeRootDensity(crop, nrLayers, rootFactor):
     for layer in range(nrLayers):
         for i in range(atoms[layer]):
             if (counter >= nrUnrootedAtoms) and (counter < nrUnrootedAtoms + nrRootedAtoms):
-                rootDensity[layer] += densityAtoms[counter - nrUnrootedAtoms]
+                myRootDensity[layer] += densityAtoms[counter - nrUnrootedAtoms]
             counter += 1
 
     # check (rootDensitySum == 1)
     rootDensitySum = 0.0
     for i in range(nrLayers):
-        rootDensitySum += rootDensity[i]
+        rootDensitySum += myRootDensity[i]
     if abs(rootDensitySum - 1.0) > EPSILON:
         print("WARNING! Sum of root density:", rootDensitySum)
 
-    return rootDensity
+    return myRootDensity
 
 
 # assign hourly transpiration
@@ -329,7 +330,7 @@ def setEvapotranspiration(ET0):
         for i in range(C3DStructure.nrRectangles):
             maxTrKiwi = getMaxTranspiration(kiwi.currentLAI, kiwi.kcMax, ET0)
             maxTranspiration = k_root[i] * maxTrKiwi
-            setTranspiration(i, kiwi, rootDensityKiwi[i], maxTranspiration)
+            setTranspiration(i, kiwi, rootDensity[i], maxTranspiration)
 
     if C3DParameters.computeEvaporation:
         maxEvaporation = getMaxEvaporation(kiwi.currentLAI, ET0)

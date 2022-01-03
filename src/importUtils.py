@@ -51,9 +51,6 @@ def readArpaeData(arpaePath):
 
 
 def readWaterData(waterPath, arpae_start, arpae_end):
-    irrigationConfigurationsFile = "irrigations_configurations.csv"
-    irrigationConfigurations = pd.read_csv(os.path.join(waterPath, irrigationConfigurationsFile))
-
     irrigationFile = "irrigations.csv"
     irrigation = pd.read_csv(os.path.join(waterPath, irrigationFile))
 
@@ -78,7 +75,7 @@ def readWaterData(waterPath, arpae_start, arpae_end):
     if arpae_start != mergedDf.iloc[0]["start"] or arpae_end != mergedDf.iloc[-1]["start"]:
         raise Exception("Irrigation file has a different time span")
 
-    return irrigationConfigurations, mergedDf
+    return mergedDf
 
 
 def transformDates(arpaeData, waterData):

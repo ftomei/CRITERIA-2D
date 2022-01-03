@@ -1,13 +1,11 @@
 # criteria3D.py
 
-from math import fabs
+from math import fabs, sqrt
 from dataStructures import *
 from rectangularMesh import distance3D
-import waterBalance
 import visual3D
 import soil
 import time
-import crop
 
 CYTHON = True
 if CYTHON:
@@ -15,7 +13,7 @@ if CYTHON:
 else:
     import solver as solver
 
-irrigationIndeces = []
+irrigationIndices = []
 
 
 def memoryAllocation(nrLayers, nrRectangles):
@@ -45,23 +43,24 @@ def setBoundaryProperties(i, area, slope):
     C3DCells[i].boundary.slope = slope
 
 
-def setDripIrrigationPositions(irrigationConfigurations):
+def setDripIrrigationPositions(rectangularMesh, irrigationConfigurations):
     for _, position in irrigationConfigurations.iterrows():
-        # x
-        xOffset = position['x'] / C3DStructure.gridStep
-        if xOffset < 0:
-            xOffset = 0
-        if xOffset >= C3DStructure.nrRectanglesInXAxis:
-            xOffset = C3DStructure.nrRectanglesInXAxis - 1
-        # y
-        yOffset = position['y'] / C3DStructure.gridStep
-        if yOffset < 0:
-            yOffset = 0
-        if yOffset >= C3DStructure.nrRectanglesInYAxis:
-            yOffset = C3DStructure.nrRectanglesInYAxis - 1
-        # index
-        index = int(C3DStructure.nrRectanglesInXAxis * yOffset + xOffset)
-        irrigationIndeces.append(index)
+        xDrip = position['x']
+        yDrip = position['y']
+
+        min_distance = NODATA
+        index = NODATA
+        # search index
+        for i in range(C3DStructure.nrRectangles):
+            [x, y, z] = rectangularMesh.C3DRM[i].centroid
+            dx = fabs(xDrip - x)
+            dy = fabs(yDrip - y)
+            d = sqrt(dx * dx + dy * dy)
+            if min_distance == NODATA or d < min_distance:
+                min_distance = d
+                index = i
+
+        irrigationIndices.append(index)
 
 
 def getCellDistance(i, j):
@@ -128,7 +127,7 @@ def setRainfall(rain, duration):
 # -----------------------------------------------------------
 def setDripIrrigation(irrigation, duration):
     rate = irrigation / duration  # [l s^-1]
-    for index in irrigationIndeces:
+    for index in irrigationIndices:
         C3DCells[index].sinkSource += rate * 0.001  # [m^3 s^-1]
 
 
@@ -145,7 +144,7 @@ def compute(timeLength):
                 time.sleep(0.00001)
 
             deltaT = min(C3DParameters.currentDeltaT, residualTime)
-            # print("\ntime step [s]: ", deltaT)
+            # print("time step [s]: ", deltaT)
             # print("sink/source [l]:", format(waterBalance.sumSinkSource(deltaT) * 1000., ".5f"))
 
             acceptedStep = solver.computeStep(deltaT)

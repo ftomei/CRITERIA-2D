@@ -16,7 +16,7 @@ from copy import copy
 sliceRectangles = []
 subSurfaceRectangles = []
 visualizedLayer = 0
-visualizedSlice = C3DStructure.nrRectanglesInXAxis * int(C3DStructure.nrRectanglesInYAxis / 2)
+visualizedSlice = int(C3DStructure.nrRectanglesInYAxis / 2)
 nrColorLevels = 10
 degreeMaximum = 1.0
 degreeMinimum = 0.4
@@ -79,7 +79,7 @@ def initialize(totalWidth):
     soilCanvas = visual.canvas(width = dx, height = dy, align="left")
     soilCanvas.background = visual.color.white
     soilCanvas.center = visual.vector(cX, cY, cZ+(rangeXY*0.2))
-    soilCanvas.ambient = visual.vector(0.33, 0.33, 0.33)
+    soilCanvas.ambient = visual.vector(0.5, 0.5, 0.5)
     soilCanvas.up = visual.vector(0,0,1)
     soilCanvas.forward = visual.vector(0, 0.01,-1.0)
     soilCanvas.range = rangeXY
@@ -92,11 +92,11 @@ def initialize(totalWidth):
     sliceCanvas = visual.canvas(width = dx, height = dy, align="left")
     sliceCanvas.background = visual.color.white
     sliceCanvas.center = visual.vector(cX, cY, cZ-(rangeZ*0.5))
-    sliceCanvas.ambient = visual.vector(0.33, 0.33, 0.33)
+    sliceCanvas.ambient = visual.vector(0.5, 0.5, 0.5)
     sliceCanvas.up = visual.vector(0, 0, 1)
     sliceCanvas.forward = visual.vector(0, 1, 0)
     sliceCanvas.range = rangeZ
-    sliceLabel = visual.label(canvas = sliceCanvas, height = h, pos=visual.vector(cX, cY, cZ+(rangeZ*0.2)))
+    sliceLabel = visual.label(canvas = sliceCanvas, height = h, pos=visual.vector(cX, cY, cZ+(rangeZ*0.3)))
     
     sliceCanvas.caption = " *** COMMANDS ***\n\n 'r': run simulation \n 'p': pause "
     sliceCanvas.caption += "\n '^': move up (soil layer) \n 'v': move down (soil layer) "
@@ -184,10 +184,10 @@ def updateLayer(s):
     global visualizedLayer
     
     if s == 'down':
-        if (visualizedLayer < C3DStructure.nrLayers-1):
+        if visualizedLayer < C3DStructure.nrLayers-1:
             visualizedLayer += 1
     elif s == 'up':
-        if (visualizedLayer > 0):
+        if visualizedLayer > 0:
             visualizedLayer -= 1
              
     updateInterface()
@@ -197,12 +197,12 @@ def updateLayer(s):
 def updateSlice(s):
     global visualizedSlice
     
-    if s == 'left':
-        if (visualizedSlice < (C3DStructure.nrRectangles - C3DStructure.nrRectanglesInXAxis)):
-            visualizedSlice += C3DStructure.nrRectanglesInXAxis
-    elif s == 'right':
-        if (visualizedSlice > 0):
-            visualizedSlice -= C3DStructure.nrRectanglesInXAxis
+    if s == 'right':
+        if visualizedSlice < C3DStructure.nrRectanglesInYAxis-1:
+            visualizedSlice += 1
+    elif s == 'left':
+        if visualizedSlice > 0:
+            visualizedSlice -= 1
              
     updateInterface()
     drawSlice(False)
@@ -255,26 +255,34 @@ def getNewRectangle(myColor, myCanvas, v):
 
 def drawSlice(isFirst):
     global sliceRectangles
-    
-    posY = (visualizedSlice / C3DStructure.nrRectanglesInXAxis) * C3DStructure.gridStep + C3DStructure.gridStep*0.5
-    if isWaterPotential:
+    from crop import k_root, rootDensity
+
+    firstIndex = visualizedSlice * C3DStructure.nrRectanglesInXAxis
+    posY = C3DCells[firstIndex].y
+
+    if isRootVisualization:
+        var = "Root density"
+    elif isWaterPotential:
         var = "Water potential"
     else:
         var = "Degree of saturation"
-    sliceLabel.text =  var + " - slice at " + format(posY*100,".1f")+"cm"
-    
+    sliceLabel.text = var + " - slice at " + format(posY*100, ".1f") + "cm"
+
     for z in range(C3DStructure.nrLayers):
         for x in range(C3DStructure.nrRectanglesInXAxis):
-            index = visualizedSlice + x + (z * C3DStructure.nrRectangles)
+            index = firstIndex + x + (z * C3DStructure.nrRectangles)
             i = z * C3DStructure.nrRectanglesInXAxis + x
-            if isWaterPotential:
+            if isRootVisualization:
+                surfaceIndex = firstIndex + x
+                c = getSEColor(2 * k_root[surfaceIndex]*rootDensity[surfaceIndex][z], 0, 1)
+            elif isWaterPotential:
                 c = getMatricPotentialColor(C3DCells[index].H - C3DCells[index].z)
             else:
                 c = getSEColor(C3DCells[index].Se, degreeMinimum, degreeMaximum)
             myColor = visual.vector(c[0], c[1], c[2])
             
             if isFirst:
-                vertices = copy(rectangularMesh.C3DRM[visualizedSlice + x].v)
+                vertices = copy(rectangularMesh.C3DRM[firstIndex + x].v)
                 for v in vertices[:2]:
                     v[2] = v[2] - soil.depth[z] + (soil.thickness[z] * 0.5)
                 vertices[2] = vertices[0]
@@ -293,7 +301,7 @@ def drawSlice(isFirst):
 def drawSubSurface(isFirst):
     global subSurfaceRectangles
 
-    from crop import kiwi, k_root
+    from crop import k_root
     maxWaterLevel = 0
     for i in range(C3DStructure.nrRectangles):
         index = visualizedLayer * C3DStructure.nrRectangles + i

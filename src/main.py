@@ -1,7 +1,4 @@
-import numpy as np
 from dataStructures import *
-from readDataFile import readDataFile
-from fileUtilities import loadState
 import soil
 import waterBalance
 import rectangularMesh
@@ -13,13 +10,13 @@ from transmissivity import computeNormTransmissivity
 import exportUtils
 import importUtils
 import pandas as pd
-import datetime
 import crop
 
 
 def main():
     print(os.getcwd())
-    dataPath = os.path.join("data", "fondo_1")
+    dataPath = os.path.join("data", "errano")
+    settingsFolder = os.path.join(dataPath, "settings")
 
     print("Building rectangle mesh...")
     rectangularMesh.rectangularMeshCreation()
@@ -30,9 +27,8 @@ def main():
 
     # SOIL
     print("Load soil...")
-    soilFolder = "soil"
-    soilFile = "soil_fitting.txt"
-    soilPath = os.path.join(dataPath, soilFolder, soilFile)
+    soilFile = "soil.txt"
+    soilPath = os.path.join(settingsFolder, soilFile)
     soil.C3DSoil = soil.readHorizon(soilPath, 1)
     totalDepth = soil.C3DSoil.lowerDepth
     print("Soil depth [m]:", totalDepth)
@@ -122,23 +118,26 @@ def main():
     waterBalance.initializeBalance()
     print("Initial water storage [m^3]:", format(waterBalance.currentStep.waterStorage, ".3f"))
 
+    print("Read drip position...")
+    irrigationConfigurations = pd.read_csv(os.path.join(settingsFolder, "drippers.csv"))
+    criteria3D.setDripIrrigationPositions(rectangularMesh, irrigationConfigurations)
+
+    print("Read plant position...")
+    plantConfiguration = pd.read_csv(os.path.join(settingsFolder, "plant.csv"))
+    crop.initializeCrop(plantConfiguration, irrigationConfigurations)
+
     print("Read weather data...")
     weatherDataFolder = "arpae"
     weatherDataPath = os.path.join(dataPath, weatherDataFolder)
     stationInfo, weatherData = importUtils.readArpaeData(weatherDataPath)
     height = stationInfo.iloc[0]["Altezza (Metri sul livello del mare)"]
 
-    print("Read irrigations data...")
+    print("Read irrigation data...")
     waterFolder = "water"
     waterPath = os.path.join(dataPath, waterFolder)
-    irrigationConfigurations, waterData = importUtils.readWaterData(waterPath, weatherData.iloc[0]["start"],
-                                                                     weatherData.iloc[-1]["start"])
-    criteria3D.setDripIrrigationPositions(irrigationConfigurations)
+    waterData = importUtils.readWaterData(waterPath, weatherData.iloc[0]["start"], weatherData.iloc[-1]["start"])
 
     # weatherData, waterData = importUtils.transformDates(weatherData, waterData)
-    soilPath = os.path.join(dataPath, "soil")
-    plantConfiguration = pd.read_csv(os.path.join(soilPath, "plant_configuration.csv"))
-    crop.initializeCrop(plantConfiguration, irrigationConfigurations)
 
     # TIME LENGTH
     weatherTimeLength = (weatherData.iloc[0]["end"] - weatherData.iloc[0]["start"])  # [s]
@@ -194,7 +193,7 @@ def main():
             criteria3D.setRainfall(waterEvent["precipitations"], waterTimeLength)
 
             if C3DParameters.assignIrrigation:
-                waterBalance.currentIrr = (len(criteria3D.irrigationIndeces) * waterEvent[
+                waterBalance.currentIrr = (len(criteria3D.irrigationIndices) * waterEvent[
                     "irrigations"]) / waterTimeLength * 3600  # [l hour-1]
                 criteria3D.setDripIrrigation(waterEvent["irrigations"], waterTimeLength)
 
