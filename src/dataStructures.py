@@ -6,13 +6,20 @@ from commonConst import *
 class C3DStructure:
     nrDimensions = 3
     nrVerticesPerRectangle = 4
-    z0 = 0.0            # [m] z
-    slope = 0.2         # [-] slope
-    gridWidth = 2.0     # [m] x axis
-    gridHeight = 2.0    # [m] y axis
+    z0 = 1.0            # [m] z
+    slopePlant = 0.2    # [-] slope around plant (baulatura)
+    slopeX = -0.01      # [-] slope on x axis
+    slopeY = -0.025     # [-] slope on y axis
+    gridWidth = 2.6     # [m] x axis
+    gridHeight = 0.6    # [m] y axis
     gridStep = 0.2      # [m]
+
     nrRectanglesInXAxis = int(gridWidth / gridStep)
+    if abs(gridWidth - gridStep * nrRectanglesInXAxis) > EPSILON:
+        nrRectanglesInXAxis += 1
     nrRectanglesInYAxis = int(gridHeight / gridStep)
+    if abs(gridHeight - gridStep * nrRectanglesInYAxis) > EPSILON:
+        nrRectanglesInYAxis += 1
     nrRectangles = nrRectanglesInXAxis * nrRectanglesInYAxis
 
     nrLayers = 0
@@ -60,13 +67,13 @@ class Ccell:
 # model parameters
 class C3DParameters:
     # water retention and conductivity
-    initialWaterPotential = -2  # [m]
+    initialWaterPotential = -3.1    # [m]
     waterRetentionCurve = IPPISCH_VG
     meanType = LOGARITHMIC
     conductivityHVRatio = 1.0
     # soil layers
-    minThickness = 0.01         # [m]
-    maxThickness = 0.05         # [m]
+    minThickness = 0.01             # [m]
+    maxThickness = 0.05             # [m]
     geometricFactor = 1.2
     # sink-source
     assignIrrigation = True
@@ -76,20 +83,22 @@ class C3DParameters:
     computeSurfaceFlow = True
     roughness = 0.24            # [s m^0.33]
     pond = 0.001                # [m]
+    # infiltration
+    computeInfiltration = True
     # boundary
     isSurfaceRunoff = True
     isFreeLateralDrainage = True
     isFreeDrainage = True
-    isWaterTable = True
-    waterTableDepth = -2        # [m]
+    isWaterTable = False
+    waterTableDepth = -1.8      # [m]
     # numerical solution
     currentDeltaT = 60.0        # [s]
-    deltaT_min = 30.0           # [s]
+    deltaT_min = 2              # [s]
     deltaT_max = 600.0          # [s]
     maxIterationsNr = 100
     maxApproximationsNr = 10
     residualTolerance = 1E-12
-    MBRThreshold = 1E-2
+    MBRThreshold = 1E-5
 
 
 # global

@@ -1,10 +1,11 @@
-import waterBalance
 import os
 from dataStructures import *
+import rectangularMesh
 import soil
 import pandas as pd
 
-exportIndeces = []
+outputIndeces = []
+outputSurfaceIndeces = []
 outputFile = ""
 heightSlice = C3DStructure.gridHeight * 0.5
 oneTimestampPerRow = True
@@ -17,7 +18,7 @@ def createExportFile(outputPath):
     if oneTimestampPerRow:
         outputPoints = pd.read_csv(os.path.join(outputPath, "output_points.csv"))
         takeSelected(outputPoints)
-        header = "timestamp," + ",".join(map(lambda index: str(index), exportIndeces)) + "\n"
+        header = "timestamp," + ",".join(map(lambda index: str(index), outputIndeces)) + "\n"
     else:
         if heightSlice == 0:
             takeAll()
@@ -34,24 +35,25 @@ def createExportFile(outputPath):
 
 def takeSelected(outputPoints):
     for _, position in outputPoints.iterrows():
-        xOffset = position['x'] / C3DStructure.gridStep
-        yOffset = position['y'] / C3DStructure.gridStep
+        x = position['x']
+        y = position['y']
         depth = position['z']
-        if 0 <= xOffset < C3DStructure.nrRectanglesInXAxis and 0 <= yOffset < C3DStructure.nrRectanglesInYAxis:
-            i = 1
-            zOffset = NODATA
-            isFound = False
-            while i < C3DStructure.nrLayers and not isFound:
-                top = soil.depth[i] - (soil.thickness[i] * 0.5)
-                bottom = soil.depth[i] + (soil.thickness[i] * 0.5)
+
+        surfaceIndex = NODATA
+        for i in range(C3DStructure.nrRectangles):
+            if rectangularMesh.isInsideRectangle(x, y, rectangularMesh.C3DRM[i]):
+                surfaceIndex = i
+                break
+
+        if surfaceIndex != NODATA:
+            for layer in range(C3DStructure.nrLayers):
+                top = soil.depth[layer] - (soil.thickness[layer] * 0.5)
+                bottom = soil.depth[layer] + (soil.thickness[layer] * 0.5)
                 if top < depth <= bottom:
-                    zOffset = i
-                    isFound = True
-                i += 1
-            if isFound:
-                # index
-                index = C3DStructure.nrRectangles * zOffset + int(C3DStructure.nrRectanglesInXAxis * yOffset + xOffset)
-                exportIndeces.append(index)
+                    index = surfaceIndex + C3DStructure.nrRectangles * layer
+                    outputIndeces.append(index)
+                    outputSurfaceIndeces.append(surfaceIndex)
+                    break
 
 
 def takeSlice():
@@ -61,18 +63,18 @@ def takeSlice():
         for j in range(C3DStructure.nrRectanglesInXAxis):
             z = C3DStructure.nrRectangles * layer
             index = i + j + z
-            exportIndeces.append(int(index))
+            outputIndeces.append(int(index))
 
 
 def takeAll():
     for index in range(C3DStructure.nrCells):
-        exportIndeces.append(index)
+        outputIndeces.append(index)
 
 
 def takeScreenshot(timestamp):
     if oneTimestampPerRow:
         row = str(int(timestamp))
-        for index in exportIndeces:
+        for index in outputIndeces:
             psi = (C3DCells[index].H - C3DCells[index].z) * 9.81    # water potential [kPa] equivalent to [centibar]
             row += "," + '{:.3f}'.format(psi)
         row += "\n"
@@ -80,7 +82,7 @@ def takeScreenshot(timestamp):
         with open(outputFile, "a") as f:
             f.write(row)
     else:
-        for index in exportIndeces:
+        for index in outputIndeces:
             if C3DCells[index].z != 0.0 and C3DCells[index].x >= 1.0:
                 row = str(int(timestamp))
                 row += "," + '{:.3f}'.format(C3DCells[index].x)

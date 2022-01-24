@@ -19,19 +19,16 @@ def updateBoundary(deltaT):
 
         if C3DCells[i].boundary.type != BOUNDARY_NONE:
             slope = C3DCells[i].boundary.slope
-            if slope == 0.0:
-                slope = 0.001
             meanH = (C3DCells[i].H + C3DCells[i].H0) * 0.5
 
             if C3DCells[i].boundary.type == BOUNDARY_RUNOFF:
-                if slope > 0.0:
-                    Hs = meanH - (C3DCells[i].z + C3DParameters.pond)
-                    if Hs > EPSILON_METER:
-                        boundaryArea = C3DCells[i].boundary.area * Hs
-                        maxFlow = (Hs * C3DCells[i].area) / deltaT
-                        # Manning equation [m3 s-1]
-                        flow = ((boundaryArea / C3DParameters.roughness) * (Hs ** (2. / 3.)) * sqrt(slope))
-                        C3DCells[i].boundary.flow = -min(flow, maxFlow)
+                Hs = meanH - (C3DCells[i].z + C3DParameters.pond)
+                if Hs > EPSILON_METER and slope > 0:
+                    boundaryArea = C3DCells[i].boundary.area * Hs
+                    maxFlow = (Hs * C3DCells[i].area) / deltaT
+                    # Manning equation [m3 s-1]
+                    flow = ((boundaryArea / C3DParameters.roughness) * (Hs ** (2./3.)) * sqrt(slope))
+                    C3DCells[i].boundary.flow = -min(flow, maxFlow)
 
             elif C3DCells[i].boundary.type == BOUNDARY_FREELATERALDRAINAGE:
                 k = C3DCells[i].k * C3DParameters.conductivityHVRatio

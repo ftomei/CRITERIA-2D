@@ -1,6 +1,7 @@
 # color.py
 
 import numpy as np
+from commonConst import EPSILON
 
 colorScaleTIN = np.array([[], []], float)
 colorRangeSE = np.array([[], []], float)
@@ -53,7 +54,7 @@ def setColorScaleDegreeOfSaturation():
     keyColors[1] = (255, 255, 0)  # yellow
     keyColors[2] = (0, 255, 0)  # green
     keyColors[3] = (0, 0, 255)  # blue
-    colorRangeSE = setColorScale(4096, keyColors)
+    colorRangeSE = setColorScale(1024, keyColors)
 
 
 def setColorScaleSurfaceWater():
@@ -80,7 +81,7 @@ def getTINColor(z, header):
 
 def getSEColor(degreeSaturation, minimum, maximum):
     if degreeSaturation == 0:
-        return 0, 0, 0
+        return 0.5, 0.5, 0.5
     percentage = (degreeSaturation - minimum) / (maximum - minimum)
     percentage = min(1.0, max(percentage, 0.0))
     index = int(percentage * (len(colorRangeSE) - 1))
@@ -108,5 +109,9 @@ def getMatricPotentialColor(signPsi):
 def getSurfaceWaterColor(waterHeight, maximum):
     percentage = waterHeight / maximum
     percentage = min(1.0, max(0.0, percentage))
-    index = int(percentage * (len(colorRangeSE) - 1))
-    return colorRangeSE[index]
+    if percentage < EPSILON:
+        return 0, 1, 0  # green
+    else:
+        # index = int(percentage * (len(colorRangeSE) - 1))
+        # return colorRangeSE[index]
+        return 0, 1 - percentage, percentage

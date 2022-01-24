@@ -13,7 +13,9 @@ class CCrop:
     laiMax = NODATA             # [m2 m-2]
     rootDepthZero = NODATA      # [m]
     rootDepthMax = NODATA       # [m]
-    rootDeformation = NODATA    # [-]
+    rootWidth = NODATA          # [m]
+    rootXDeformation = NODATA   # [-]
+    rootZDeformation = NODATA   # [-]
     kcMax = NODATA              # [-]
     fRAW = NODATA               # [-]
     currentLAI = NODATA
@@ -26,15 +28,17 @@ class CCrop:
         self.currentRootLength = self.currentRootDepth - self.rootDepthZero
 
     def setKiwifruit(self):
-        self.laiMin = 1.0           # [m2 m-2]
-        self.laiMax = 4.0           # [m2 m-2]
-        self.rootDepthZero = 0.05   # [m]
-        self.rootDepthMax = 0.7     # [m]
-        self.rootDeformation = 1.5  # [-] 0: symmetric 1: cardioid 2: cardioid more accentuated
-        self.kcMax = 1.6            # [-]
-        self.fRAW = 0.6             # [-]
+        self.laiMin = 1.0               # [m2 m-2]
+        self.laiMax = 4.0               # [m2 m-2]
+        self.rootDepthZero = 0.15       # [m]
+        self.rootDepthMax = 0.9         # [m]
+        self.rootWidth = 2.0            # [m]
+        self.rootXDeformation = 0.75    # [-]
+        self.rootZDeformation = 0.0     # [-] 0: symmetric 1: cardioid 2: cardioid more accentuated
+        self.kcMax = 2.0                # [-]
+        self.fRAW = 0.6                 # [-]
         self.setMaxValues()
-        self.currentLAI = 2.9       # [m2 m-2]
+        self.currentLAI = 4.0       # [m2 m-2]
 
 
 kiwi = CCrop()
@@ -42,7 +46,7 @@ rootDensity = []
 k_root = np.array
 
 
-def initializeCrop(plantConfiguration, irrigationConfigurations):
+def initializeCrop(plantConfiguration):
     global rootDensity, k_root
 
     # initialize kiwifruit
@@ -52,11 +56,11 @@ def initializeCrop(plantConfiguration, irrigationConfigurations):
     k_root = np.zeros(C3DStructure.nrRectangles)
     if C3DParameters.computeTranspiration:
         # line plant-sprinkler
-        max_distance = plantConfiguration.iloc[0]['max_distance']
+        max_distance = kiwi.rootWidth * 0.5
         x1 = plantConfiguration.iloc[0]['plant_x']
         y1 = plantConfiguration.iloc[0]['plant_y']
-        x2 = irrigationConfigurations.iloc[0]['x']
-        y2 = irrigationConfigurations.iloc[0]['y']
+        x2 = plantConfiguration.iloc[1]['plant_x']
+        y2 = plantConfiguration.iloc[1]['plant_y']
         a = y2 - y1
         b = x1 - x2
         c = y1 * (x2 - x1) - x1 * (y2 - y1)
@@ -64,13 +68,13 @@ def initializeCrop(plantConfiguration, irrigationConfigurations):
 
         for i in range(C3DStructure.nrRectangles):
             [x, y, z] = rectangularMesh.C3DRM[i].centroid
-            line_distance = abs(a * x + b * y + c) / denominator
+            line_distance = math.fabs(a * x + b * y + c) / denominator
             # plant_cell_distance = rectangularMesh.distance2D(plant_xy, rectangularMesh.C3DRM[i].centroid)
 
-            if line_distance > max_distance:
-                k_root[i] = 0.0
+            if line_distance < max_distance or math.fabs(line_distance - max_distance) < EPSILON:
+                k_root[i] = 1.0 - (line_distance / max_distance) * kiwi.rootXDeformation
             else:
-                k_root[i] = 1 - (line_distance / max_distance)
+                k_root[i] = 0.0
     else:
         kiwi.currentLAI = 0
 
@@ -160,7 +164,7 @@ def computeRootDensity(crop, nrLayers, rootFactor):
 
     nrUnrootedAtoms = int(round(crop.rootDepthZero * 1000))
     nrRootedAtoms = int(round(rootLength * 1000))
-    densityAtoms = cardioidDistribution(crop.rootDeformation, nrRootedAtoms)
+    densityAtoms = cardioidDistribution(crop.rootZDeformation, nrRootedAtoms)
 
     # assign root density
     counter = 0
@@ -181,7 +185,7 @@ def computeRootDensity(crop, nrLayers, rootFactor):
 
 
 # assign hourly transpiration
-def setTranspiration(surfaceIndex, crop, rootDensity, maxTranspiration):
+def setTranspiration(surfaceIndex, crop, myRootDensity, maxTranspiration):
     if maxTranspiration < EPSILON:
         return 0.0
 
@@ -193,7 +197,7 @@ def setTranspiration(surfaceIndex, crop, rootDensity, maxTranspiration):
     rootDensityWithoutStress = 0.0  # [-]
     actualTranspiration = 0.0  # [mm]
 
-    nrLayers = len(rootDensity)
+    nrLayers = len(myRootDensity)
     isLayerStressed = np.zeros(nrLayers, dtype=bool)
     layerTranspiration = np.zeros(nrLayers, np.float64)
     for layer in range(nrLayers):
@@ -201,7 +205,7 @@ def setTranspiration(surfaceIndex, crop, rootDensity, maxTranspiration):
         layerTranspiration[layer] = 0
 
     for layer in range(nrLayers):
-        if rootDensity[layer] > 0:
+        if myRootDensity[layer] > 0:
             i = surfaceIndex + C3DStructure.nrRectangles * layer
             theta = soil.getVolumetricWaterContent(i)
             # TODO water surplus
@@ -211,12 +215,12 @@ def setTranspiration(surfaceIndex, crop, rootDensity, maxTranspiration):
                 if theta <= WP:
                     layerTranspiration[layer] = 0
                 else:
-                    layerTranspiration[layer] = maxTranspiration * rootDensity[layer] * (
+                    layerTranspiration[layer] = maxTranspiration * myRootDensity[layer] * (
                                 (theta - WP) / (WSThreshold - WP))
                 isLayerStressed[layer] = True
             else:
                 # normal conditions
-                layerTranspiration[layer] = maxTranspiration * rootDensity[layer]
+                layerTranspiration[layer] = maxTranspiration * myRootDensity[layer]
 
                 # check stress
                 theta_mm = theta * soil.thickness[layer] * 1000.
@@ -224,7 +228,7 @@ def setTranspiration(surfaceIndex, crop, rootDensity, maxTranspiration):
 
                 if (theta_mm - layerTranspiration[layer]) > WSThreshold_mm:
                     isLayerStressed[layer] = False
-                    rootDensityWithoutStress += rootDensity[layer]
+                    rootDensityWithoutStress += myRootDensity[layer]
                 else:
                     isLayerStressed[layer] = True
 
@@ -241,8 +245,8 @@ def setTranspiration(surfaceIndex, crop, rootDensity, maxTranspiration):
 
         # redistribution acts on not stressed roots
         for layer in range(nrLayers):
-            if (rootDensity[layer] > 0) and (not isLayerStressed[layer]):
-                addTranspiration = redistribution * (rootDensity[layer] / rootDensityWithoutStress)
+            if (myRootDensity[layer] > 0) and (not isLayerStressed[layer]):
+                addTranspiration = redistribution * (myRootDensity[layer] / rootDensityWithoutStress)
                 layerTranspiration[layer] += addTranspiration
                 actualTranspiration += addTranspiration
 
@@ -290,7 +294,7 @@ def setEvaporation(surfaceIndex, maxEvaporation):
         sumCoefficient += (coeffEvap[i] * soil.thickness[i])
 
     isWaterSupply = True
-    while (residualEvaporation > EPSILON) and (isWaterSupply == True):
+    while (residualEvaporation > EPSILON) and (isWaterSupply is True):
         isWaterSupply = False
         sumEvaporation = 0.0
 

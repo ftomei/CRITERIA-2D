@@ -2,7 +2,7 @@
 
 from math import fabs, sqrt
 from dataStructures import *
-from rectangularMesh import distance3D
+import rectangularMesh
 import visual3D
 import soil
 import time
@@ -14,6 +14,7 @@ else:
     import solver as solver
 
 irrigationIndices = []
+plantIndices = []
 
 
 def memoryAllocation(nrLayers, nrRectangles):
@@ -43,30 +44,32 @@ def setBoundaryProperties(i, area, slope):
     C3DCells[i].boundary.slope = slope
 
 
-def setDripIrrigationPositions(rectangularMesh, irrigationConfigurations):
+def setDripIrrigationPositions(irrigationConfigurations):
     for _, position in irrigationConfigurations.iterrows():
-        xDrip = position['x']
-        yDrip = position['y']
-
-        min_distance = NODATA
-        index = NODATA
+        x = position['x']
+        y = position['y']
         # search index
         for i in range(C3DStructure.nrRectangles):
-            [x, y, z] = rectangularMesh.C3DRM[i].centroid
-            dx = fabs(xDrip - x)
-            dy = fabs(yDrip - y)
-            d = sqrt(dx * dx + dy * dy)
-            if min_distance == NODATA or d < min_distance:
-                min_distance = d
-                index = i
+            if rectangularMesh.isInsideRectangle(x, y, rectangularMesh.C3DRM[i]):
+                irrigationIndices.append(i)
+                break
 
-        irrigationIndices.append(index)
+
+def setPlantPositions(plantConfigurations):
+    for _, position in plantConfigurations.iterrows():
+        x = position['plant_x']
+        y = position['plant_y']
+        # search index
+        for i in range(C3DStructure.nrRectangles):
+            if rectangularMesh.isInsideRectangle(x, y, rectangularMesh.C3DRM[i]):
+                plantIndices.append(i)
+                break
 
 
 def getCellDistance(i, j):
     v1 = [C3DCells[i].x, C3DCells[i].y, C3DCells[i].z]
     v2 = [C3DCells[j].x, C3DCells[j].y, C3DCells[j].z]
-    return distance3D(v1, v2)
+    return rectangularMesh.distance3D(v1, v2)
 
 
 # -----------------------------------------------------------

@@ -15,7 +15,7 @@ class C3DBalance:
 totalTime = 0.0
 currentPrec = 0.0
 currentIrr = 0.0
-MBRMultiply = 1.0
+MBRMultiply: float = 1.0
 maxCourant = 0.0
 bestMBR = NODATA
 nrMBRWrong = 0
@@ -35,7 +35,7 @@ def doubleTimeStep():
 
 
 def halveTimeStep():
-    if (C3DParameters.currentDeltaT == C3DParameters.deltaT_min):
+    if C3DParameters.currentDeltaT == C3DParameters.deltaT_min:
         incMBRThreshold()
     else:
         C3DParameters.currentDeltaT = max(C3DParameters.currentDeltaT * 0.5,
@@ -50,7 +50,7 @@ def incMBRThreshold():
 
 def decMBRThreshold():
     global MBRMultiply
-    if (MBRMultiply > 1.0):
+    if MBRMultiply > 1.0:
         MBRMultiply *= 0.5
         C3DParameters.MBRThreshold *= 0.5
 
@@ -80,8 +80,8 @@ def updateBalance(deltaT):
 def getWaterStorage():
     waterStorage = 0.0
     for i in range(C3DStructure.nrCells):
-        if (C3DCells[i].isSurface):
-            if (C3DCells[i].H > C3DCells[i].z):
+        if C3DCells[i].isSurface:
+            if C3DCells[i].H > C3DCells[i].z:
                 waterStorage += (C3DCells[i].H - C3DCells[i].z) * C3DCells[i].area
         else:
             waterStorage += (getVolumetricWaterContent(i) * C3DCells[i].volume)
@@ -91,8 +91,8 @@ def getWaterStorage():
 def sumBoundaryFlow(deltaT):
     mySum = 0.0
     for i in range(C3DStructure.nrCells):
-        if (C3DCells[i].boundary.type != BOUNDARY_NONE):
-            if (C3DCells[i].boundary.flow != NODATA):
+        if C3DCells[i].boundary.type != BOUNDARY_NONE:
+            if C3DCells[i].boundary.flow != NODATA:
                 mySum += C3DCells[i].boundary.flow * deltaT
     return mySum
 
@@ -119,16 +119,9 @@ def sumWaterFlow(deltaT, isAbsoluteValue):
 def computeBalanceError(deltaT):
     currentStep.waterStorage = getWaterStorage()
     currentStep.waterFlow = sumWaterFlow(deltaT, False)
-    deltaStorage = currentStep.waterStorage - previousStep.waterStorage
-    currentStep.MBE = deltaStorage - currentStep.waterFlow
+    currentStep.MBE = currentStep.waterStorage - (previousStep.waterStorage + currentStep.waterFlow)
+    currentStep.MBR = fabs(currentStep.MBE) / previousStep.waterStorage
 
-    # sumFlowAbs = abs(currentStep.waterFlow)
-    sumFlowAbs = sumWaterFlow(deltaT, True)
-    minimumFlow = ((C3DStructure.totalArea * 0.0005) / 3600.0) * deltaT
-    if sumFlowAbs < minimumFlow:
-        currentStep.MBR = abs(currentStep.MBE) / minimumFlow
-    else:
-        currentStep.MBR = abs(currentStep.MBE) / sumFlowAbs
     # print ("Mass Balance Error [l]:", format(currentStep.MBE * 1000,".5f"))
     # print("Mass Balance Ratio:", format(currentStep.MBR, ".5f"))
 
@@ -145,7 +138,8 @@ def waterBalance(deltaT, approximation):
     # case 1: step accepted
     if currentStep.MBR < C3DParameters.MBRThreshold:
         updateBalance(deltaT)
-        if approximation < 3 and maxCourant < 0.3 and currentStep.MBR < (C3DParameters.MBRThreshold * 0.5):
+        if approximation < 3 and maxCourant < 0.3 and currentStep.MBR < (C3DParameters.MBRThreshold * 0.5) \
+                and C3DParameters.currentDeltaT < C3DParameters.deltaT_max:
             # print("Good MBR!")
             doubleTimeStep()
         return True

@@ -48,40 +48,36 @@ def clearSkyRad(myDate, finalHourUTC, latDegrees, lonDegrees):
     solarAngle = math.asin(math.sin(latRad) * math.sin(solarDeclination)
                            + math.cos(latRad) * math.cos(solarDeclination)
                            * math.cos(math.pi / 12 * (solarTime - solarNoon)))
+    clearSkyRadiation = max(0., SOLAR_CONSTANT * math.sin(solarAngle)) * MAXIMUM_TRANSMISSIVITY
+    return clearSkyRadiation
 
-    return max(0., SOLAR_CONSTANT * math.sin(solarAngle))
 
-
-def computeNormTransmissivity(obsData, currentDateTime, latitude, longitude):
+def computeNormTransmissivity(obsData, obsIndex, latitude, longitude):
+    currentIndex = obsIndex
     potentialRad = 0
     observedRad = 0
     nrHoursAhead = 0
 
-    myDateTime = currentDateTime
-    while (potentialRad < TRANSMISSIVITY_THRESHOLD) and (nrHoursAhead < 12):
-        date = datetime.date(myDateTime.year, myDateTime.month, myDateTime.day)
-        hour = myDateTime.hour
+    while (potentialRad < TRANSMISSIVITY_THRESHOLD) and (nrHoursAhead < 12) and (currentIndex >= 0):
+        currentData = obsData.iloc[currentIndex]
+        currentDateTime = pd.to_datetime(currentData["timestamp"], unit='s')
+        date = datetime.date(currentDateTime.year, currentDateTime.month, currentDateTime.day)
+        hour = currentDateTime.hour
         potentialRad += clearSkyRad(date, hour, latitude, longitude)
-        timestamp = (myDateTime - pd.Timedelta('1 hour') - pd.Timestamp("1970-01-01")) // pd.Timedelta('1s')
-        try:
-            observedRad += obsData.loc[timestamp]["radiations"]
-        except:
-            print("missing radiation data:", timestamp)
-
-        myDateTime += pd.Timedelta('1 hour')
-        if potentialRad >= TRANSMISSIVITY_THRESHOLD:
+        observedRad += currentData["solar_radiation"]
+        if potentialRad < TRANSMISSIVITY_THRESHOLD:
             nrHoursAhead += 1
+            currentIndex -= 1
 
-    myDateTime = currentDateTime
     for i in range(nrHoursAhead):
-        myDateTime -= pd.Timedelta('1 hour')
-        date = datetime.date(myDateTime.year, myDateTime.month, myDateTime.day)
-        hour = myDateTime.hour
-        potentialRad += clearSkyRad(date, hour, latitude, longitude)
-        timestamp = (myDateTime - pd.Timedelta('1 hour') - pd.Timestamp("1970-01-01")) // pd.Timedelta('1s')
-        try:
-            observedRad += obsData.loc[timestamp]["radiations"]
-        except:
-            print("missing radiation data:", timestamp)
+        currentIndex = obsIndex + i
+        if currentIndex < len(obsData):
+            currentData = obsData.iloc[currentIndex]
+            currentDateTime = pd.to_datetime(currentData["timestamp"], unit='s')
+            date = datetime.date(currentDateTime.year, currentDateTime.month, currentDateTime.day)
+            hour = currentDateTime.hour
+            potentialRad += clearSkyRad(date, hour, latitude, longitude)
+            observedRad += currentData["solar_radiation"]
 
-    return min(1., observedRad / (potentialRad * MAXIMUM_TRANSMISSIVITY))
+    return min(1., observedRad / potentialRad)
+

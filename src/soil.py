@@ -196,8 +196,8 @@ def dTheta_dPsi(curve, signPsi):
         return -theta / (C3DSoil.Campbell_b * signPsi)
     elif curve == IPPISCH_VG:
         dSe_dPsi = C3DSoil.VG_alpha * C3DSoil.VG_n * \
-                (C3DSoil.VG_m * pow(1. + pow(C3DSoil.VG_alpha * fabs(signPsi), C3DSoil.VG_n), -(C3DSoil.VG_m + 1.)) * \
-                pow(C3DSoil.VG_alpha * fabs(signPsi), C3DSoil.VG_n - 1.))
+                   (C3DSoil.VG_m * pow(1. + pow(C3DSoil.VG_alpha * fabs(signPsi), C3DSoil.VG_n), -(C3DSoil.VG_m + 1.))
+                    * pow(C3DSoil.VG_alpha * fabs(signPsi), C3DSoil.VG_n - 1.))
         dSe_dPsi *= (1. / C3DSoil.VG_Sc)
         return dSe_dPsi * (C3DSoil.thetaS - C3DSoil.VG_thetaR)
 

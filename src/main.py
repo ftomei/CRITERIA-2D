@@ -119,83 +119,86 @@ def main():
     print("Initial water storage [m^3]:", format(waterBalance.currentStep.waterStorage, ".3f"))
 
     print("Read drip position...")
-    irrigationConfigurations = pd.read_csv(os.path.join(settingsFolder, "drippers.csv"))
-    criteria3D.setDripIrrigationPositions(rectangularMesh, irrigationConfigurations)
+    irrigationConfigurations = pd.read_csv(os.path.join(settingsFolder, "dripper.csv"))
+    criteria3D.setDripIrrigationPositions(irrigationConfigurations)
 
     print("Read plant position...")
     plantConfiguration = pd.read_csv(os.path.join(settingsFolder, "plant.csv"))
-    crop.initializeCrop(plantConfiguration, irrigationConfigurations)
+    criteria3D.setPlantPositions(plantConfiguration)
+    crop.initializeCrop(plantConfiguration)
 
     print("Read weather data...")
-    weatherDataFolder = "arpae"
+    weatherDataFolder = "meteo"
     weatherDataPath = os.path.join(dataPath, weatherDataFolder)
-    stationInfo, weatherData = importUtils.readArpaeData(weatherDataPath)
-    height = stationInfo.iloc[0]["Altezza (Metri sul livello del mare)"]
+    stationInfo, weatherData = importUtils.readMeteoData(weatherDataPath)
+    height = stationInfo.iloc[0]["Height"]
 
     print("Read irrigation data...")
     waterFolder = "water"
     waterPath = os.path.join(dataPath, waterFolder)
-    waterData = importUtils.readWaterData(waterPath, weatherData.iloc[0]["start"], weatherData.iloc[-1]["start"])
+    waterData = importUtils.readWaterData(waterPath, weatherData.iloc[0]["timestamp"],
+                                          weatherData.iloc[-1]["timestamp"])
 
     # weatherData, waterData = importUtils.transformDates(weatherData, waterData)
 
     # TIME LENGTH
-    weatherTimeLength = (weatherData.iloc[0]["end"] - weatherData.iloc[0]["start"])  # [s]
-    waterTimeLength = (waterData.iloc[0]["end"] - waterData.iloc[0]["start"])  # [s]
-    print("Weather relevations time lenght [s]:", weatherTimeLength)
-    print("Water relevations time lenght [s]:", waterTimeLength)
+    weatherTimeLength = (weatherData.iloc[1]["timestamp"] - weatherData.iloc[0]["timestamp"])  # [s]
+    waterTimeLength = (waterData.iloc[1]["timestamp"] - waterData.iloc[0]["timestamp"])  # [s]
+    print("Weather data time length [s]:", weatherTimeLength)
+    print("Water data time length [s]:", waterTimeLength)
     if (weatherTimeLength % waterTimeLength) != 0:
-        raise Exception("Water time lenght is not a divider of weather data time lenght")
+        raise Exception("Water time length is not a divider of weather data time length")
     else:
-        nrWaterEventsInWeatherTimeLength = int(weatherTimeLength / waterTimeLength)
+        nrWaterEventsInTimeLength = int(weatherTimeLength / waterTimeLength)
     print("Total simulation time [hours]:", len(weatherData) * weatherTimeLength / 3600)
-
-    visual3D.initialize(1280)
-    visual3D.isPause = True
 
     # initialize export
     outputPath = os.path.join(dataPath, "output")
     exportUtils.createExportFile(outputPath)
 
-    latitude = stationInfo.iloc[0]["Latitudine (Gradi Centesimali)"]
-    longitude = stationInfo.iloc[0]["Longitudine (Gradi Centesimali)"]
+    latitude = stationInfo.iloc[0]["Latitude"]
+    longitude = stationInfo.iloc[0]["Longitude"]
+
+    visual3D.initialize(1280)
+    visual3D.isPause = True
+
+    weatherData.set_index(["timestamp"])
+    waterData.set_index(["timestamp"])
 
     # main cycle
-    extendedWeatherData, extendedWaterData = importUtils.setDataIndeces(weatherData, waterData)
-    weatherData, waterData = extendedWeatherData.iloc[12:-12], extendedWaterData.iloc[12:-12]
-    waterTableDate, waterTableDepth = importUtils.readWaterTable(waterPath)
+    weatherIndex = 0
+    while weatherIndex < len(weatherData):
+        obsWeather = weatherData.loc[weatherIndex]
+        currentDateTime = pd.to_datetime(obsWeather["timestamp"], unit='s')
 
-    for weatherIndex, obsWeather in weatherData.iterrows():
-        currentDateTime = pd.to_datetime(obsWeather["end"], unit='s')
+        # waterTable
         # for i in range(len(waterTableDepth)):
         #    if currentDateTime > waterTableDate[i]:
         #        C3DParameters.waterTableDepth = waterTableDepth[i]
 
-        airTemperature = obsWeather["temperature"]
-        globalSWRadiation = obsWeather["radiations"]
-        airRelHumidity = obsWeather["humidity"]
-        windSpeed_10m = obsWeather["wind"]
+        airTemperature = obsWeather["air_temperature"]
+        globalSWRadiation = obsWeather["solar_radiation"]
+        airRelHumidity = obsWeather["air_humidity"]
+        windSpeed_10m = obsWeather["wind_speed"]
 
         # evapotranspiration
-        normTransmissivity = computeNormTransmissivity(extendedWeatherData, currentDateTime, latitude, longitude)
+        normTransmissivity = computeNormTransmissivity(weatherData, weatherIndex, latitude, longitude)
         ET0 = computeHourlyET0(height, airTemperature, globalSWRadiation, airRelHumidity, windSpeed_10m,
                                normTransmissivity)  # mm m^-2
         print(currentDateTime, "ET0:", format(ET0, ".2f"))
 
         crop.setEvapotranspiration(ET0)
 
-        for i in range(nrWaterEventsInWeatherTimeLength):
-
-            waterIndex = weatherIndex + (i * waterTimeLength)
+        for i in range(nrWaterEventsInTimeLength):
+            waterIndex = weatherIndex * nrWaterEventsInTimeLength + i
             waterEvent = waterData.loc[waterIndex]
 
-            waterBalance.currentPrec = waterEvent["precipitations"] / waterTimeLength * 3600  # [mm m-2 hour-1]
-            criteria3D.setRainfall(waterEvent["precipitations"], waterTimeLength)
+            waterBalance.currentPrec = waterEvent["precipitation"] / waterTimeLength * 3600.  # [mm m-2 hour-1]
+            criteria3D.setRainfall(waterEvent["precipitation"], waterTimeLength)
 
             if C3DParameters.assignIrrigation:
-                waterBalance.currentIrr = (len(criteria3D.irrigationIndices) * waterEvent[
-                    "irrigations"]) / waterTimeLength * 3600  # [l hour-1]
-                criteria3D.setDripIrrigation(waterEvent["irrigations"], waterTimeLength)
+                waterBalance.currentIrr = waterEvent["irrigation"] / waterTimeLength * 3600.  # [l hour-1]
+                criteria3D.setDripIrrigation(waterEvent["irrigation"], waterTimeLength)
 
             if (waterBalance.currentIrr > 0) or (waterBalance.currentPrec > 0):
                 C3DParameters.deltaT_max = 300
@@ -205,7 +208,8 @@ def main():
 
             criteria3D.compute(waterTimeLength)
 
-            exportUtils.takeScreenshot(waterEvent["end"])
+        exportUtils.takeScreenshot(obsWeather["timestamp"])
+        weatherIndex += 1
 
     print("\nEnd simulation.")
 
