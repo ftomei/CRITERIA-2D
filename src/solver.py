@@ -111,12 +111,13 @@ def  newMatrixElement(i, link, k, isLateral, deltaT, isFirstApprox):
         if C3DCells[j].isSurface:
             value = infiltration(j, i, link, deltaT, isFirstApprox)
         else:
-            value = redistribution(i, link, isLateral, deltaT)
-    if (value == 0.0): return(False)
+            value = redistribution(i, link, isLateral)
+    if value == 0.0:
+        return False
     
     indices[i][k] = j
     A[i][k] = value
-    return (True)
+    return True
 
 def arrangeMatrix(i, deltaT):
     global b, C, A 
