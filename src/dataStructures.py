@@ -90,7 +90,7 @@ class C3DParameters:
     isFreeLateralDrainage = True
     isFreeDrainage = True
     isWaterTable = False
-    waterTableDepth = -1.8      # [m]
+    waterTableDepth = -6.0      # [m]
     # numerical solution
     currentDeltaT = 60.0        # [s]
     deltaT_min = 2              # [s]

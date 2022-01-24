@@ -248,3 +248,7 @@ def isInsideRectangle(x, y, rectangle):
         return True
     else:
         return False
+
+# todo from x,y z to index
+# todo from index to x,y,z
+# todo parametri suolo

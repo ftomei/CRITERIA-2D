@@ -33,9 +33,9 @@ class CCrop:
         self.rootDepthZero = 0.15       # [m]
         self.rootDepthMax = 0.9         # [m]
         self.rootWidth = 2.0            # [m]
-        self.rootXDeformation = 0.75    # [-]
+        self.rootXDeformation = 0.8     # [-]
         self.rootZDeformation = 0.0     # [-] 0: symmetric 1: cardioid 2: cardioid more accentuated
-        self.kcMax = 2.0                # [-]
+        self.kcMax = 3.0                # [-]
         self.fRAW = 0.6                 # [-]
         self.setMaxValues()
         self.currentLAI = 4.0       # [m2 m-2]
@@ -154,6 +154,8 @@ def computeRootDensity(crop, nrLayers, rootFactor):
         return myRootDensity
 
     rootLength = crop.currentRootLength * math.sqrt(rootFactor)
+    decrease = crop.currentRootLength - rootLength
+    rootZero = crop.rootDepthZero + decrease * 0.25
     if rootLength < 0.001:
         return myRootDensity
 
@@ -162,7 +164,7 @@ def computeRootDensity(crop, nrLayers, rootFactor):
     for i in range(nrLayers):
         atoms[i] = int(round(soil.thickness[i] * 1000))
 
-    nrUnrootedAtoms = int(round(crop.rootDepthZero * 1000))
+    nrUnrootedAtoms = int(round(rootZero * 1000))
     nrRootedAtoms = int(round(rootLength * 1000))
     densityAtoms = cardioidDistribution(crop.rootZDeformation, nrRootedAtoms)
 

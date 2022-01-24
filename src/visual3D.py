@@ -296,7 +296,9 @@ def drawSlice(isFirst):
     firstIndex = visualizedSlice * C3DStructure.nrRectanglesInXAxis
     posY = C3DCells[firstIndex].y
 
-    if isRootVisualization:
+    if isPointVisualization:
+        var = "Output points"
+    elif isRootVisualization:
         var = "Root density"
     elif isWaterPotential:
         var = "Water potential"
@@ -310,7 +312,7 @@ def drawSlice(isFirst):
             i = layer * C3DStructure.nrRectanglesInXAxis + x
             if isRootVisualization:
                 surfaceIndex = firstIndex + x
-                c = getSEColor(5 * k_root[surfaceIndex] * rootDensity[surfaceIndex][layer], 0, 1)
+                c = getSEColor(10 * k_root[surfaceIndex] * rootDensity[surfaceIndex][layer], 0, 1)
             elif isPointVisualization:
                 c = [0.5, 0.5, 0.5]
                 if index in outputIndeces:
@@ -340,10 +342,10 @@ def drawSlice(isFirst):
 
 def drawSurface(isFirst):
     global subSurfaceRectangles
+    from crop import k_root, rootDensity
     from criteria3D import irrigationIndices, plantIndices
-    from exportUtils import outputSurfaceIndeces
+    from exportUtils import outputSurfaceIndeces, outputIndeces
 
-    from crop import k_root
     maxWaterLevel = 0
     for i in range(C3DStructure.nrRectangles):
         index = visualizedLayer * C3DStructure.nrRectangles + i
@@ -366,6 +368,12 @@ def drawSurface(isFirst):
         else:
             if isWaterPotential:
                 c = getMatricPotentialColor(C3DCells[index].H - C3DCells[index].z)
+            elif isRootVisualization:
+                c = getSEColor(10 * k_root[i] * rootDensity[i][visualizedLayer], 0, 1)
+            elif isPointVisualization:
+                c = [0.5, 0.5, 0.5]
+                if index in outputIndeces:
+                    c = [1, 0, 0]
             else:
                 c = getSEColor(C3DCells[index].Se, degreeMinimum, degreeMaximum)
 
@@ -379,15 +387,22 @@ def drawSurface(isFirst):
             subSurfaceRectangles[i].v1.color = myColor
             subSurfaceRectangles[i].v2.color = myColor
             subSurfaceRectangles[i].v3.color = myColor
-            # label
+
+    # label
     if visualizedLayer == 0:
-        if isRootVisualization:
+        if isPointVisualization:
+            layerLabel.text = "Output points"
+        elif isRootVisualization:
             layerLabel.text = "Root factor"
         else:
             layerLabel.text = "Surface water level - max:" + format(maxWaterLevel * 1000, ".1f") + "mm"
     else:
         depth = soil.depth[visualizedLayer] * 100
-        if isWaterPotential:
+        if isPointVisualization:
+            var = "Output points"
+        elif isRootVisualization:
+            var = "Root density"
+        elif isWaterPotential:
             var = "Water potential"
         else:
             var = "Degree of saturation"
