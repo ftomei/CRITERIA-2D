@@ -10,6 +10,7 @@ from transmissivity import computeNormTransmissivity
 import exportUtils
 import importUtils
 import pandas as pd
+import numpy as np
 import crop
 
 
@@ -176,10 +177,16 @@ def main():
         #    if currentDateTime > waterTableDate[i]:
         #        C3DParameters.waterTableDepth = waterTableDepth[i]
 
-        airTemperature = obsWeather["air_temperature"]
-        globalSWRadiation = obsWeather["solar_radiation"]
-        airRelHumidity = obsWeather["air_humidity"]
-        windSpeed_10m = obsWeather["wind_speed"]
+        if not(np.isnan(obsWeather["air_temperature"])):
+            airTemperature = obsWeather["air_temperature"]
+        if not(np.isnan(obsWeather["solar_radiation"])):
+            globalSWRadiation = obsWeather["solar_radiation"]
+        if not(np.isnan(obsWeather["air_humidity"])):
+            airRelHumidity = obsWeather["air_humidity"]
+        if not(np.isnan(obsWeather["wind_speed"])):
+            windSpeed_10m = obsWeather["wind_speed"]
+        else:
+            print("Missed")
 
         # evapotranspiration
         normTransmissivity = computeNormTransmissivity(weatherData, weatherIndex, latitude, longitude)
@@ -192,13 +199,15 @@ def main():
         for i in range(nrWaterEventsInTimeLength):
             waterIndex = weatherIndex * nrWaterEventsInTimeLength + i
             waterEvent = waterData.loc[waterIndex]
+            precipitation = 0 if np.isnan(waterEvent["precipitation"]) else  waterEvent["precipitation"]
+            irrigation = 0 if np.isnan(waterEvent["irrigation"]) else waterEvent["irrigation"]
 
-            waterBalance.currentPrec = waterEvent["precipitation"] / waterTimeLength * 3600.  # [mm m-2 hour-1]
-            criteria3D.setRainfall(waterEvent["precipitation"], waterTimeLength)
+            waterBalance.currentPrec = precipitation / waterTimeLength * 3600.  # [mm m-2 hour-1]
+            criteria3D.setRainfall(precipitation, waterTimeLength)
 
             if C3DParameters.assignIrrigation:
-                waterBalance.currentIrr = waterEvent["irrigation"] / waterTimeLength * 3600.  # [l hour-1]
-                criteria3D.setDripIrrigation(waterEvent["irrigation"], waterTimeLength)
+                waterBalance.currentIrr = irrigation / waterTimeLength * 3600.  # [l hour-1]
+                criteria3D.setDripIrrigation(irrigation, waterTimeLength)
 
             if (waterBalance.currentIrr > 0) or (waterBalance.currentPrec > 0):
                 C3DParameters.deltaT_max = 300

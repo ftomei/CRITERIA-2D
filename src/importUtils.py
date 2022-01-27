@@ -39,7 +39,7 @@ def readMeteoData(meteoPath):
 
     mergedDf = meteoData[0]
     for i in range(1, len(meteoData)):
-        mergedDf = mergedDf.merge(meteoData[i], left_index=True, right_index=True)
+        mergedDf = mergedDf.merge(meteoData[i], how='outer', left_index=True, right_index=True)
 
     return stationInfo, mergedDf.reset_index()
 
@@ -60,7 +60,7 @@ def readWaterData(waterPath, meteo_start, meteo_end):
     irrigation = irrigation.set_index(['timestamp'])
     precipitations = precipitations.set_index(['timestamp'])
 
-    mergedDf = irrigation.merge(precipitations, left_index=True, right_index=True)
+    mergedDf = irrigation.merge(precipitations, how='outer', left_index=True, right_index=True)
     mergedDf = mergedDf.reset_index()
 
     if meteo_start != mergedDf.iloc[0]["timestamp"] or meteo_end != mergedDf.iloc[-1]["timestamp"]:
