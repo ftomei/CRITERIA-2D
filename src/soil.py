@@ -54,8 +54,31 @@ def readHorizon(soilFileName, i):
     return horizon
 
 
+def searchProgressionFactor(minThickness, maxThickness, maxThicknessDepth):
+    factor = 1.01
+    bestError = 9999
+    bestFactor = factor
+    while factor <= 2.0:
+        thickness = minThickness
+        currentDepth = minThickness * 0.5
+        while thickness < maxThickness:
+            nextThickness = min(maxThickness, thickness * factor)
+            currentDepth += (thickness + nextThickness) * 0.5
+            thickness = nextThickness
+        error = fabs(currentDepth - maxThicknessDepth)
+        if error < bestError:
+            bestError = error
+            bestFactor = factor
+        factor += 0.01
+
+    return bestFactor
+
+
 # set depth and thickness of layers
-def setLayers(totalDepth, minThickness, maxThickness, factor):
+def setLayers(totalDepth, minThickness, maxThickness, maxThicknessDepth):
+    # search progression factor
+    factor = searchProgressionFactor(minThickness, maxThickness, maxThicknessDepth)
+
     nrLayers = 1
     prevThickness = minThickness
     currentDepth = minThickness * 0.5

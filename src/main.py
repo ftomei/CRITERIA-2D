@@ -37,7 +37,7 @@ def main():
     C3DStructure.nrLayers, soil.depth, soil.thickness = soil.setLayers(totalDepth,
                                                                        C3DParameters.minThickness,
                                                                        C3DParameters.maxThickness,
-                                                                       C3DParameters.geometricFactor)
+                                                                       C3DParameters.maxThicknessDepth)
     print("Nr. of layers:", C3DStructure.nrLayers)
 
     # Initialize memory
@@ -172,6 +172,10 @@ def main():
         obsWeather = weatherData.loc[weatherIndex]
         currentDateTime = pd.to_datetime(obsWeather["timestamp"], unit='s')
 
+        # kiwi
+        if currentDateTime.month > 9:
+            crop.kiwi.kcMax = 0.5
+
         # waterTable
         # for i in range(len(waterTableDepth)):
         #    if currentDateTime > waterTableDate[i]:
@@ -199,7 +203,7 @@ def main():
         for i in range(nrWaterEventsInTimeLength):
             waterIndex = weatherIndex * nrWaterEventsInTimeLength + i
             waterEvent = waterData.loc[waterIndex]
-            precipitation = 0 if np.isnan(waterEvent["precipitation"]) else  waterEvent["precipitation"]
+            precipitation = 0 if np.isnan(waterEvent["precipitation"]) else waterEvent["precipitation"]
             irrigation = 0 if np.isnan(waterEvent["irrigation"]) else waterEvent["irrigation"]
 
             waterBalance.currentPrec = precipitation / waterTimeLength * 3600.  # [mm m-2 hour-1]

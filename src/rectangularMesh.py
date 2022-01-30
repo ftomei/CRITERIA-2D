@@ -2,6 +2,7 @@
 
 from math import fabs, sqrt
 import numpy as np
+import soil
 from copy import copy
 from dataStructures import *
 from enum import Enum
@@ -76,8 +77,8 @@ def getRectangleVertices(x, y):
     v = np.zeros((C3DStructure.nrVerticesPerRectangle, C3DStructure.nrDimensions), float)
     dzy = C3DStructure.slopeY * y
     dzy2 = C3DStructure.slopeY * (y + C3DStructure.gridStep)
-    dzPlant = C3DStructure.slopePlant * min(1.0, fabs(x))
-    dzPlant2 = C3DStructure.slopePlant * min(1.0, fabs(x + C3DStructure.gridStep))
+    dzPlant = C3DStructure.slopePlant * min(C3DStructure.slopeSide, fabs(x))
+    dzPlant2 = C3DStructure.slopePlant * min(C3DStructure.slopeSide, fabs(x + C3DStructure.gridStep))
     v[0] = [x, y, C3DStructure.z0 - dzPlant - dzy]
     v[1] = [x + C3DStructure.gridStep, y, C3DStructure.z0 - dzPlant2 - dzy]
     v[2] = [x + C3DStructure.gridStep, y + C3DStructure.gridStep, C3DStructure.z0 - dzPlant2 - dzy2]
@@ -154,16 +155,6 @@ def boundaryProperties(index, vertices, centroid):
             else:
                 boundarySlopes.append(dz / dxy)
     return neighbours, boundarySides, boundarySlopes
-
-
-# TODO to check
-def magnitude(v):
-    return np.sqrt(v.dot(v))
-
-
-# TODO to check
-def getArea(v):
-    return 0.5 * magnitude(np.cross(v[1] - v[0], v[2] - v[0]))
 
 
 def getCentroid3D(vertices):
@@ -249,6 +240,30 @@ def isInsideRectangle(x, y, rectangle):
     else:
         return False
 
-# todo from x,y z to index
-# todo from index to x,y,z
-# todo parametri suolo
+
+def getSurfaceIndex(x, y):
+    # search index
+    for index in range(C3DStructure.nrRectangles):
+        if isInsideRectangle(x, y, C3DRM[index]):
+            return index
+    return NODATA
+
+
+def getCellIndex(x, y, depth):
+    surfaceIndex = getSurfaceIndex (x, y)
+    if surfaceIndex != NODATA:
+        for layer in range(C3DStructure.nrLayers):
+            top = soil.depth[layer] - (soil.thickness[layer] * 0.5)
+            bottom = soil.depth[layer] + (soil.thickness[layer] * 0.5)
+            if top < depth <= bottom:
+                index = surfaceIndex + C3DStructure.nrRectangles * layer
+                return index
+    return NODATA
+
+
+def getXYDepth(index):
+    x = C3DCells[index].x
+    y = C3DCells[index].y
+    surfaceIndex = getSurfaceIndex(x, y)
+    depth = C3DCells[surfaceIndex].z - C3DCells[index].z
+    return x, y, depth

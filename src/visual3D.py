@@ -7,6 +7,7 @@ import fileUtilities
 import waterBalance
 import rectangularMesh
 import soil
+import crop
 
 from copy import copy
 
@@ -291,7 +292,7 @@ def getNewRectangle(myColor, myCanvas, v, computeNormal):
 def drawSlice(isFirst):
     global sliceRectangles
     from crop import k_root, rootDensity
-    from exportUtils import outputIndeces
+    from exportUtils import outputIndices
 
     firstIndex = visualizedSlice * C3DStructure.nrRectanglesInXAxis
     posY = C3DCells[firstIndex].y
@@ -315,7 +316,7 @@ def drawSlice(isFirst):
                 c = getSEColor(10 * k_root[surfaceIndex] * rootDensity[surfaceIndex][layer], 0, 1)
             elif isPointVisualization:
                 c = [0.5, 0.5, 0.5]
-                if index in outputIndeces:
+                if index in outputIndices:
                     c = [1, 0, 0]
             elif isWaterPotential:
                 c = getMatricPotentialColor(C3DCells[index].H - C3DCells[index].z)
@@ -342,9 +343,8 @@ def drawSlice(isFirst):
 
 def drawSurface(isFirst):
     global subSurfaceRectangles
-    from crop import k_root, rootDensity
     from criteria3D import irrigationIndices, plantIndices
-    from exportUtils import outputSurfaceIndeces, outputIndeces
+    from exportUtils import outputSurfaceIndices, outputIndices
 
     maxWaterLevel = 0
     for i in range(C3DStructure.nrRectangles):
@@ -352,14 +352,14 @@ def drawSurface(isFirst):
         # color
         if visualizedLayer == 0:
             if isRootVisualization:
-                c = getSEColor(k_root[i], 0, 1)
+                c = getSEColor(crop.k_root[i], 0, 1)
             elif isPointVisualization:
                 c = [0.5, 0.5, 0.5]
                 if i in plantIndices:
                     c = [0, 1, 0]
                 elif i in irrigationIndices:
                     c = [0, 0, 1]
-                elif i in outputSurfaceIndeces:
+                elif i in outputSurfaceIndices:
                     c = [1, 0, 0]
             else:
                 waterLevel = max(C3DCells[i].H - C3DCells[i].z, 0.0)
@@ -369,10 +369,10 @@ def drawSurface(isFirst):
             if isWaterPotential:
                 c = getMatricPotentialColor(C3DCells[index].H - C3DCells[index].z)
             elif isRootVisualization:
-                c = getSEColor(10 * k_root[i] * rootDensity[i][visualizedLayer], 0, 1)
+                c = getSEColor(10 * crop.k_root[i] * crop.rootDensity[i][visualizedLayer], 0, 1)
             elif isPointVisualization:
                 c = [0.5, 0.5, 0.5]
-                if index in outputIndeces:
+                if index in outputIndices:
                     c = [1, 0, 0]
             else:
                 c = getSEColor(C3DCells[index].Se, degreeMinimum, degreeMaximum)

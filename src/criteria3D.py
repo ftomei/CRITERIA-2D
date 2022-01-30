@@ -48,22 +48,18 @@ def setDripIrrigationPositions(irrigationConfigurations):
     for _, position in irrigationConfigurations.iterrows():
         x = position['x']
         y = position['y']
-        # search index
-        for i in range(C3DStructure.nrRectangles):
-            if rectangularMesh.isInsideRectangle(x, y, rectangularMesh.C3DRM[i]):
-                irrigationIndices.append(i)
-                break
+        surfaceIndex = rectangularMesh.getSurfaceIndex(x, y)
+        if surfaceIndex != NODATA:
+            irrigationIndices.append(surfaceIndex)
 
 
 def setPlantPositions(plantConfigurations):
     for _, position in plantConfigurations.iterrows():
         x = position['plant_x']
         y = position['plant_y']
-        # search index
-        for i in range(C3DStructure.nrRectangles):
-            if rectangularMesh.isInsideRectangle(x, y, rectangularMesh.C3DRM[i]):
-                plantIndices.append(i)
-                break
+        surfaceIndex = rectangularMesh.getSurfaceIndex(x, y)
+        if surfaceIndex != NODATA:
+            plantIndices.append(surfaceIndex)
 
 
 def getCellDistance(i, j):

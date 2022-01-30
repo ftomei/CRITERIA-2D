@@ -4,8 +4,8 @@ import rectangularMesh
 import soil
 import pandas as pd
 
-outputIndeces = []
-outputSurfaceIndeces = []
+outputIndices = []
+outputSurfaceIndices = []
 outputFile = ""
 heightSlice = C3DStructure.gridHeight * 0.5
 oneTimestampPerRow = True
@@ -18,7 +18,7 @@ def createExportFile(outputPath):
     if oneTimestampPerRow:
         outputPoints = pd.read_csv(os.path.join(outputPath, "output_points.csv"))
         takeSelected(outputPoints)
-        header = "timestamp," + ",".join(map(lambda index: str(index), outputIndeces)) + "\n"
+        header = "timestamp," + ",".join(map(lambda index: str(index), outputIndices)) + "\n"
     else:
         if heightSlice == 0:
             takeAll()
@@ -38,22 +38,12 @@ def takeSelected(outputPoints):
         x = position['x']
         y = position['y']
         depth = position['z']
-
-        surfaceIndex = NODATA
-        for i in range(C3DStructure.nrRectangles):
-            if rectangularMesh.isInsideRectangle(x, y, rectangularMesh.C3DRM[i]):
-                surfaceIndex = i
-                break
-
+        surfaceIndex = rectangularMesh.getSurfaceIndex(x, y)
         if surfaceIndex != NODATA:
-            for layer in range(C3DStructure.nrLayers):
-                top = soil.depth[layer] - (soil.thickness[layer] * 0.5)
-                bottom = soil.depth[layer] + (soil.thickness[layer] * 0.5)
-                if top < depth <= bottom:
-                    index = surfaceIndex + C3DStructure.nrRectangles * layer
-                    outputIndeces.append(index)
-                    outputSurfaceIndeces.append(surfaceIndex)
-                    break
+            index = rectangularMesh.getCellIndex(x, y, depth)
+            if index != NODATA:
+                outputSurfaceIndices.append(surfaceIndex)
+                outputIndices.append(index)
 
 
 def takeSlice():
@@ -63,18 +53,18 @@ def takeSlice():
         for j in range(C3DStructure.nrRectanglesInXAxis):
             z = C3DStructure.nrRectangles * layer
             index = i + j + z
-            outputIndeces.append(int(index))
+            outputIndices.append(int(index))
 
 
 def takeAll():
     for index in range(C3DStructure.nrCells):
-        outputIndeces.append(index)
+        outputIndices.append(index)
 
 
 def takeScreenshot(timestamp):
     if oneTimestampPerRow:
         row = str(int(timestamp))
-        for index in outputIndeces:
+        for index in outputIndices:
             psi = (C3DCells[index].H - C3DCells[index].z) * 9.81    # water potential [kPa] equivalent to [centibar]
             row += "," + '{:.3f}'.format(psi)
         row += "\n"
@@ -82,7 +72,7 @@ def takeScreenshot(timestamp):
         with open(outputFile, "a") as f:
             f.write(row)
     else:
-        for index in outputIndeces:
+        for index in outputIndices:
             if C3DCells[index].z != 0.0 and C3DCells[index].x >= 1.0:
                 row = str(int(timestamp))
                 row += "," + '{:.3f}'.format(C3DCells[index].x)

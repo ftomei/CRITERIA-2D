@@ -33,7 +33,7 @@ class CCrop:
         self.rootDepthZero = 0.15       # [m]
         self.rootDepthMax = 0.9         # [m]
         self.rootWidth = 2.0            # [m]
-        self.rootXDeformation = 0.8     # [-]
+        self.rootXDeformation = 0.5     # [-]
         self.rootZDeformation = 0.0     # [-] 0: symmetric 1: cardioid 2: cardioid more accentuated
         self.kcMax = 3.0                # [-]
         self.fRAW = 0.6                 # [-]
@@ -154,8 +154,8 @@ def computeRootDensity(crop, nrLayers, rootFactor):
         return myRootDensity
 
     rootLength = crop.currentRootLength * math.sqrt(rootFactor)
-    decrease = crop.currentRootLength - rootLength
-    rootZero = crop.rootDepthZero + decrease * 0.25
+    #decrease = crop.currentRootLength - rootLength
+    #rootZero = crop.rootDepthZero + decrease * 0.25
     if rootLength < 0.001:
         return myRootDensity
 
@@ -164,7 +164,7 @@ def computeRootDensity(crop, nrLayers, rootFactor):
     for i in range(nrLayers):
         atoms[i] = int(round(soil.thickness[i] * 1000))
 
-    nrUnrootedAtoms = int(round(rootZero * 1000))
+    nrUnrootedAtoms = int(round(crop.rootDepthZero * 1000))
     nrRootedAtoms = int(round(rootLength * 1000))
     densityAtoms = cardioidDistribution(crop.rootZDeformation, nrRootedAtoms)
 
@@ -327,7 +327,6 @@ def setEvaporation(surfaceIndex, maxEvaporation):
 
 
 def setEvapotranspiration(ET0):
-
     # initialize sinkSource
     for i in range(C3DStructure.nrCells):
         C3DCells[i].sinkSource = 0
@@ -335,7 +334,7 @@ def setEvapotranspiration(ET0):
     if C3DParameters.computeTranspiration:
         for i in range(C3DStructure.nrRectangles):
             maxTrKiwi = getMaxTranspiration(kiwi.currentLAI, kiwi.kcMax, ET0)
-            maxTranspiration = k_root[i] * maxTrKiwi
+            maxTranspiration = maxTrKiwi # * k_root[i]
             setTranspiration(i, kiwi, rootDensity[i], maxTranspiration)
 
     if C3DParameters.computeEvaporation:
