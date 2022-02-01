@@ -85,9 +85,9 @@ def computeHourlyET0(height, airTemperature, globalSWRadiation, airRelHumidity,
     # slope of saturation vapor pressure curve [kPa K]
     slope = 4098. * satVapPressure / (airTempKelvin * airTempKelvin)
     # latent heat of vaporization [J kg-1]
-    latentHeatVap = 2501000. - 2369.2 * airTemperature;
+    latentHeatVap = 2501000. - 2369.2 * airTemperature
     # psychrometric instrument constant [kPa K-1] 
-    psychro = CP * pressure / (RATIO_WATER_VD * latentHeatVap);
+    psychro = CP * pressure / (RATIO_WATER_VD * latentHeatVap)
 
     denominator = slope + psychro * (1. + Cd * windSpeed_2m)
     firstTerm = slope * (netRadiation - g) / (latentHeatVap * denominator)

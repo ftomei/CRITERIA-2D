@@ -80,4 +80,3 @@ def computeNormTransmissivity(obsData, obsIndex, latitude, longitude):
             observedRad += currentData["solar_radiation"]
 
     return min(1., observedRad / potentialRad)
-

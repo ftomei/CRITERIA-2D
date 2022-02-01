@@ -173,7 +173,7 @@ def main():
         currentDateTime = pd.to_datetime(obsWeather["timestamp"], unit='s')
 
         # kiwi
-        if currentDateTime.month > 9:
+        if currentDateTime.month >= 10:
             crop.kiwi.kcMax = 0.5
 
         # waterTable
@@ -224,7 +224,8 @@ def main():
         exportUtils.takeScreenshot(obsWeather["timestamp"])
         weatherIndex += 1
 
-    print("\nEnd simulation.")
+    visual3D.isPause = True
+    print("\nEnd simulation.\n")
 
 
 main()

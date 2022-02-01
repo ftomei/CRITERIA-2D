@@ -59,12 +59,12 @@ def searchProgressionFactor(minThickness, maxThickness, maxThicknessDepth):
     bestError = 9999
     bestFactor = factor
     while factor <= 2.0:
-        thickness = minThickness
+        myThickness = minThickness
         currentDepth = minThickness * 0.5
-        while thickness < maxThickness:
-            nextThickness = min(maxThickness, thickness * factor)
-            currentDepth += (thickness + nextThickness) * 0.5
-            thickness = nextThickness
+        while myThickness < maxThickness:
+            nextThickness = min(maxThickness, myThickness * factor)
+            currentDepth += (myThickness + nextThickness) * 0.5
+            myThickness = nextThickness
         error = fabs(currentDepth - maxThicknessDepth)
         if error < bestError:
             bestError = error
@@ -106,7 +106,8 @@ def setLayers(totalDepth, minThickness, maxThickness, maxThicknessDepth):
 
 
 def getVolumetricWaterContent(i):
-    if C3DCells[i].isSurface: return NODATA
+    if C3DCells[i].isSurface:
+        return NODATA
     curve = C3DParameters.waterRetentionCurve
     Se = C3DCells[i].Se
     return waterContent(curve, Se)
@@ -127,7 +128,8 @@ def getHydraulicConductivity(i):
     if C3DCells[i].isSurface:
         return NODATA
     curve = C3DParameters.waterRetentionCurve
-    return hydraulicConductivity(curve, C3DCells[i].Se, C3DCells[i].z)
+    layer = int(i / C3DStructure.nrRectangles)
+    return hydraulicConductivity(curve, C3DCells[i].Se, depth[layer])
 
 
 def airEntryPotential(curve):
@@ -160,7 +162,8 @@ def waterContent(curve, Se):
 
 def degreeOfSaturation(curve, signPsi):
     airEntry = airEntryPotential(curve)
-    if signPsi >= airEntry: return 1.0
+    if signPsi >= airEntry:
+        return 1.0
 
     Se = NODATA
     if curve == CAMPBELL:
@@ -174,7 +177,7 @@ def degreeOfSaturation(curve, signPsi):
 def hydraulicConductivity(curve, Se, z):
     k = NODATA
     # soil compaction
-    if abs(z) > 0.5:
+    if abs(z) >= 0.5:
         ks = C3DSoil.Ks * 0.25
     else:
         ks = C3DSoil.Ks
@@ -201,7 +204,8 @@ def thetaFromPsi(curve, signPsi):
 
 
 def SeFromTheta(curve, theta):
-    if theta >= C3DSoil.thetaS: return 1.
+    if theta >= C3DSoil.thetaS:
+        return 1.
     if curve == CAMPBELL:
         return theta / C3DSoil.thetaS
     elif curve == IPPISCH_VG:
@@ -260,9 +264,9 @@ def meanK(meanType, k1, k2):
 # [m3 m-3] water content at field capacity
 def getFieldCapacityWC():
     curve = C3DParameters.waterRetentionCurve
-    FC = -20.  # [kPa]
+    FC = -30.  # [kPa]
     FC /= 9.81  # [m]
-    return thetaFromPsi(curve, FC / 9.81)
+    return thetaFromPsi(curve, FC)
 
 
 # [m3 m-3] water content at wilting point

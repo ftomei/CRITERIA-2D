@@ -30,13 +30,13 @@ class CCrop:
     def setKiwifruit(self):
         self.laiMin = 1.0               # [m2 m-2]
         self.laiMax = 4.0               # [m2 m-2]
-        self.rootDepthZero = 0.15       # [m]
+        self.rootDepthZero = 0.10       # [m]
         self.rootDepthMax = 0.8         # [m]
         self.rootWidth = 2.0            # [m]
         self.rootXDeformation = 0.5     # [-]
         self.rootZDeformation = 0.0     # [-] 0: symmetric 1: cardioid 2: cardioid more accentuated
         self.kcMax = 3.0                # [-]
-        self.fRAW = 0.6                 # [-]
+        self.fRAW = 0.5                 # [-]
         self.setMaxValues()
         self.currentLAI = 4.0       # [m2 m-2]
 
@@ -69,7 +69,6 @@ def initializeCrop(plantConfiguration):
         for i in range(C3DStructure.nrRectangles):
             [x, y, z] = rectangularMesh.C3DRM[i].centroid
             line_distance = math.fabs(a * x + b * y + c) / denominator
-            # plant_cell_distance = rectangularMesh.distance2D(plant_xy, rectangularMesh.C3DRM[i].centroid)
 
             if line_distance < max_distance or math.fabs(line_distance - max_distance) < EPSILON:
                 k_root[i] = 1.0 - (line_distance / max_distance) * kiwi.rootXDeformation
@@ -154,8 +153,9 @@ def computeRootDensity(crop, nrLayers, rootFactor):
         return myRootDensity
 
     rootLength = crop.currentRootLength * math.sqrt(rootFactor)
-    #decrease = crop.currentRootLength - rootLength
-    #rootZero = crop.rootDepthZero + decrease * 0.25
+    # decrease = crop.currentRootLength - rootLength
+    # rootZero = crop.rootDepthZero + decrease * 0.25
+    rootZero = crop.rootDepthZero
     if rootLength < 0.001:
         return myRootDensity
 
@@ -164,7 +164,7 @@ def computeRootDensity(crop, nrLayers, rootFactor):
     for i in range(nrLayers):
         atoms[i] = int(round(soil.thickness[i] * 1000))
 
-    nrUnrootedAtoms = int(round(crop.rootDepthZero * 1000))
+    nrUnrootedAtoms = int(round(rootZero * 1000))
     nrRootedAtoms = int(round(rootLength * 1000))
     densityAtoms = cardioidDistribution(crop.rootZDeformation, nrRootedAtoms)
 
@@ -191,6 +191,7 @@ def setTranspiration(surfaceIndex, crop, myRootDensity, maxTranspiration):
     if maxTranspiration < EPSILON:
         return 0.0
 
+    SAT = soil.C3DSoil.thetaS
     FC = soil.getFieldCapacityWC()  # [m3 m-3] water content at field capacity
     WP = soil.getWiltingPointWC()  # [m3 m-3] water content at wilting point
     WSThreshold = FC - crop.fRAW * (FC - WP)  # [m3 m-3] water scarcity stress threshold
@@ -201,7 +202,7 @@ def setTranspiration(surfaceIndex, crop, myRootDensity, maxTranspiration):
 
     nrLayers = len(myRootDensity)
     isLayerStressed = np.zeros(nrLayers, dtype=bool)
-    layerTranspiration = np.zeros(nrLayers, np.float64)
+    layerTranspiration = np.zeros(nrLayers, np.float64)         # [mm]
     for layer in range(nrLayers):
         isLayerStressed[layer] = False
         layerTranspiration[layer] = 0
@@ -210,10 +211,13 @@ def setTranspiration(surfaceIndex, crop, myRootDensity, maxTranspiration):
         if myRootDensity[layer] > 0:
             i = surfaceIndex + C3DStructure.nrRectangles * layer
             theta = soil.getVolumetricWaterContent(i)
-            # TODO water surplus
-
-            # WATER SCARCITY
-            if theta < WSThreshold:
+            # water surplus
+            if theta > FC:
+                layerTranspiration[layer] = maxTranspiration * myRootDensity[layer] \
+                                            * (1.0 - (theta - FC) / (SAT - FC))
+                isLayerStressed[layer] = True
+            # water scarcity
+            elif theta < WSThreshold:
                 if theta <= WP:
                     layerTranspiration[layer] = 0
                 else:
@@ -265,9 +269,9 @@ def setTranspiration(surfaceIndex, crop, myRootDensity, maxTranspiration):
 def setEvaporation(surfaceIndex, maxEvaporation):
     # TODO: enable surface evaporation - numerical problem
     """
-    surfaceWater = (C3DCells[surfaceIndex].H - C3DCells[surfaceIndex].z)    # [m]
-    surfaceEvaporation = min(maxEvaporation, surfaceWater * 1000.0)         # [mm]
-    rate = (surfaceEvaporation * 0.001) / 3600.0                            # [m s-1]
+    surfaceWater = (C3DCells[surfaceIndex].H - C3DCells[surfaceIndex].z)        # [m]
+    surfaceEvaporation = min(maxEvaporation, surfaceWater * 1000.0)             # [mm]
+    rate = (surfaceEvaporation * 0.001) / 3600.0                                # [m s-1]
     C3DCells[surfaceIndex].sinkSource -= rate * C3DCells[surfaceIndex].area     # [m3 s-1]
     """
     surfaceEvaporation = 0
@@ -334,7 +338,7 @@ def setEvapotranspiration(ET0):
     if C3DParameters.computeTranspiration:
         for i in range(C3DStructure.nrRectangles):
             maxTrKiwi = getMaxTranspiration(kiwi.currentLAI, kiwi.kcMax, ET0)
-            maxTranspiration = maxTrKiwi # * k_root[i]
+            maxTranspiration = maxTrKiwi * k_root[i]
             setTranspiration(i, kiwi, rootDensity[i], maxTranspiration)
 
     if C3DParameters.computeEvaporation:

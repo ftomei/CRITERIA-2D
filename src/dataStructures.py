@@ -13,7 +13,7 @@ class C3DStructure:
     gridWidth = 2.2     # [m] x axis
     gridHeight = 0.6    # [m] y axis
     gridStep = 0.2      # [m]
-    slopeSide = 0.8     # [m] side of baulatura
+    slopeSide = 0.6     # [m] side of baulatura
 
     nrRectanglesInXAxis = int(gridWidth / gridStep)
     if abs(gridWidth - gridStep * nrRectanglesInXAxis) > EPSILON:

@@ -250,7 +250,7 @@ def getSurfaceIndex(x, y):
 
 
 def getCellIndex(x, y, depth):
-    surfaceIndex = getSurfaceIndex (x, y)
+    surfaceIndex = getSurfaceIndex(x, y)
     if surfaceIndex != NODATA:
         for layer in range(C3DStructure.nrLayers):
             top = soil.depth[layer] - (soil.thickness[layer] * 0.5)

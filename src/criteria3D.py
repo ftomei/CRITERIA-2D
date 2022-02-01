@@ -135,7 +135,9 @@ def compute(timeLength):
     currentTime = 0
     while currentTime < timeLength:
         residualTime = timeLength - currentTime
+        deltaT = min(C3DParameters.currentDeltaT, residualTime)
         acceptedStep = False
+
         while not acceptedStep:
             if visual3D.isPause:
                 print("\nPress 'r' to run")
