@@ -36,7 +36,7 @@ class CCrop:
         self.rootXDeformation = 0.5     # [-]
         self.rootZDeformation = 0.0     # [-] 0: symmetric 1: cardioid 2: cardioid more accentuated
         self.kcMax = 3.0                # [-]
-        self.fRAW = 0.5                 # [-]
+        self.fRAW = 0.6                 # [-]
         self.setMaxValues()
         self.currentLAI = 4.0       # [m2 m-2]
 
@@ -205,7 +205,7 @@ def setTranspiration(surfaceIndex, crop, myRootDensity, maxTranspiration):
     layerTranspiration = np.zeros(nrLayers, np.float64)         # [mm]
     for layer in range(nrLayers):
         isLayerStressed[layer] = False
-        layerTranspiration[layer] = 0
+        layerTranspiration[layer] = 0.0
 
     for layer in range(nrLayers):
         if myRootDensity[layer] > 0:
@@ -219,7 +219,7 @@ def setTranspiration(surfaceIndex, crop, myRootDensity, maxTranspiration):
             # water scarcity
             elif theta < WSThreshold:
                 if theta <= WP:
-                    layerTranspiration[layer] = 0
+                    layerTranspiration[layer] = 0.0
                 else:
                     layerTranspiration[layer] = maxTranspiration * myRootDensity[layer] * (
                                 (theta - WP) / (WSThreshold - WP))

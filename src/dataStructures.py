@@ -13,7 +13,7 @@ class C3DStructure:
     gridWidth = 2.2     # [m] x axis
     gridHeight = 0.6    # [m] y axis
     gridStep = 0.2      # [m]
-    slopeSide = 0.6     # [m] side of baulatura
+    slopeSide = 0.5     # [m] side of baulatura
 
     nrRectanglesInXAxis = int(gridWidth / gridStep)
     if abs(gridWidth - gridStep * nrRectanglesInXAxis) > EPSILON:
@@ -83,11 +83,11 @@ class C3DParameters:
     # surface flow
     computeSurfaceFlow = False
     roughness = 0.24            # [s m^0.33]
-    pond = 0.002                # [m]
+    pond = 0.005                # [m]
     # infiltration
     computeInfiltration = True
     # boundary
-    isSurfaceRunoff = False
+    isSurfaceRunoff = True
     isFreeLateralDrainage = True
     isFreeDrainage = True
     isWaterTable = False
