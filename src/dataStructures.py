@@ -87,7 +87,7 @@ class C3DParameters:
     # infiltration
     computeInfiltration = True
     # boundary
-    isSurfaceRunoff = True
+    isSurfaceRunoff = False
     isFreeLateralDrainage = True
     isFreeDrainage = True
     isWaterTable = False
