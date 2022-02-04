@@ -67,35 +67,43 @@ class Ccell:
 
 # model parameters
 class C3DParameters:
-    # water retention and conductivity
-    initialWaterPotential = -4.0    # [m]
+    # water retention curve and conductivity
+    initialWaterPotential = -4.0        # [m]
     waterRetentionCurve = IPPISCH_VG
     meanType = LOGARITHMIC
     conductivityHVRatio = 1.0
-    # soil layers
-    minThickness = 0.01             # [m]
-    maxThickness = 0.04             # [m]
-    maxThicknessDepth = 0.2         # [m]
+
+    # soil layers thickness
+    minThickness = 0.01                 # [m]
+    maxThickness = 0.04                 # [m]
+    maxThicknessDepth = 0.2             # [m]
+
     # sink-source
     assignIrrigation = True
     computeEvaporation = True
     computeTranspiration = True
+
     # surface flow
-    computeSurfaceFlow = False
-    roughness = 0.24            # [s m^0.33]
-    pond = 0.005                # [m]
+    computeSurfaceFlow = True
+    roughness = 0.24                    # [s m^0.33]
+    pondIrrigation = 0.01               # [m]
+    pondRainfall = 0.002                # [m]
+    pond = pondRainfall
+
     # infiltration
     computeInfiltration = True
+
     # boundary
-    isSurfaceRunoff = False
+    isSurfaceRunoff = True
     isFreeLateralDrainage = True
     isFreeDrainage = True
     isWaterTable = False
-    waterTableDepth = -6.0      # [m]
-    # numerical solution
-    currentDeltaT = 60.0        # [s]
-    deltaT_min = 2              # [s]
-    deltaT_max = 600.0          # [s]
+    waterTableDepth = -6.0              # [m]
+
+    # numerical solution parameters
+    currentDeltaT = 60.0                # [s]
+    deltaT_min = 2                      # [s]
+    deltaT_max = 600.0                  # [s]
     maxIterationsNr = 100
     maxApproximationsNr = 10
     residualTolerance = 1E-12

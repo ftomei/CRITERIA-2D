@@ -219,6 +219,11 @@ def main():
             else:
                 C3DParameters.deltaT_max = waterTimeLength
 
+            if waterBalance.currentPrec > 0:
+                C3DParameters.pond = C3DParameters.pondRainfall
+            else:
+                C3DParameters.pond = C3DParameters.pondIrrigation
+
             criteria3D.compute(waterTimeLength)
 
         exportUtils.takeScreenshot(obsWeather["timestamp"])

@@ -30,7 +30,7 @@ class CCrop:
     def setKiwifruit(self):
         self.laiMin = 1.0               # [m2 m-2]
         self.laiMax = 4.0               # [m2 m-2]
-        self.rootDepthZero = 0.10       # [m]
+        self.rootDepthZero = 0.1        # [m]
         self.rootDepthMax = 0.8         # [m]
         self.rootWidth = 2.0            # [m]
         self.rootXDeformation = 0.5     # [-]
