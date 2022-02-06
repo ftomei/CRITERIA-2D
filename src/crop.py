@@ -5,7 +5,7 @@ import soil
 import rectangularMesh
 import numpy as np
 
-MAX_EVAPORATION_DEPTH = 0.2     # [m]
+MAX_EVAPORATION_DEPTH = 0.15    # [m]
 
 
 class CCrop:
@@ -282,8 +282,8 @@ def setEvaporation(surfaceIndex, maxEvaporation):
         return actualEvaporation
 
     # soil evaporation
-    FC = soil.getFieldCapacityWC()  # [m3 m-3] water content at field capacity
-    HH = soil.getHygroscopicWC()    # [m3 m-3] water content at Hygroscopic moisture
+    FC = soil.getFieldCapacityWC()      # [m3 m-3] water content at field capacity
+    HH = soil.getHygroscopicWC()        # [m3 m-3] water content at Hygroscopic moisture
     half_FC = HH + (FC - HH) * 0.5
     lastIndex = 0
     while (lastIndex < len(soil.depth)) and (soil.depth[lastIndex] <= MAX_EVAPORATION_DEPTH):

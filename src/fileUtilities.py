@@ -13,10 +13,7 @@ import pandas as pd
 
 def getStateFileName(isSave):
     root = tkinter.Tk()
-    options = {}
-    options['defaultextension'] = ".csv"
-    options['filetypes'] = [("Comma separated values", ".csv")]
-    options['initialdir'] = "data"
+    options = {'defaultextension': ".csv", 'filetypes': [("Comma separated values", ".csv")], 'initialdir': "data"}
     if isSave:
         fileName = tkinter.filedialog.asksaveasfilename(**options)
     else:
@@ -78,45 +75,4 @@ def loadStateOld(fileName):
             for i in range(C3DStructure.nrRectangles):
                 index = layer * C3DStructure.nrRectangles + i
                 criteria3D.setMatricPotential(index, state[i + 1][layerIndex])
-    return True
-
-
-def loadState(fileName):
-    if fileName == "":
-        fileName = getStateFileName(False)
-    if fileName == "":
-        return False
-
-    state = pd.read_csv(fileName)
-    p = []
-    values = []
-    for _, position in state.iterrows():
-        x = position['x']
-        y = position['y']
-        depth = position['z']
-        p.append([x, y, depth])
-        values.append(position['psi'])
-
-    for surfaceIndex in range(C3DStructure.nrRectangles):
-        for layer in range(C3DStructure.nrLayers):
-            i = surfaceIndex + C3DStructure.nrRectangles * layer
-            # surface
-            if layer == 0:
-                criteria3D.setMatricPotential(i, 0)
-            # subsurface
-            else:
-                p0 = rectangularMesh.getXYDepth(i)
-                # inverse distance weight
-                sumWeights = 0
-                sumPsi = 0
-                for index in range(len(p)):
-                    dist = rectangularMesh.distance3D(p[index], p0)
-                    dist = max(dist, 0.001)
-                    weight = 1. / (dist * dist * dist)
-                    sumWeights += weight
-                    sumPsi += values[index] * weight
-
-                psi = (sumPsi / sumWeights) / 9.81          # water potential - from [kPa] to [m]
-                criteria3D.setMatricPotential(i, psi)
-
     return True

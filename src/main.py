@@ -12,6 +12,7 @@ import importUtils
 import pandas as pd
 import numpy as np
 import crop
+import time
 
 
 def main():
@@ -139,8 +140,9 @@ def main():
     waterPath = os.path.join(dataPath, waterFolder)
     waterData = importUtils.readWaterData(waterPath, weatherData.iloc[0]["timestamp"],
                                           weatherData.iloc[-1]["timestamp"])
-
-    # weatherData, waterData = importUtils.transformDates(weatherData, waterData)
+    weatherData.set_index(["timestamp"])
+    waterData.set_index(["timestamp"])
+    weatherData, waterData = importUtils.transformDates(weatherData, waterData)
 
     # TIME LENGTH
     weatherTimeLength = (weatherData.iloc[1]["timestamp"] - weatherData.iloc[0]["timestamp"])  # [s]
@@ -162,9 +164,9 @@ def main():
 
     visual3D.initialize(1280)
     visual3D.isPause = True
-
-    weatherData.set_index(["timestamp"])
-    waterData.set_index(["timestamp"])
+    # wait for start
+    while visual3D.isPause:
+        time.sleep(0.00001)
 
     # main cycle
     weatherIndex = 0
@@ -172,9 +174,9 @@ def main():
         obsWeather = weatherData.loc[weatherIndex]
         currentDateTime = pd.to_datetime(obsWeather["timestamp"], unit='s')
 
-        # kiwi
+        # kiwi - end season
         if currentDateTime.month >= 10:
-            crop.kiwi.kcMax = 0.5
+            crop.kiwi.kcMax = 1.0
 
         # waterTable
         # for i in range(len(waterTableDepth)):
@@ -219,12 +221,7 @@ def main():
             else:
                 C3DParameters.deltaT_max = waterTimeLength
 
-            if waterBalance.currentPrec > 0:
-                C3DParameters.pond = C3DParameters.pondRainfall
-            else:
-                C3DParameters.pond = C3DParameters.pondIrrigation
-
-            criteria3D.compute(waterTimeLength)
+            criteria3D.compute(waterTimeLength, True)
 
         exportUtils.takeScreenshot(obsWeather["timestamp"])
         weatherIndex += 1

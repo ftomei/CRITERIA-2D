@@ -56,6 +56,9 @@ def decMBRThreshold():
 
 
 def initializeBalance():
+    global totalTime
+
+    totalTime = 0.0
     storage = getWaterStorage()
     currentStep.waterStorage = storage
     previousStep.waterStorage = storage

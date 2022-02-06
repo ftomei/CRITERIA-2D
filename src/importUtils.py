@@ -1,5 +1,6 @@
 import pandas as pd
 import os
+import criteria3D
 
 
 def readWaterTable(waterPath):
@@ -19,7 +20,7 @@ def readMeteoData(meteoPath):
     humidityFile = "air_humidity.csv"
     humidity = pd.read_csv(os.path.join(meteoPath, humidityFile))
 
-    radiationsFile= "solar_radiation.csv"
+    radiationsFile = "solar_radiation.csv"
     radiations = pd.read_csv(os.path.join(meteoPath, radiationsFile))
 
     temperatureFile = "air_temperature.csv"
@@ -48,7 +49,7 @@ def readWaterData(waterPath, meteo_start, meteo_end):
     irrigationFile = "irrigation.csv"
     irrigation = pd.read_csv(os.path.join(waterPath, irrigationFile))
 
-    precipitationsFile= "precipitation.csv"
+    precipitationsFile = "precipitation.csv"
     precipitations = pd.read_csv(os.path.join(waterPath, precipitationsFile))
 
     if irrigation.iloc[0]["timestamp"] != precipitations.iloc[0]["timestamp"]:
@@ -69,19 +70,31 @@ def readWaterData(waterPath, meteo_start, meteo_end):
     return mergedDf
 
 
-def transformDates(arpaeData, waterData):
-    arpaeData["start"] = pd.to_datetime(arpaeData["start"], infer_datetime_format=True)
-    arpaeData["end"] = pd.to_datetime(arpaeData["end"], infer_datetime_format=True)
-
-    waterData["start"] = pd.to_datetime(waterData["start"], infer_datetime_format=True)
-    waterData["end"] = pd.to_datetime(waterData["end"], infer_datetime_format=True)
-    
-    return arpaeData, waterData
-
-
-def setDataIndices(meteoData, waterData):
-    meteoData = meteoData.set_index(["timestamp"])
-    waterData = waterData.set_index(["timestamp"])
-    
+def transformDates(meteoData, waterData):
+    meteoData["time"] = pd.to_datetime(meteoData["timestamp"], infer_datetime_format=True)
+    waterData["time"] = pd.to_datetime(waterData["timestamp"], infer_datetime_format=True)
     return meteoData, waterData
+
+
+def loadState(fileName):
+    if not os.path.isfile(fileName):
+        return False
+
+    state = pd.read_csv(fileName)
+    pos = []
+    potential = []
+    for _, position in state.iterrows():
+        x = position['x'] / 100.                # [m]
+        y = position['y'] / 100.                # [m]
+        depth = -position['z'] / 100.           # [m]
+        psi = position['potential'] / 9.81      # water potential - from [kPa] to [m]
+        pos.append([x, y, depth])
+        potential.append(psi)
+        # symmetric values
+        if x != 0:
+            pos.append([-x, y, depth])
+            potential.append(psi)
+
+    criteria3D.setModelState(pos, potential)
+    return True
     

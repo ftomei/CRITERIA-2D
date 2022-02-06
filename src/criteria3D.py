@@ -3,6 +3,7 @@
 from math import fabs, sqrt
 from dataStructures import *
 import rectangularMesh
+import waterBalance
 import visual3D
 import soil
 import time
@@ -130,8 +131,36 @@ def setDripIrrigation(irrigation, duration):
         C3DCells[index].sinkSource += rate * 0.001  # [m^3 s^-1]
 
 
+def setModelState(position, psiValues):
+    for surfaceIndex in range(C3DStructure.nrRectangles):
+        for layer in range(C3DStructure.nrLayers):
+            i = surfaceIndex + C3DStructure.nrRectangles * layer
+            # surface
+            if layer == 0:
+                setMatricPotential(i, 0)
+            # subsurface
+            else:
+                p0 = rectangularMesh.getXYDepth(i)
+                # inverse distance weight
+                sumWeights = 0
+                sumPsi = 0
+                for index in range(len(position)):
+                    distance = rectangularMesh.distance3D(position[index], p0)
+                    distance = max(distance, 0.001)
+                    weight = 1. / (distance * distance * distance)
+                    sumWeights += weight
+                    sumPsi += psiValues[index] * weight
+
+                psi = (sumPsi / sumWeights)
+                setMatricPotential(i, psi)
+
+    waterBalance.initializeBalance()
+    compute(3600, False)
+    waterBalance.initializeBalance()
+
+
 # timeLength        [s]          
-def compute(timeLength):
+def compute(timeLength, isRedraw):
     currentTime = 0
     while currentTime < timeLength:
         residualTime = timeLength - currentTime
@@ -139,10 +168,11 @@ def compute(timeLength):
         acceptedStep = False
 
         while not acceptedStep:
-            if visual3D.isPause:
-                print("\nPress 'r' to run")
-            while visual3D.isPause:
-                time.sleep(0.00001)
+            if isRedraw:
+                if visual3D.isPause:
+                    print("\nPress 'r' to run")
+                    while visual3D.isPause:
+                        time.sleep(0.00001)
 
             deltaT = min(C3DParameters.currentDeltaT, residualTime)
             # print("time step [s]: ", deltaT)
@@ -154,5 +184,6 @@ def compute(timeLength):
                 for i in range(C3DStructure.nrCells):
                     C3DCells[i].H = C3DCells[i].H0
 
-        visual3D.redraw()
+        if isRedraw:
+            visual3D.redraw()
         currentTime += deltaT

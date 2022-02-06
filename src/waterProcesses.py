@@ -14,7 +14,7 @@ else:
 
 def redistribution(i, link, isLateral):
     j = link.index
-    k = meanK(C3DParameters.meanType, C3DCells[i].k, C3DCells[j].k)
+    k = meanK(C3DParameters.conductivityMean, C3DCells[i].k, C3DCells[j].k)
     if isLateral:
         k *= C3DParameters.conductivityHVRatio
 
@@ -32,7 +32,7 @@ def infiltration(surf, sub, link, deltaT, isFirstApprox):
         if psi < EPSILON:
             return 0.0
         
-        interfaceK = meanK(C3DParameters.meanType, C3DCells[sub].k, soil.C3DSoil.Ks)
+        interfaceK = meanK(C3DParameters.conductivityMean, C3DCells[sub].k, soil.C3DSoil.Ks)
         dH = C3DCells[surf].H - C3DCells[sub].H
         maxK = (psi / deltaT) * (link.distance / dH)
         k = min(interfaceK, maxK)

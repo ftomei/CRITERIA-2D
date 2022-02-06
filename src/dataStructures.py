@@ -13,7 +13,7 @@ class C3DStructure:
     gridWidth = 2.2     # [m] x axis
     gridHeight = 0.6    # [m] y axis
     gridStep = 0.2      # [m]
-    slopeSide = 0.5     # [m] side of baulatura
+    slopeSide = 0.6     # [m] side of baulatura
 
     nrRectanglesInXAxis = int(gridWidth / gridStep)
     if abs(gridWidth - gridStep * nrRectanglesInXAxis) > EPSILON:
@@ -67,11 +67,15 @@ class Ccell:
 
 # model parameters
 class C3DParameters:
-    # water retention curve and conductivity
     initialWaterPotential = -4.0        # [m]
+
+    # water retention curve and conductivity
     waterRetentionCurve = IPPISCH_VG
-    meanType = LOGARITHMIC
+    conductivityMean = LOGARITHMIC
     conductivityHVRatio = 1.0
+
+    # infiltration
+    computeInfiltration = True
 
     # soil layers thickness
     minThickness = 0.01                 # [m]
@@ -86,12 +90,7 @@ class C3DParameters:
     # surface flow
     computeSurfaceFlow = True
     roughness = 0.24                    # [s m^0.33]
-    pondIrrigation = 0.01               # [m]
-    pondRainfall = 0.002                # [m]
-    pond = pondRainfall
-
-    # infiltration
-    computeInfiltration = True
+    pond = 0.05                         # [m]
 
     # boundary
     isSurfaceRunoff = True

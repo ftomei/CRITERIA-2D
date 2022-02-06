@@ -8,6 +8,7 @@ import waterBalance
 import rectangularMesh
 import soil
 import crop
+import importUtils
 
 from copy import copy
 
@@ -248,8 +249,8 @@ def keyInput(evt):
     elif s == 'l':
         isPause = True
         print("Load State...")
-        if fileUtilities.loadState(""):
-            waterBalance.initializeBalance()
+        fileName = fileUtilities.getStateFileName(False)
+        if importUtils.loadState(fileName):
             redraw()
     elif s == "c":
         if isPause:
