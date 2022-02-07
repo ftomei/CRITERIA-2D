@@ -155,8 +155,6 @@ def setModelState(position, psiValues):
                 setMatricPotential(i, psi)
 
     waterBalance.initializeBalance()
-    compute(3600, False)
-    waterBalance.initializeBalance()
 
 
 # timeLength        [s]          

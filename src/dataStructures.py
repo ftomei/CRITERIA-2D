@@ -90,7 +90,7 @@ class C3DParameters:
     # surface flow
     computeSurfaceFlow = True
     roughness = 0.24                    # [s m^0.33]
-    pond = 0.05                         # [m]
+    pond = 0.01                         # [m]
 
     # boundary
     isSurfaceRunoff = True
