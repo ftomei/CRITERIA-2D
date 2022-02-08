@@ -6,27 +6,29 @@ from dataStructures import *
 from readDataFile import readDataFile
 
 
-class CsoilHorizon:
-    upperDepth = NODATA  # [m]
-    lowerDepth = NODATA  # [m]
-    Campbell_he = NODATA  # [J kg^-1]
-    Campbell_b = NODATA  # [-]
-    Campbell_n = NODATA  # [-]
-    VG_he = NODATA  # [J kg^-1]
-    VG_alpha = NODATA  # [kg J^-1]
-    VG_n = NODATA  # [-]
-    VG_m = NODATA  # [-]
-    VG_Sc = NODATA  # [-]
-    VG_thetaR = NODATA  # [m^3 m^-3]
-    Mualem_L = NODATA  # [-]
-    thetaS = NODATA  # [m^3 m^-3]
-    Ks = NODATA  # [kg s m^-3]
+class CSoilHorizon:
+    def __init__(self):
+        upperDepth = NODATA     # [m]
+        lowerDepth = NODATA     # [m]
+        Campbell_he = NODATA    # [J kg^-1]
+        Campbell_b = NODATA     # [-]
+        Campbell_n = NODATA     # [-]
+        VG_he = NODATA          # [J kg^-1]
+        VG_alpha = NODATA       # [kg J^-1]
+        VG_n = NODATA           # [-]
+        VG_m = NODATA           # [-]
+        VG_Sc = NODATA          # [-]
+        VG_thetaR = NODATA      # [m^3 m^-3]
+        Mualem_L = NODATA       # [-]
+        thetaS = NODATA         # [m^3 m^-3]
+        Ks = NODATA             # [kg s m^-3]
+        pass
 
 
-# global
+# global arrays
 depth = np.array([], np.float64)
 thickness = np.array([], np.float64)
-C3DSoil = CsoilHorizon()
+C3DSoil = CSoilHorizon()
 
 
 def readHorizon(soilFileName, i):
@@ -34,7 +36,7 @@ def readHorizon(soilFileName, i):
     if (not isFileOk) or (len(A[0]) < 10):
         print("warning: wrong soil file.")
         return False
-    horizon = CsoilHorizon()
+    horizon = CSoilHorizon()
     i -= 1
     horizon.upperDepth = A[i, 0]
     horizon.lowerDepth = A[i, 1]

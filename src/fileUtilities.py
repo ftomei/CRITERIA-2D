@@ -7,8 +7,6 @@ import soil
 import tkinter
 import tkinter.filedialog
 import criteria3D
-import rectangularMesh
-import pandas as pd
 
 
 def getStateFileName(isSave):
