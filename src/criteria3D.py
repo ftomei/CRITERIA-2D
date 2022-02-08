@@ -8,7 +8,6 @@ import visual3D
 import soil
 import time
 
-CYTHON = True
 if CYTHON:
     import solverCython as solver
 else:

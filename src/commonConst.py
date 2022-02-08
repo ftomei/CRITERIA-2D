@@ -1,5 +1,7 @@
 # commonConst.py
 
+CYTHON = True
+
 CAMPBELL = 1
 IPPISCH_VG = 2
 

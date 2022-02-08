@@ -5,7 +5,7 @@ from dataStructures import *
 import waterBalance
 import soil
 
-CYTHON = True
+
 if CYTHON:
     from solverC import meanK
 else:
