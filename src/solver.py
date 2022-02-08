@@ -45,16 +45,16 @@ def computeStep(deltaT):
                 C[i] = C3DCells[i].volume * soil.get_dTheta_dH(i)
         boundaryConditions.updateBoundary(deltaT)
 
-        print("approximation nr:", approximation)
-        print("Sum flows (abs) [l]:", format(waterBalance.sumWaterFlow(deltaT, True) * 1000., ".5f"))
+        # print("approximation nr:", approximation)
+        # print("Sum flows (abs) [l]:", format(waterBalance.sumWaterFlow(deltaT, True) * 1000., ".5f"))
 
         for i in range(C3DStructure.nrCells):
             k = 0
             if (newMatrixElement(i, C3DCells[i].upLink, k,
                                  False, deltaT, isFirstApprox)):
                 k += 1
-            for l in range(C3DStructure.nrLateralLinks):
-                if (newMatrixElement(i, C3DCells[i].lateralLink[l], k,
+            for link in range(C3DStructure.nrLateralLinks):
+                if (newMatrixElement(i, C3DCells[i].lateralLink[link], k,
                                      True, deltaT, isFirstApprox)):
                     k += 1
             if (newMatrixElement(i, C3DCells[i].downLink, k,
@@ -99,12 +99,12 @@ def computeStep(deltaT):
 def newMatrixElement(i, link, k, isLateral, deltaT, isFirstApprox):
     global A, indices
     j = link.index
-    if (j == NOLINK): return (False)
+    if j == NOLINK:
+        return False
 
-    value = 0.0
     if C3DCells[i].isSurface:
         if C3DCells[j].isSurface:
-            if (C3DParameters.computeSurfaceFlow):
+            if C3DParameters.computeSurfaceFlow:
                 value = runoff(i, link, deltaT, isFirstApprox)
             else:
                 value = 0.0
@@ -127,20 +127,22 @@ def arrangeMatrix(i, deltaT):
     global b, C, A
     mySum = 0.0
     for j in range(C3DStructure.nrMaxLinks):
-        if (indices[i][j] == NOLINK): break
+        if indices[i][j] == NOLINK:
+            break
         mySum += A[i][j]
         A[i][j] *= -1.0
 
     # diagonal and vector b     
     D = (C[i] / deltaT) + mySum
     b[i] = (C[i] / deltaT) * C3DCells[i].H0
-    if (C3DCells[i].flow != NODATA):
+    if C3DCells[i].flow != NODATA:
         b[i] += C3DCells[i].flow
 
     # matrix conditioning
     b[i] /= D
     for j in range(C3DStructure.nrMaxLinks):
-        if (indices[i][j] == NOLINK): break
+        if indices[i][j] == NOLINK:
+            break
         A[i][j] /= D
 
 
@@ -151,13 +153,13 @@ def solveMatrix(approximation):
     iteration = 0
     norm = 1000.
     bestNorm = norm
-    while ((norm > C3DParameters.residualTolerance)
-           and (iteration < maxIterationsNr)):
+    while norm > C3DParameters.residualTolerance and iteration < maxIterationsNr:
         norm = GaussSeidel()
-        if norm > (bestNorm * 10.0): return (False)
+        if norm > (bestNorm * 10.0):
+            return False
         bestNorm = min(norm, bestNorm)
         iteration += 1
-    return (True)
+    return True
 
 
 def GaussSeidel():
@@ -167,11 +169,13 @@ def GaussSeidel():
         new_x = b[i]
         for j in range(C3DStructure.nrMaxLinks):
             n = indices[i][j]
-            if (n == NOLINK): break
+            if n == NOLINK:
+                break
             new_x -= (A[i][j] * x[n])
 
         dx = fabs(new_x - x[i])
         # infinite norm
-        if (dx > norm): norm = dx
+        if dx > norm:
+            norm = dx
         x[i] = new_x
-    return (norm)
+    return norm

@@ -183,13 +183,13 @@ def main():
         #    if currentDateTime > waterTableDate[i]:
         #        C3DParameters.waterTableDepth = waterTableDepth[i]
 
-        if not(np.isnan(obsWeather["air_temperature"])):
+        if not (np.isnan(obsWeather["air_temperature"])):
             airTemperature = obsWeather["air_temperature"]
-        if not(np.isnan(obsWeather["solar_radiation"])):
+        if not (np.isnan(obsWeather["solar_radiation"])):
             globalSWRadiation = obsWeather["solar_radiation"]
-        if not(np.isnan(obsWeather["air_humidity"])):
+        if not (np.isnan(obsWeather["air_humidity"])):
             airRelHumidity = obsWeather["air_humidity"]
-        if not(np.isnan(obsWeather["wind_speed"])):
+        if not (np.isnan(obsWeather["wind_speed"])):
             windSpeed_10m = obsWeather["wind_speed"]
         else:
             print("Missed")
