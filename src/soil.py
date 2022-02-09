@@ -180,7 +180,7 @@ def hydraulicConductivity(curve, Se, z):
     k = NODATA
     # soil compaction
     if abs(z) >= 0.5:
-        ks = C3DSoil.Ks * 0.25
+        ks = C3DSoil.Ks * 0.5
     else:
         ks = C3DSoil.Ks
 

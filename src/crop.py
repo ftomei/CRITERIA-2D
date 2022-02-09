@@ -5,19 +5,19 @@ import soil
 import rectangularMesh
 import numpy as np
 
-MAX_EVAPORATION_DEPTH = 0.15    # [m]
+MAX_EVAPORATION_DEPTH = 0.15  # [m]
 
 
 class CCrop:
-    laiMin = NODATA             # [m2 m-2]
-    laiMax = NODATA             # [m2 m-2]
-    rootDepthZero = NODATA      # [m]
-    rootDepthMax = NODATA       # [m]
-    rootWidth = NODATA          # [m]
-    rootXDeformation = NODATA   # [-]
-    rootZDeformation = NODATA   # [-]
-    kcMax = NODATA              # [-]
-    fRAW = NODATA               # [-]
+    laiMin = NODATA  # [m2 m-2]
+    laiMax = NODATA  # [m2 m-2]
+    rootDepthZero = NODATA  # [m]
+    rootDepthMax = NODATA  # [m]
+    rootWidth = NODATA  # [m]
+    rootXDeformation = NODATA  # [-]
+    rootZDeformation = NODATA  # [-]
+    kcMax = NODATA  # [-]
+    fRAW = NODATA  # [-]
     currentLAI = NODATA
     currentRootDepth = NODATA
     currentRootLength = NODATA
@@ -31,26 +31,37 @@ class CCrop:
         self.laiMin = 1.0               # [m2 m-2]
         self.laiMax = 4.0               # [m2 m-2]
         self.rootDepthZero = 0.1        # [m]
-        self.rootDepthMax = 0.8         # [m]
+        self.rootDepthMax = 0.75        # [m]
         self.rootWidth = 2.0            # [m]
-        self.rootXDeformation = 0.5     # [-]
+        self.rootXDeformation = 0.4     # [-]
         self.rootZDeformation = 0.0     # [-] 0: symmetric 1: cardioid 2: cardioid more accentuated
-        self.kcMax = 3.0                # [-]
+        self.kcMax = 2.6                # [-]
         self.fRAW = 0.6                 # [-]
         self.setMaxValues()
-        self.currentLAI = 4.0       # [m2 m-2]
+        self.currentLAI = 4.0           # [m2 m-2]
 
 
+# global variables
 kiwi = CCrop()
 rootDensity = []
-k_root = np.array
+k_root = np.array([], np.float64)
+SAT = NODATA            # [m3 m-3] water content at saturation
+FC = NODATA             # [m3 m-3] water content at field capacity
+WP = NODATA             # [m3 m-3] water content at wilting point
+wsThreshold = NODATA    # [m3 m-3] water scarcity stress threshold
 
 
 def initializeCrop(plantConfiguration):
     global rootDensity, k_root
+    global SAT, FC, WP, wsThreshold
 
     # initialize kiwifruit
     kiwi.setKiwifruit()
+
+    SAT = soil.C3DSoil.thetaS
+    FC = soil.getFieldCapacityWC()
+    WP = soil.getWiltingPointWC()
+    wsThreshold = FC - kiwi.fRAW * (FC - WP)
 
     # initialize root factor
     k_root = np.zeros(C3DStructure.nrRectangles)
@@ -187,25 +198,17 @@ def computeRootDensity(crop, nrLayers, rootFactor):
 
 
 # assign hourly transpiration
-def setTranspiration(surfaceIndex, crop, myRootDensity, maxTranspiration):
+def setTranspiration(surfaceIndex, myRootDensity, maxTranspiration):
     if maxTranspiration < EPSILON:
         return 0.0
 
-    SAT = soil.C3DSoil.thetaS
-    FC = soil.getFieldCapacityWC()  # [m3 m-3] water content at field capacity
-    WP = soil.getWiltingPointWC()  # [m3 m-3] water content at wilting point
-    WSThreshold = FC - crop.fRAW * (FC - WP)  # [m3 m-3] water scarcity stress threshold
-
     # Initialize
-    rootDensityWithoutStress = 0.0  # [-]
-    actualTranspiration = 0.0  # [mm]
+    rootDensityWithoutStress = 0.0      # [-]
+    actualTranspiration = 0.0           # [mm]
 
     nrLayers = len(myRootDensity)
     isLayerStressed = np.zeros(nrLayers, dtype=bool)
-    layerTranspiration = np.zeros(nrLayers, np.float64)         # [mm]
-    for layer in range(nrLayers):
-        isLayerStressed[layer] = False
-        layerTranspiration[layer] = 0.0
+    layerTranspiration = np.zeros(nrLayers, np.float64)  # [mm]
 
     for layer in range(nrLayers):
         if myRootDensity[layer] > 0:
@@ -216,27 +219,28 @@ def setTranspiration(surfaceIndex, crop, myRootDensity, maxTranspiration):
                 layerTranspiration[layer] = maxTranspiration * myRootDensity[layer] \
                                             * (1.0 - (theta - FC) / (SAT - FC))
                 isLayerStressed[layer] = True
-            # water scarcity
-            elif theta < WSThreshold:
-                if theta <= WP:
-                    layerTranspiration[layer] = 0.0
-                else:
-                    layerTranspiration[layer] = maxTranspiration * myRootDensity[layer] * (
-                                (theta - WP) / (WSThreshold - WP))
-                isLayerStressed[layer] = True
             else:
-                # normal conditions
-                layerTranspiration[layer] = maxTranspiration * myRootDensity[layer]
-
-                # check stress
-                theta_mm = theta * soil.thickness[layer] * 1000.
-                WSThreshold_mm = WSThreshold * soil.thickness[layer] * 1000.
-
-                if (theta_mm - layerTranspiration[layer]) > WSThreshold_mm:
-                    isLayerStressed[layer] = False
-                    rootDensityWithoutStress += myRootDensity[layer]
-                else:
+                # water scarcity
+                if theta < wsThreshold:
+                    if theta <= WP:
+                        layerTranspiration[layer] = 0.0
+                    else:
+                        layerTranspiration[layer] = maxTranspiration * myRootDensity[layer] * (
+                                (theta - WP) / (wsThreshold - WP))
                     isLayerStressed[layer] = True
+                else:
+                    # normal conditions
+                    layerTranspiration[layer] = maxTranspiration * myRootDensity[layer]
+
+                    # check stress
+                    theta_mm = theta * soil.thickness[layer] * 1000.
+                    WSThreshold_mm = wsThreshold * soil.thickness[layer] * 1000.
+
+                    if (theta_mm - layerTranspiration[layer]) > WSThreshold_mm:
+                        isLayerStressed[layer] = False
+                        rootDensityWithoutStress += myRootDensity[layer]
+                    else:
+                        isLayerStressed[layer] = True
 
             actualTranspiration += layerTranspiration[layer]
 
@@ -282,8 +286,8 @@ def setEvaporation(surfaceIndex, maxEvaporation):
         return actualEvaporation
 
     # soil evaporation
-    FC = soil.getFieldCapacityWC()      # [m3 m-3] water content at field capacity
-    HH = soil.getHygroscopicWC()        # [m3 m-3] water content at Hygroscopic moisture
+    FC = soil.getFieldCapacityWC()  # [m3 m-3] water content at field capacity
+    HH = soil.getHygroscopicWC()  # [m3 m-3] water content at Hygroscopic moisture
     half_FC = HH + (FC - HH) * 0.5
     lastIndex = 0
     while (lastIndex < len(soil.depth)) and (soil.depth[lastIndex] <= MAX_EVAPORATION_DEPTH):
@@ -306,7 +310,7 @@ def setEvaporation(surfaceIndex, maxEvaporation):
 
         for layer in range(1, nrEvapLayers):
             index = surfaceIndex + C3DStructure.nrRectangles * layer
-            theta = soil.getVolumetricWaterContent(index)                       # [m3 m-3]
+            theta = soil.getVolumetricWaterContent(index)  # [m3 m-3]
             evaporationThreshold = half_FC - coeffEvap[layer] * (half_FC - HH)  # [m3 m-3]
             evaporation = residualEvaporation * ((coeffEvap[layer]
                                                   * soil.thickness[layer]) / sumCoefficient)  # [mm]
@@ -339,7 +343,7 @@ def setEvapotranspiration(ET0):
         for i in range(C3DStructure.nrRectangles):
             maxTrKiwi = getMaxTranspiration(kiwi.currentLAI, kiwi.kcMax, ET0)
             maxTranspiration = maxTrKiwi * k_root[i]
-            setTranspiration(i, kiwi, rootDensity[i], maxTranspiration)
+            setTranspiration(i, rootDensity[i], maxTranspiration)
 
     if C3DParameters.computeEvaporation:
         maxEvaporation = getMaxEvaporation(kiwi.currentLAI, ET0)
