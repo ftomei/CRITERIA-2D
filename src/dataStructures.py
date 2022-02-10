@@ -10,9 +10,9 @@ class C3DStructure:
     slopePlant = 0.2    # [-] slope around plant (baulatura)
     slopeX = -0.01      # [-] slope on x axis
     slopeY = -0.025     # [-] slope on y axis
-    gridWidth = 2.75   # [m] x axis
-    gridHeight = 0.75  # [m] y axis
-    gridStep = 0.25    # [m]
+    gridWidth = 2.375   # [m] x axis
+    gridHeight = 0.625  # [m] y axis
+    gridStep = 0.125    # [m]
     slopeSide = 1.0     # [m] side of baulatura
 
     nrRectanglesInXAxis = int(gridWidth / gridStep)

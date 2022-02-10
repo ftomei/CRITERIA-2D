@@ -84,10 +84,10 @@ def loadState(fileName):
     pos = []
     potential = []
     for _, position in state.iterrows():
-        x = position['x'] / 100.                # [m]
-        y = position['y'] / 100.                # [m]
-        depth = -position['z'] / 100.           # [m]
-        psi = position['potential'] / 9.81      # water potential - from [kPa] to [m]
+        x = position['x']                   # [m]
+        y = position['y']                   # [m]
+        depth = position['z']               # [m]
+        psi = position['value'] / 9.81      # water potential - from [kPa] to [m]
         pos.append([x, y, depth])
         potential.append(psi)
         # symmetric values

@@ -2,11 +2,11 @@ from dataStructures import *
 import rectangularMesh
 import criteria3D
 import numpy as np
-import pandas as pd
 from scipy.interpolate import interpn
 
+
 def buildDataStructuresForInterpolation(initialState):
-    # Select just the vertices that compose an hyper-plane
+    # Select just the vertices that compose a hyper-plane
     initialState = initialState.sort_values(by=['x', 'y', 'z'])
     # Understand which interpolation to apply (1D, 2D, 3D)
     x = initialState["x"].unique()
@@ -32,7 +32,9 @@ def buildDataStructuresForInterpolation(initialState):
     for i in range(x.shape[-1]):
         for j in range(y.shape[-1]):
             for k in range(z.shape[-1]):
-                value = initialState[(initialState["x"] == x[i]) & (initialState["y"] == y[j]) & (initialState["z"] == z[k])]["value"]
+                value = \
+                initialState[(initialState["x"] == x[i]) & (initialState["y"] == y[j]) & (initialState["z"] == z[k])][
+                    "value"]
                 if len(points) == 1:
                     # Even though we do not know which is the coordinate that has not one unique value,
                     # we can sum all of the coordinates because the index of the ones that has just one unique value would be 0
@@ -49,6 +51,7 @@ def buildDataStructuresForInterpolation(initialState):
                     values[i, j, k] = value
     return points, values, [x, y, z]
 
+
 def getVertices(domain):
     mins = [min(axis) for axis in domain]
     maxs = [max(axis) for axis in domain]
@@ -64,14 +67,19 @@ def interpolate(initialState):
     origin, maxFirstCoordinate, maxSecondCoordinate, maxThirdCoordinate = getVertices(domain)
 
     originIndex = rectangularMesh.getCellIndex(origin[0], origin[1], origin[2])
-    maxFirstCoordinateIndex = rectangularMesh.getCellIndex(maxFirstCoordinate[0], maxFirstCoordinate[1], maxFirstCoordinate[2])
-    maxSecondCoordinateIndex = rectangularMesh.getCellIndex(maxSecondCoordinate[0], maxSecondCoordinate[1], maxSecondCoordinate[2])
-    maxThirdCoordinateIndex = rectangularMesh.getCellIndex(maxThirdCoordinate[0], maxThirdCoordinate[1], maxThirdCoordinate[2])
+    maxFirstCoordinateIndex = rectangularMesh.getCellIndex(maxFirstCoordinate[0], maxFirstCoordinate[1],
+                                                           maxFirstCoordinate[2])
+    maxSecondCoordinateIndex = rectangularMesh.getCellIndex(maxSecondCoordinate[0], maxSecondCoordinate[1],
+                                                            maxSecondCoordinate[2])
+    maxThirdCoordinateIndex = rectangularMesh.getCellIndex(maxThirdCoordinate[0], maxThirdCoordinate[1],
+                                                           maxThirdCoordinate[2])
 
     interpolated_points = {}
     for x_inc in range(0, maxFirstCoordinateIndex - originIndex + 1, 1):
-        for y_inc in range(0, maxSecondCoordinateIndex - originIndex + C3DStructure.nrRectanglesInXAxis, C3DStructure.nrRectanglesInXAxis):
-            for z_inc in range(0, maxThirdCoordinateIndex - originIndex + C3DStructure.nrRectangles, C3DStructure.nrRectangles):
+        for y_inc in range(0, maxSecondCoordinateIndex - originIndex + C3DStructure.nrRectanglesInXAxis,
+                           C3DStructure.nrRectanglesInXAxis):
+            for z_inc in range(0, maxThirdCoordinateIndex - originIndex + C3DStructure.nrRectangles,
+                               C3DStructure.nrRectangles):
 
                 index = originIndex + x_inc + y_inc + z_inc
                 coords = [round(num, 2) for num in rectangularMesh.getXYDepth(index)]
@@ -88,36 +96,39 @@ def interpolate(initialState):
                         point = np.array([x, y])
                 if len(points) == 3:
                     point = np.array([x, y, z])
- 
+
                 value = interpn(points, values, point)
                 interpolated_points[index] = value[0]
                 criteria3D.setMatricPotential(index, value)
     return interpolated_points
 
-def getCloserIndex(i, indeces):
+
+def getCloserIndex(i, indices):
     min_index = float('inf')
     min_distance = float('inf')
-    #x_i, y_i, z_i = rectangularMesh.getXYDepth(i)
-    for index in indeces:
-        #x_index, y_index, z_index = rectangularMesh.getXYDepth(index)
+    # x_i, y_i, z_i = rectangularMesh.getXYDepth(i)
+    for index in indices:
+        # x_index, y_index, z_index = rectangularMesh.getXYDepth(index)
         distance = criteria3D.getCellDistance(i, index)
         if distance < min_distance:
             min_index = index
             min_distance = distance
     return min_index
 
+
 def assimilate(initialState):
     interpolated_points = interpolate(initialState)
-    
-    if not((initialState['x'] < 0).any()):
+
+    if not ((initialState['x'] < 0).any()):
         initialState[['x', 'y']] = -initialState[['x', 'y']]
         new_interpolated_points = interpolate(initialState)
         interpolated_points = {**interpolated_points, **new_interpolated_points}
 
-    indeces = interpolated_points.keys()
+    indices = interpolated_points.keys()
     for i in range(C3DStructure.nrCells):
         x, y, depth = rectangularMesh.getXYDepth(i)
-        if (i not in indeces) and (depth != 0):
-            min_index = getCloserIndex(i, indeces)
-            value = interpolated_points[min_index]
-            criteria3D.setMatricPotential(i, value)
+        if (i not in indices) and (depth != 0):
+            min_index = getCloserIndex(i, indices)
+            # water potential - from [kPa] to [m]
+            psi = interpolated_points[min_index] / 9.81
+            criteria3D.setMatricPotential(i, psi)

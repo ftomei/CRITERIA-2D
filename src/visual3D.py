@@ -314,7 +314,8 @@ def drawSlice(isFirst):
             i = layer * C3DStructure.nrRectanglesInXAxis + x
             if isRootVisualization:
                 surfaceIndex = firstIndex + x
-                c = getSEColor(10 * k_root[surfaceIndex] * rootDensity[surfaceIndex][layer], 0, 1)
+                c = getSEColor(k_root[surfaceIndex] * rootDensity[surfaceIndex][layer]
+                               / (soil.thickness[layer] * 2), 0, 1)
             elif isPointVisualization:
                 c = [0.5, 0.5, 0.5]
                 if index in outputIndices:
@@ -370,7 +371,8 @@ def drawSurface(isFirst):
             if isWaterPotential:
                 c = getMatricPotentialColor(C3DCells[index].H - C3DCells[index].z)
             elif isRootVisualization:
-                c = getSEColor(10 * crop.k_root[i] * crop.rootDensity[i][visualizedLayer], 0, 1)
+                c = getSEColor(crop.k_root[i] * crop.rootDensity[i][visualizedLayer]
+                               / (soil.thickness[visualizedLayer] * 2), 0, 1)
             elif isPointVisualization:
                 c = [0.5, 0.5, 0.5]
                 if index in outputIndices:

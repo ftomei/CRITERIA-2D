@@ -48,12 +48,13 @@ k_root = np.array([], np.float64)
 SAT = NODATA            # [m3 m-3] water content at saturation
 FC = NODATA             # [m3 m-3] water content at field capacity
 WP = NODATA             # [m3 m-3] water content at wilting point
+HH = NODATA             # [m3 m-3] water content at Hygroscopic moisture
 wsThreshold = NODATA    # [m3 m-3] water scarcity stress threshold
 
 
 def initializeCrop(plantConfiguration):
     global rootDensity, k_root
-    global SAT, FC, WP, wsThreshold
+    global SAT, FC, WP, HH, wsThreshold
 
     # initialize kiwifruit
     kiwi.setKiwifruit()
@@ -61,6 +62,7 @@ def initializeCrop(plantConfiguration):
     SAT = soil.C3DSoil.thetaS
     FC = soil.getFieldCapacityWC()
     WP = soil.getWiltingPointWC()
+    HH = soil.getHygroscopicWC()
     wsThreshold = FC - kiwi.fRAW * (FC - WP)
 
     # initialize root factor
@@ -286,8 +288,6 @@ def setEvaporation(surfaceIndex, maxEvaporation):
         return actualEvaporation
 
     # soil evaporation
-    FC = soil.getFieldCapacityWC()  # [m3 m-3] water content at field capacity
-    HH = soil.getHygroscopicWC()  # [m3 m-3] water content at Hygroscopic moisture
     half_FC = HH + (FC - HH) * 0.5
     lastIndex = 0
     while (lastIndex < len(soil.depth)) and (soil.depth[lastIndex] <= MAX_EVAPORATION_DEPTH):
