@@ -10,10 +10,10 @@ class C3DStructure:
     slopePlant = 0.2    # [-] slope around plant (baulatura)
     slopeX = -0.01      # [-] slope on x axis
     slopeY = -0.025     # [-] slope on y axis
-    gridWidth = 2.2     # [m] x axis
-    gridHeight = 0.6    # [m] y axis
-    gridStep = 0.2      # [m]
-    slopeSide = 0.6     # [m] side of baulatura
+    gridWidth = 2.75   # [m] x axis
+    gridHeight = 0.75  # [m] y axis
+    gridStep = 0.25    # [m]
+    slopeSide = 1.0     # [m] side of baulatura
 
     nrRectanglesInXAxis = int(gridWidth / gridStep)
     if abs(gridWidth - gridStep * nrRectanglesInXAxis) > EPSILON:
@@ -88,12 +88,12 @@ class C3DParameters:
     computeTranspiration = True
 
     # surface flow
-    computeSurfaceFlow = True
+    computeSurfaceFlow = False
     roughness = 0.24                    # [s m^0.33]
-    pond = 0.01                         # [m]
+    pond = 0.02                         # [m]
 
     # boundary
-    isSurfaceRunoff = True
+    isSurfaceRunoff = False
     isFreeLateralDrainage = True
     isFreeDrainage = True
     isWaterTable = False
