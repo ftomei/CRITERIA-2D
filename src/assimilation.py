@@ -98,8 +98,10 @@ def interpolate(initialState):
                     point = np.array([x, y, z])
 
                 value = interpn(points, values, point)
-                interpolated_points[index] = value[0]
-                criteria3D.setMatricPotential(index, value)
+                interpolated_points[index] = value
+                # water potential - from [kPa] to [m]
+                psi = value / 9.81
+                criteria3D.setMatricPotential(index, psi)
     return interpolated_points
 
 
@@ -129,6 +131,7 @@ def assimilate(initialState):
         x, y, depth = rectangularMesh.getXYDepth(i)
         if (i not in indices) and (depth != 0):
             min_index = getCloserIndex(i, indices)
+            value = interpolated_points[min_index]
             # water potential - from [kPa] to [m]
-            psi = interpolated_points[min_index] / 9.81
+            psi = value / 9.81
             criteria3D.setMatricPotential(i, psi)
