@@ -4,6 +4,7 @@ import waterBalance
 import rectangularMesh
 import criteria3D
 import visual3D
+import assimilation
 import os
 from PenmanMonteith import computeHourlyET0
 from transmissivity import computeNormTransmissivity
@@ -117,6 +118,9 @@ def main():
             linkIndex = index + C3DStructure.nrRectangles
             criteria3D.SetCellLink(index, linkIndex, DOWN, exchangeArea)
 
+    stateFolder = os.path.join(dataPath, "state")
+    initialState = pd.read_csv(os.path.join(stateFolder, "1630447200.csv"))
+    assimilation.assimilate(initialState)
     waterBalance.initializeBalance()
     print("Initial water storage [m^3]:", format(waterBalance.currentStep.waterStorage, ".3f"))
 
