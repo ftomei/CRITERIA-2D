@@ -98,7 +98,7 @@ def interpolate(initialState):
                     point = np.array([x, y, z])
 
                 value = interpn(points, values, point)
-                interpolated_points[index] = value
+                interpolated_points[index] = value[0]
                 # water potential - from [kPa] to [m]
                 psi = value / 9.81
                 criteria3D.setMatricPotential(index, psi)
