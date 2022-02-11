@@ -180,7 +180,7 @@ def main():
 
         # kiwi - end season
         if currentDateTime.month >= 10:
-            crop.kiwi.kcMax = 0.6
+            crop.kiwi.currentKc = 0.6
 
         # waterTable
         # for i in range(len(waterTableDepth)):

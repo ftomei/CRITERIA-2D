@@ -315,7 +315,7 @@ def drawSlice(isFirst):
             if isRootVisualization:
                 surfaceIndex = firstIndex + x
                 c = getSEColor(k_root[surfaceIndex] * rootDensity[surfaceIndex][layer]
-                               / (soil.thickness[layer] * 2), 0, 1)
+                               / (soil.thickness[layer] * 3), 0, 1)
             elif isPointVisualization:
                 c = [0.5, 0.5, 0.5]
                 if index in outputIndices:
@@ -372,7 +372,7 @@ def drawSurface(isFirst):
                 c = getMatricPotentialColor(C3DCells[index].H - C3DCells[index].z)
             elif isRootVisualization:
                 c = getSEColor(crop.k_root[i] * crop.rootDensity[i][visualizedLayer]
-                               / (soil.thickness[visualizedLayer] * 2), 0, 1)
+                               / (soil.thickness[visualizedLayer] * 3), 0, 1)
             elif isPointVisualization:
                 c = [0.5, 0.5, 0.5]
                 if index in outputIndices:

@@ -19,37 +19,38 @@ class CCrop:
     kcMax = NODATA  # [-]
     fRAW = NODATA  # [-]
     currentLAI = NODATA
+    currentKc = NODATA
     currentRootDepth = NODATA
     currentRootLength = NODATA
 
     def setMaxValues(self):
         self.currentLAI = self.laiMax
+        self.currentKc = self.kcMax
         self.currentRootDepth = self.rootDepthMax
         self.currentRootLength = self.currentRootDepth - self.rootDepthZero
 
     def setKiwifruit(self):
-        self.laiMin = 1.0               # [m2 m-2]
-        self.laiMax = 4.0               # [m2 m-2]
-        self.rootDepthZero = 0.1        # [m]
-        self.rootDepthMax = 0.75        # [m]
-        self.rootWidth = 2.0            # [m]
-        self.rootXDeformation = 0.4     # [-]
-        self.rootZDeformation = 0.0     # [-] 0: symmetric 1: cardioid 2: cardioid more accentuated
-        self.kcMax = 2.8                # [-]
-        self.fRAW = 0.6                 # [-]
+        self.laiMin = 1.0           # [m2 m-2]
+        self.laiMax = 4.0           # [m2 m-2]
+        self.rootDepthZero = 0.1    # [m]
+        self.rootDepthMax = 0.75    # [m]
+        self.rootWidth = 2.0        # [m]
+        self.rootXDeformation = 0.4  # [-]
+        self.rootZDeformation = 0.0  # [-] 0: symmetric 1: cardioid 2: cardioid more accentuated
+        self.kcMax = 2.0            # [-]
+        self.fRAW = 0.6             # [-]
         self.setMaxValues()
-        self.currentLAI = 4.0           # [m2 m-2]
 
 
 # global variables
 kiwi = CCrop()
 rootDensity = []
 k_root = np.array([], np.float64)
-SAT = NODATA            # [m3 m-3] water content at saturation
-FC = NODATA             # [m3 m-3] water content at field capacity
-WP = NODATA             # [m3 m-3] water content at wilting point
-HH = NODATA             # [m3 m-3] water content at Hygroscopic moisture
-wsThreshold = NODATA    # [m3 m-3] water scarcity stress threshold
+SAT = NODATA  # [m3 m-3] water content at saturation
+FC = NODATA  # [m3 m-3] water content at field capacity
+WP = NODATA  # [m3 m-3] water content at wilting point
+HH = NODATA  # [m3 m-3] water content at Hygroscopic moisture
+wsThreshold = NODATA  # [m3 m-3] water scarcity stress threshold
 
 
 def initializeCrop(plantConfiguration):
@@ -68,7 +69,7 @@ def initializeCrop(plantConfiguration):
     # initialize root factor
     k_root = np.zeros(C3DStructure.nrRectangles)
     if C3DParameters.computeTranspiration:
-        # line plant-sprinkler
+        # line plant
         max_distance = kiwi.rootWidth * 0.5
         x1 = plantConfiguration.iloc[0]['plant_x']
         y1 = plantConfiguration.iloc[0]['plant_y']
@@ -84,7 +85,8 @@ def initializeCrop(plantConfiguration):
             line_distance = math.fabs(a * x + b * y + c) / denominator
 
             if line_distance < max_distance or math.fabs(line_distance - max_distance) < EPSILON:
-                k_root[i] = 1.0 - (line_distance / max_distance) * kiwi.rootXDeformation
+                factor = 1.0 - line_distance / (max_distance * 0.5)
+                k_root[i] = 1.0 + factor * kiwi.rootXDeformation
             else:
                 k_root[i] = 0.0
     else:
@@ -165,7 +167,7 @@ def computeRootDensity(crop, nrLayers, rootFactor):
     if crop.currentRootLength <= 0 or rootFactor == 0:
         return myRootDensity
 
-    rootLength = crop.currentRootLength * math.sqrt(rootFactor)
+    rootLength = crop.currentRootLength * min(1, math.sqrt(rootFactor))
     # decrease = crop.currentRootLength - rootLength
     # rootZero = crop.rootDepthZero + decrease * 0.25
     rootZero = crop.rootDepthZero
@@ -205,8 +207,8 @@ def setTranspiration(surfaceIndex, myRootDensity, maxTranspiration):
         return 0.0
 
     # Initialize
-    rootDensityWithoutStress = 0.0      # [-]
-    actualTranspiration = 0.0           # [mm]
+    rootDensityWithoutStress = 0.0  # [-]
+    actualTranspiration = 0.0  # [mm]
 
     nrLayers = len(myRootDensity)
     isLayerStressed = np.zeros(nrLayers, dtype=bool)
@@ -337,7 +339,7 @@ def setEvaporation(surfaceIndex, maxEvaporation):
 def setEvapotranspiration(ET0):
     if C3DParameters.computeTranspiration:
         for i in range(C3DStructure.nrRectangles):
-            maxTrKiwi = getMaxTranspiration(kiwi.currentLAI, kiwi.kcMax, ET0)
+            maxTrKiwi = getMaxTranspiration(kiwi.currentLAI, kiwi.currentKc, ET0)
             maxTranspiration = maxTrKiwi * k_root[i]
             setTranspiration(i, rootDensity[i], maxTranspiration)
 
