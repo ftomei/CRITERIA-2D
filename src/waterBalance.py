@@ -84,7 +84,7 @@ def getWaterStorage():
     waterStorage = 0.0
     for i in range(C3DStructure.nrCells):
         if C3DCells[i].isSurface:
-            if C3DCells[i].H > C3DCells[i].z:
+            if abs(C3DCells[i].H - C3DCells[i].z) > EPSILON:
                 waterStorage += (C3DCells[i].H - C3DCells[i].z) * C3DCells[i].area
         else:
             waterStorage += (getVolumetricWaterContent(i) * C3DCells[i].volume)
@@ -123,7 +123,10 @@ def computeBalanceError(deltaT):
     currentStep.waterStorage = getWaterStorage()
     currentStep.waterFlow = sumWaterFlow(deltaT, False)
     currentStep.MBE = currentStep.waterStorage - (previousStep.waterStorage + currentStep.waterFlow)
-    currentStep.MBR = fabs(currentStep.MBE) / previousStep.waterStorage
+    if previousStep.waterStorage > 0:
+        currentStep.MBR = fabs(currentStep.MBE) / previousStep.waterStorage
+    else:
+        currentStep.MBR = fabs(currentStep.MBE)
 
     # print ("Mass Balance Error [l]:", format(currentStep.MBE * 1000,".5f"))
     # print("Mass Balance Ratio:", format(currentStep.MBR, ".5f"))

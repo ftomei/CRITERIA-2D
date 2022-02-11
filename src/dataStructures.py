@@ -6,7 +6,7 @@ from commonConst import *
 class C3DStructure:
     nrDimensions = 3
     nrVerticesPerRectangle = 4
-    z0 = 1.0            # [m] z
+    z0 = 0.0            # [m] z
     slopePlant = 0.2    # [-] slope around plant (baulatura)
     slopeX = -0.01      # [-] slope on x axis
     slopeY = -0.025     # [-] slope on y axis
@@ -18,9 +18,11 @@ class C3DStructure:
     nrRectanglesInXAxis = int(gridWidth / gridStep)
     if abs(gridWidth - gridStep * nrRectanglesInXAxis) > EPSILON:
         nrRectanglesInXAxis += 1
+
     nrRectanglesInYAxis = int(gridHeight / gridStep)
     if abs(gridHeight - gridStep * nrRectanglesInYAxis) > EPSILON:
         nrRectanglesInYAxis += 1
+
     nrRectangles = nrRectanglesInXAxis * nrRectanglesInYAxis
 
     nrLayers = 0
@@ -80,7 +82,7 @@ class C3DParameters:
     # soil layers thickness
     minThickness = 0.01                 # [m]
     maxThickness = 0.04                 # [m]
-    maxThicknessDepth = 0.2             # [m]
+    maxThicknessAt = 0.2                # [m]
 
     # sink-source
     assignIrrigation = True
@@ -88,12 +90,14 @@ class C3DParameters:
     computeTranspiration = True
 
     # surface flow
-    computeSurfaceFlow = False
+    computeSurfaceFlow = True
     roughness = 0.24                    # [s m^0.33]
-    pond = 0.02                         # [m]
+    pondIrrigation = 0.01               # [m]
+    pondRainfall = 0.002                # [m]
+    pond = pondRainfall                 # [m]
 
     # boundary
-    isSurfaceRunoff = False
+    isSurfaceRunoff = True
     isFreeLateralDrainage = True
     isFreeDrainage = True
     isWaterTable = False

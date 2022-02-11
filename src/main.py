@@ -39,7 +39,7 @@ def main():
     C3DStructure.nrLayers, soil.depth, soil.thickness = soil.setLayers(totalDepth,
                                                                        C3DParameters.minThickness,
                                                                        C3DParameters.maxThickness,
-                                                                       C3DParameters.maxThicknessDepth)
+                                                                       C3DParameters.maxThicknessAt)
     print("Nr. of layers:", C3DStructure.nrLayers)
 
     # Initialize memory
@@ -203,7 +203,7 @@ def main():
         ET0 = computeHourlyET0(height, airTemperature, globalSWRadiation, airRelHumidity, windSpeed_10m,
                                normTransmissivity)  # mm m^-2
         print(currentDateTime, "ET0:", format(ET0, ".2f"))
-
+        criteria3D.initializeSinkSource(ALL)
         crop.setEvapotranspiration(ET0)
 
         for i in range(nrWaterEventsInTimeLength):
@@ -212,6 +212,7 @@ def main():
             precipitation = 0 if np.isnan(waterEvent["precipitation"]) else waterEvent["precipitation"]
             irrigation = 0 if np.isnan(waterEvent["irrigation"]) else waterEvent["irrigation"]
 
+            criteria3D.initializeSinkSource(ONLY_SURFACE)
             waterBalance.currentPrec = precipitation / waterTimeLength * 3600.  # [mm m-2 hour-1]
             criteria3D.setRainfall(precipitation, waterTimeLength)
 

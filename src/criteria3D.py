@@ -1,6 +1,6 @@
 # criteria3D.py
 
-from math import fabs, sqrt
+from math import fabs
 from dataStructures import *
 import rectangularMesh
 import waterBalance
@@ -107,6 +107,15 @@ def setMatricPotential(i, signPsi):
     return OK
 
 
+def initializeSinkSource(cellType):
+    if cellType == ONLY_SURFACE:
+        for i in range(C3DStructure.nrRectangles):
+            C3DCells[i].sinkSource = 0
+    else:
+        for i in range(C3DStructure.nrCells):
+            C3DCells[i].sinkSource = 0
+
+
 # -----------------------------------------------------------
 # set uniform rainfall rate
 # rain            [mm]
@@ -126,6 +135,11 @@ def setRainfall(rain, duration):
 # -----------------------------------------------------------
 def setDripIrrigation(irrigation, duration):
     rate = irrigation / duration  # [l s^-1]
+    if rate > 0:
+        C3DParameters.pond = C3DParameters.pondIrrigation
+    else:
+        C3DParameters.pond = C3DParameters.pondRainfall
+
     for index in irrigationIndices:
         C3DCells[index].sinkSource += rate * 0.001  # [m^3 s^-1]
 

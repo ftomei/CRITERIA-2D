@@ -45,32 +45,3 @@ def saveState():
                 else:
                     f.write("\n")
 
-
-def loadStateOld(fileName):
-    if fileName == "":
-        fileName = getStateFileName(False)
-    if fileName == "":
-        return False
-    state, isFileOk = readDataFile(fileName, 0, ",", False)
-    if not isFileOk or (C3DStructure.nrRectangles + 1) > len(state):
-        print("*** Wrong state file!")
-        return False
-    # first row: depth
-    depth = state[0]
-    # surface
-    for i in range(C3DStructure.nrRectangles):
-        criteria3D.setMatricPotential(i, state[i + 1][0])
-    # subsurface
-    for layer in range(1, C3DStructure.nrLayers):
-        minDistance = 100.0
-        layerIndex = NODATA
-        for stateLayer in range(1, len(depth)):
-            dz = fabs(soil.depth[layer] - depth[stateLayer])
-            if dz < minDistance:
-                minDistance = dz
-                layerIndex = stateLayer
-        if layerIndex != NODATA:
-            for i in range(C3DStructure.nrRectangles):
-                index = layer * C3DStructure.nrRectangles + i
-                criteria3D.setMatricPotential(index, state[i + 1][layerIndex])
-    return True

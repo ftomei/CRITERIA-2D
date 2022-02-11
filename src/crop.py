@@ -35,7 +35,7 @@ class CCrop:
         self.rootWidth = 2.0            # [m]
         self.rootXDeformation = 0.4     # [-]
         self.rootZDeformation = 0.0     # [-] 0: symmetric 1: cardioid 2: cardioid more accentuated
-        self.kcMax = 2.6                # [-]
+        self.kcMax = 2.8                # [-]
         self.fRAW = 0.6                 # [-]
         self.setMaxValues()
         self.currentLAI = 4.0           # [m2 m-2]
@@ -335,10 +335,6 @@ def setEvaporation(surfaceIndex, maxEvaporation):
 
 
 def setEvapotranspiration(ET0):
-    # initialize sinkSource
-    for i in range(C3DStructure.nrCells):
-        C3DCells[i].sinkSource = 0
-
     if C3DParameters.computeTranspiration:
         for i in range(C3DStructure.nrRectangles):
             maxTrKiwi = getMaxTranspiration(kiwi.currentLAI, kiwi.kcMax, ET0)
