@@ -98,7 +98,7 @@ def setMatricPotential(i, signPsi):
     if C3DCells[i].isSurface:
         C3DCells[i].H = C3DCells[i].z + max(signPsi, 0.0)
         C3DCells[i].Se = 1.
-        C3DCells[i].k = soil.C3DSoil.Ks
+        C3DCells[i].k = soil.horizon.Ks
     else:
         C3DCells[i].H = C3DCells[i].z + signPsi
         C3DCells[i].Se = soil.getDegreeOfSaturation(i)
@@ -168,8 +168,6 @@ def setModelState(position, psiValues):
                 setMatricPotential(i, psi)
 
     waterBalance.initializeBalance()
-    #compute(3600, False)
-    #waterBalance.initializeBalance()
 
 
 # timeLength        [s]          

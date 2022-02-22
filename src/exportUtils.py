@@ -1,7 +1,6 @@
 import os
 from dataStructures import *
 import rectangularMesh
-import soil
 import pandas as pd
 
 outputIndices = []

@@ -1,57 +1,59 @@
 # soil.py
 
-from math import fabs, log, sqrt
 import numpy as np
+from math import fabs, log, sqrt
 from dataStructures import *
-from readDataFile import readDataFile
+import pandas as pd
 
 
 class CSoilHorizon:
-    def __init__(self):
-        upperDepth = NODATA     # [m]
-        lowerDepth = NODATA     # [m]
-        Campbell_he = NODATA    # [J kg^-1]
-        Campbell_b = NODATA     # [-]
-        Campbell_n = NODATA     # [-]
-        VG_he = NODATA          # [J kg^-1]
-        VG_alpha = NODATA       # [kg J^-1]
-        VG_n = NODATA           # [-]
-        VG_m = NODATA           # [-]
-        VG_Sc = NODATA          # [-]
-        VG_thetaR = NODATA      # [m^3 m^-3]
-        Mualem_L = NODATA       # [-]
-        thetaS = NODATA         # [m^3 m^-3]
-        Ks = NODATA             # [kg s m^-3]
-        pass
+    upperDepth = NODATA     # [m]
+    lowerDepth = NODATA     # [m]
+    sand = NODATA           # [%]
+    silt = NODATA           # [%]
+    clay = NODATA           # [%]
+    Campbell_he = NODATA    # [J kg^-1]
+    Campbell_b = NODATA     # [-]
+    Campbell_n = NODATA     # [-]
+    VG_he = NODATA          # [J kg^-1]
+    VG_alpha = NODATA       # [kg J^-1]
+    VG_n = NODATA           # [-]
+    VG_m = NODATA           # [-]
+    VG_Sc = NODATA          # [-]
+    VG_thetaR = NODATA      # [m^3 m^-3]
+    Mualem_L = NODATA       # [-]
+    thetaS = NODATA         # [m^3 m^-3]
+    Ks = NODATA             # [kg s m^-3]
 
 
 # global arrays
 depth = np.array([], np.float64)
 thickness = np.array([], np.float64)
-C3DSoil = CSoilHorizon()
+horizon = CSoilHorizon()
 
 
 def readHorizon(soilFileName, i):
-    A, isFileOk = readDataFile(soilFileName, 1, ',', False)
-    if (not isFileOk) or (len(A[0]) < 10):
-        print("warning: wrong soil file.")
-        return False
-    horizon = CSoilHorizon()
-    i -= 1
-    horizon.upperDepth = A[i, 0]
-    horizon.lowerDepth = A[i, 1]
-    horizon.Campbell_he = -A[i, 2]
-    horizon.Campbell_b = A[i, 3]
+    global horizon
+    soilDataFrame = pd.read_csv(soilFileName)
+    soilData = soilDataFrame.loc[0]
+
+    horizon.upperDepth = soilData["upper_depth"]
+    horizon.lowerDepth = soilData["lower_depth"]
+    horizon.sand = soilData["sand"]
+    horizon.silt = soilData["silt"]
+    horizon.clay = soilData["clay"]
+    horizon.Campbell_he = soilData["Campbell_he"]
+    horizon.Campbell_b = soilData["Campbell_b"]
     horizon.Campbell_n = 2.0 + (3.0 / horizon.Campbell_b)
-    horizon.VG_he = -A[i, 4]
-    horizon.VG_alpha = A[i, 5]
-    horizon.VG_n = A[i, 6]
+    horizon.VG_he = soilData["VG_he"]
+    horizon.VG_alpha = soilData["VG_alpha"]
+    horizon.VG_n = soilData["VG_n"]
     horizon.VG_m = 1. - (1. / horizon.VG_n)
     horizon.VG_Sc = pow(1. + pow(horizon.VG_alpha * fabs(horizon.VG_he),
                                  horizon.VG_n), -horizon.VG_m)
-    horizon.VG_thetaR = A[i, 7]
-    horizon.thetaS = A[i, 8]
-    horizon.Ks = A[i, 9]
+    horizon.VG_thetaR = soilData["thetaR"]
+    horizon.thetaS = soilData["thetaS"]
+    horizon.Ks = soilData["Ks"]
     horizon.Mualem_L = 0.5
     return horizon
 
@@ -136,28 +138,28 @@ def getHydraulicConductivity(i):
 
 def airEntryPotential(curve):
     if curve == CAMPBELL:
-        return C3DSoil.Campbell_he
+        return horizon.Campbell_he
     elif curve == IPPISCH_VG:
-        return C3DSoil.VG_he
+        return horizon.VG_he
     else:
         return NODATA
 
 
 def waterPotential(curve, Se):
     if curve == CAMPBELL:
-        return C3DSoil.Campbell_he * Se ** (-C3DSoil.Campbell_b)
+        return horizon.Campbell_he * Se ** (-horizon.Campbell_b)
     elif curve == IPPISCH_VG:
-        return -(1. / C3DSoil.VG_alpha) * ((1. / (Se * C3DSoil.VG_Sc))
-                                           ** (1. / C3DSoil.VG_m) - 1.) ** (1. / C3DSoil.VG_n)
+        return -(1. / horizon.VG_alpha) * ((1. / (Se * horizon.VG_Sc))
+                                           ** (1. / horizon.VG_m) - 1.) ** (1. / horizon.VG_n)
     else:
         return NODATA
 
 
 def waterContent(curve, Se):
     if curve == CAMPBELL:
-        return Se * C3DSoil.thetaS
+        return Se * horizon.thetaS
     elif curve == IPPISCH_VG:
-        return Se * (C3DSoil.thetaS - C3DSoil.VG_thetaR) + C3DSoil.VG_thetaR
+        return Se * (horizon.thetaS - horizon.VG_thetaR) + horizon.VG_thetaR
     else:
         return NODATA
 
@@ -169,10 +171,10 @@ def degreeOfSaturation(curve, signPsi):
 
     Se = NODATA
     if curve == CAMPBELL:
-        Se = pow(signPsi / C3DSoil.Campbell_he, -1. / C3DSoil.Campbell_b)
+        Se = pow(signPsi / horizon.Campbell_he, -1. / horizon.Campbell_b)
     elif curve == IPPISCH_VG:
-        Se = (1. / C3DSoil.VG_Sc) * pow(1. + pow(C3DSoil.VG_alpha
-                                                 * fabs(signPsi), C3DSoil.VG_n), -C3DSoil.VG_m)
+        Se = (1. / horizon.VG_Sc) * pow(1. + pow(horizon.VG_alpha
+                                                 * fabs(signPsi), horizon.VG_n), -horizon.VG_m)
     return Se
 
 
@@ -180,18 +182,18 @@ def hydraulicConductivity(curve, Se, z):
     k = NODATA
     # soil compaction
     if abs(z) >= 0.5:
-        ks = C3DSoil.Ks * 0.5
+        ks = horizon.Ks * 0.5
     else:
-        ks = C3DSoil.Ks
+        ks = horizon.Ks
 
     if curve == CAMPBELL:
-        psi = C3DSoil.Campbell_he * Se ** (-C3DSoil.Campbell_b)
-        k = ks * (C3DSoil.Campbell_he / psi) ** C3DSoil.Campbell_n
+        psi = horizon.Campbell_he * Se ** (-horizon.Campbell_b)
+        k = ks * (horizon.Campbell_he / psi) ** horizon.Campbell_n
 
     if curve == IPPISCH_VG:
-        num = 1. - pow(1. - pow(Se * C3DSoil.VG_Sc, 1. / C3DSoil.VG_m), C3DSoil.VG_m)
-        den = 1. - pow(1. - pow(C3DSoil.VG_Sc, 1. / C3DSoil.VG_m), C3DSoil.VG_m)
-        k = ks * pow(Se, C3DSoil.Mualem_L) * pow((num / den), 2.)
+        num = 1. - pow(1. - pow(Se * horizon.VG_Sc, 1. / horizon.VG_m), horizon.VG_m)
+        den = 1. - pow(1. - pow(horizon.VG_Sc, 1. / horizon.VG_m), horizon.VG_m)
+        k = ks * pow(Se, horizon.Mualem_L) * pow((num / den), 2.)
     return k
 
 
@@ -206,12 +208,12 @@ def thetaFromPsi(curve, signPsi):
 
 
 def SeFromTheta(curve, theta):
-    if theta >= C3DSoil.thetaS:
+    if theta >= horizon.thetaS:
         return 1.
     if curve == CAMPBELL:
-        return theta / C3DSoil.thetaS
+        return theta / horizon.thetaS
     elif curve == IPPISCH_VG:
-        return (theta - C3DSoil.VG_thetaR) / (C3DSoil.thetaS - C3DSoil.VG_thetaR)
+        return (theta - horizon.VG_thetaR) / (horizon.thetaS - horizon.VG_thetaR)
     else:
         return NODATA
 
@@ -221,14 +223,14 @@ def dTheta_dPsi(curve, signPsi):
     if signPsi > airEntry:
         return 0.0
     if curve == CAMPBELL:
-        theta = C3DSoil.thetaS * degreeOfSaturation(curve, signPsi)
-        return -theta / (C3DSoil.Campbell_b * signPsi)
+        theta = horizon.thetaS * degreeOfSaturation(curve, signPsi)
+        return -theta / (horizon.Campbell_b * signPsi)
     elif curve == IPPISCH_VG:
-        dSe_dPsi = C3DSoil.VG_alpha * C3DSoil.VG_n * \
-                   (C3DSoil.VG_m * pow(1. + pow(C3DSoil.VG_alpha * fabs(signPsi), C3DSoil.VG_n), -(C3DSoil.VG_m + 1.))
-                    * pow(C3DSoil.VG_alpha * fabs(signPsi), C3DSoil.VG_n - 1.))
-        dSe_dPsi *= (1. / C3DSoil.VG_Sc)
-        return dSe_dPsi * (C3DSoil.thetaS - C3DSoil.VG_thetaR)
+        dSe_dPsi = horizon.VG_alpha * horizon.VG_n * \
+                   (horizon.VG_m * pow(1. + pow(horizon.VG_alpha * fabs(signPsi), horizon.VG_n), -(horizon.VG_m + 1.))
+                    * pow(horizon.VG_alpha * fabs(signPsi), horizon.VG_n - 1.))
+        dSe_dPsi *= (1. / horizon.VG_Sc)
+        return dSe_dPsi * (horizon.thetaS - horizon.VG_thetaR)
 
 
 def get_dTheta_dH(i):
@@ -266,8 +268,20 @@ def meanK(meanType, k1, k2):
 # [m3 m-3] water content at field capacity
 def getFieldCapacityWC():
     curve = C3DParameters.waterRetentionCurve
-    FC = -25.   # [kPa]
-    FC /= 9.81  # [m]
+    fcMin = -10             # [kPa] clay < 20% : sandy soils
+    fcMax = -33             # [kPa] clay > 50% : clay soils
+    clayMin = 20            # [%]
+    clayMax = 50            # [%]
+
+    if horizon.clay < clayMin:
+        fieldCapacity = fcMin
+    elif horizon.clay >= clayMax:
+        fieldCapacity = fcMax
+    else:
+        clayFactor = (horizon.clay - clayMin) / (clayMax - clayMin)
+        fieldCapacity = fcMin + (fcMax - fcMin) * clayFactor
+
+    FC = fieldCapacity / 9.81       # [m]
     return thetaFromPsi(curve, FC)
 
 

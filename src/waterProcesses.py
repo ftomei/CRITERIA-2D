@@ -32,13 +32,13 @@ def infiltration(surf, sub, link, deltaT, isFirstApprox):
         if psi < EPSILON:
             return 0.0
         
-        interfaceK = meanK(C3DParameters.conductivityMean, C3DCells[sub].k, soil.C3DSoil.Ks)
+        interfaceK = meanK(C3DParameters.conductivityMean, C3DCells[sub].k, soil.horizon.Ks)
         dH = C3DCells[surf].H - C3DCells[sub].H
         maxK = (psi / deltaT) * (link.distance / dH)
         k = min(interfaceK, maxK)
     else:
         # saturated
-        k = soil.C3DSoil.Ks
+        k = soil.horizon.Ks
     
     return (k * link.area) / link.distance
 

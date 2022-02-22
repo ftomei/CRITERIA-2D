@@ -3,7 +3,6 @@
 import vpython as visual
 from dataStructures import *
 from color import *
-import fileUtilities
 import waterBalance
 import rectangularMesh
 import soil
@@ -50,7 +49,7 @@ def initialize(totalWidth):
     # RANGE
     rx = rectangularMesh.header.xMax - rectangularMesh.header.xMin
     ry = rectangularMesh.header.yMax - rectangularMesh.header.yMin
-    rz = rectangularMesh.header.zMax - rectangularMesh.header.zMin + soil.C3DSoil.lowerDepth
+    rz = rectangularMesh.header.zMax - rectangularMesh.header.zMin + soil.horizon.lowerDepth
     rangeX = rx * rectangularMesh.header.magnify
     rangeXY = max(rx, ry) * rectangularMesh.header.magnify
     rangeZ = rz * rectangularMesh.header.magnify
@@ -106,11 +105,11 @@ def initialize(totalWidth):
     sliceCanvas.caption = " *** COMMANDS ***\n\n 'r': Run simulation \n 'p': Pause "
     sliceCanvas.caption += "\n '^': move up (soil layer) \n 'v': move down (soil layer) "
     sliceCanvas.caption += "\n '<': move left (soil slice) \n '>': move right (soil slice) "
-    sliceCanvas.caption += "\n 's': Save state \n 'l': Load state "
+    sliceCanvas.caption += "\n 'l': Load state "
     sliceCanvas.caption += "\n 'c': Colorscale range"
-    sliceCanvas.caption += "\n 'w': Water content/potential"
-    sliceCanvas.caption += "\n 'd': root Density visualization"
-    sliceCanvas.caption += "\n 'o': Output point position"
+    sliceCanvas.caption += "\n 'w': View water content/potential"
+    sliceCanvas.caption += "\n 'd': View root Density"
+    sliceCanvas.caption += "\n 'o': View output point"
 
     drawSlice(True)
     updateInterface()
@@ -242,14 +241,10 @@ def keyInput(evt):
         updateLayer(s)
     elif s == 'left' or s == 'right':
         updateSlice(s)
-    elif s == 's':
-        isPause = True
-        print("Save State...")
-        fileUtilities.saveState()
     elif s == 'l':
         isPause = True
         print("Load State...")
-        fileName = fileUtilities.getStateFileName(False)
+        fileName = importUtils.getStateFileName(False)
         if importUtils.loadState(fileName):
             redraw()
     elif s == "c":

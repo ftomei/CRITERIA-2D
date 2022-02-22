@@ -2,7 +2,6 @@
 
 from math import sqrt
 from dataStructures import *
-import soil
 
 
 def updateBoundary(deltaT):

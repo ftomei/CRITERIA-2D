@@ -32,8 +32,8 @@ def main():
     print("Load soil...")
     soilFile = "soil.txt"
     soilPath = os.path.join(settingsFolder, soilFile)
-    soil.C3DSoil = soil.readHorizon(soilPath, 1)
-    totalDepth = soil.C3DSoil.lowerDepth
+    soil.readHorizon(soilPath, 1)
+    totalDepth = soil.horizon.lowerDepth
     print("Soil depth [m]:", totalDepth)
 
     C3DStructure.nrLayers, soil.depth, soil.thickness = soil.setLayers(totalDepth,
@@ -118,6 +118,7 @@ def main():
             linkIndex = index + C3DStructure.nrRectangles
             criteria3D.SetCellLink(index, linkIndex, DOWN, exchangeArea)
 
+    # initial state
     stateFolder = os.path.join(dataPath, "state")
     initialState = pd.read_csv(os.path.join(stateFolder, "1630447200.csv"))
     assimilation.assimilate(initialState)

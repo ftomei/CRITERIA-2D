@@ -1,3 +1,5 @@
+# assimilation.py
+
 from dataStructures import *
 import rectangularMesh
 import criteria3D
@@ -97,7 +99,7 @@ def interpolate(initialState):
                 if len(points) == 3:
                     point = np.array([x, y, z])
 
-                value = interpn(points, values, point)
+                value = interpn(points, values, point, bounds_error=False)
                 interpolated_points[index] = value[0]
                 # water potential - from [kPa] to [m]
                 psi = value / 9.81

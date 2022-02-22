@@ -1,6 +1,19 @@
 import pandas as pd
 import os
 import criteria3D
+import tkinter
+import tkinter.filedialog
+
+
+def getStateFileName(isSave):
+    root = tkinter.Tk()
+    options = {'defaultextension': ".csv", 'filetypes': [("Comma separated values", ".csv")], 'initialdir': "data"}
+    if isSave:
+        fileName = tkinter.filedialog.asksaveasfilename(**options)
+    else:
+        fileName = tkinter.filedialog.askopenfilename(**options)
+    root.destroy()
+    return fileName
 
 
 def readWaterTable(waterPath):

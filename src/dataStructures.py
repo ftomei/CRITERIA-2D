@@ -6,22 +6,27 @@ from commonConst import *
 class C3DStructure:
     nrDimensions = 3
     nrVerticesPerRectangle = 4
-    z0 = 0.0            # [m] z
+
+    z0 = 100.0          # [m] topographic elevation
     slopePlant = 0.2    # [-] slope around plant (baulatura)
     slopeX = -0.01      # [-] slope on x axis
     slopeY = -0.025     # [-] slope on y axis
-    gridWidth = 2.375   # [m] x axis
-    gridHeight = 0.625  # [m] y axis
-    gridStep = 0.125    # [m]
     slopeSide = 1.0     # [m] side of baulatura
 
-    nrRectanglesInXAxis = int(gridWidth / gridStep)
-    if abs(gridWidth - gridStep * nrRectanglesInXAxis) > EPSILON:
+    gridStep = 0.125     # [m]
+    DX = 2.5            # [m]
+    DY = 0.66           # [m]
+
+    nrRectanglesInXAxis = int(DX / gridStep)
+    if (nrRectanglesInXAxis % 2) == 0:
         nrRectanglesInXAxis += 1
 
-    nrRectanglesInYAxis = int(gridHeight / gridStep)
-    if abs(gridHeight - gridStep * nrRectanglesInYAxis) > EPSILON:
+    nrRectanglesInYAxis = int(DY / gridStep)
+    if (nrRectanglesInYAxis % 2) == 0:
         nrRectanglesInYAxis += 1
+
+    gridWidth = nrRectanglesInXAxis * gridStep      # [m] x axis
+    gridHeight = nrRectanglesInYAxis * gridStep     # [m] x axis
 
     nrRectangles = nrRectanglesInXAxis * nrRectanglesInYAxis
 
@@ -92,7 +97,7 @@ class C3DParameters:
     # surface flow
     computeSurfaceFlow = False
     roughness = 0.24                    # [s m^0.33]
-    pondIrrigation = 0.02               # [m]
+    pondIrrigation = 0.01               # [m]
     pondRainfall = 0.002                # [m]
     pond = pondRainfall                 # [m]
 
@@ -105,7 +110,7 @@ class C3DParameters:
 
     # numerical solution parameters
     currentDeltaT = 60.0                # [s]
-    deltaT_min = 2                      # [s]
+    deltaT_min = 1                      # [s]
     deltaT_max = 600.0                  # [s]
     maxIterationsNr = 100
     maxApproximationsNr = 10
