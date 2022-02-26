@@ -179,10 +179,6 @@ def main():
         obsWeather = weatherData.loc[weatherIndex]
         currentDateTime = pd.to_datetime(obsWeather["timestamp"], unit='s')
 
-        # kiwi - end season
-        if currentDateTime.month >= 10:
-            crop.kiwi.currentKc = 0.6
-
         # waterTable
         # for i in range(len(waterTableDepth)):
         #    if currentDateTime > waterTableDate[i]:
@@ -205,7 +201,7 @@ def main():
                                normTransmissivity)  # mm m^-2
         print(currentDateTime, "ET0:", format(ET0, ".2f"))
         criteria3D.initializeSinkSource(ALL)
-        crop.setEvapotranspiration(ET0)
+        crop.setEvapotranspiration(currentDateTime, ET0)
 
         for i in range(nrWaterEventsInTimeLength):
             waterIndex = weatherIndex * nrWaterEventsInTimeLength + i
