@@ -178,10 +178,10 @@ def degreeOfSaturation(curve, signPsi):
     return Se
 
 
-def hydraulicConductivity(curve, Se, z):
+def hydraulicConductivity(curve, Se, layerDepth):
     k = NODATA
     # soil compaction
-    if abs(z) >= 0.5:
+    if abs(layerDepth) >= 0.5:
         ks = horizon.Ks * 0.5
     else:
         ks = horizon.Ks
