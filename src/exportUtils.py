@@ -16,8 +16,8 @@ def createExportFile(outputPath):
 
     if oneTimestampPerRow:
         outputPoints = pd.read_csv(os.path.join(outputPath, "output_points.csv"))
-        takeSelected(outputPoints)
-        header = "timestamp," + ",".join(map(lambda index: str(index), outputIndices)) + "\n"
+        outputIndicesString = takeSelected(outputPoints)
+        header = "timestamp," + outputIndicesString + "\n"
     else:
         if heightSlice == 0:
             takeAll()
@@ -33,6 +33,7 @@ def createExportFile(outputPath):
 
 
 def takeSelected(outputPoints):
+    outputIndicesStrings = []
     for _, position in outputPoints.iterrows():
         x = position['x']
         y = position['y']
@@ -43,6 +44,9 @@ def takeSelected(outputPoints):
             if index != NODATA:
                 outputSurfaceIndices.append(surfaceIndex)
                 outputIndices.append(index)
+                outputIndicesStrings.append(f'z{depth}_y{y}_x{x}')
+    return ",".join(outputIndicesStrings)
+
 
 
 def takeSlice():
