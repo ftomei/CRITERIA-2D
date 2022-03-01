@@ -181,7 +181,7 @@ def compute(timeLength, isRedraw):
         while not acceptedStep:
             if isRedraw:
                 if visual3D.isPause:
-                    print("\nPress 'r' to run")
+                    # print("\nPress 'r' to run")
                     while visual3D.isPause:
                         time.sleep(0.00001)
 

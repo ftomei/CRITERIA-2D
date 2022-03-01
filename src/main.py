@@ -3,7 +3,7 @@ import soil
 import waterBalance
 import rectangularMesh
 import criteria3D
-import visual3D
+#import visual3D
 import assimilation
 import os
 from PenmanMonteith import computeHourlyET0
@@ -17,36 +17,37 @@ import time
 
 
 def main():
-    print(os.getcwd())
+    print('Start')
+    # print(os.getcwd())
     dataPath = os.path.join("data", "errano")
     settingsFolder = os.path.join(dataPath, "settings")
 
-    print("Building rectangle mesh...")
+    # print("Building rectangle mesh...")
     rectangularMesh.rectangularMeshCreation()
-    print("Nr. of rectangles:", C3DStructure.nrRectangles)
-    print("Total area [m^2]:", C3DStructure.totalArea)
+    # print("Nr. of rectangles:", C3DStructure.nrRectangles)
+    # print("Total area [m^2]:", C3DStructure.totalArea)
 
     rectangularMesh.header = rectangularMesh.getHeader(rectangularMesh.C3DRM)
 
     # SOIL
-    print("Load soil...")
+    # print("Load soil...")
     soilFile = "soil.txt"
     soilPath = os.path.join(settingsFolder, soilFile)
     soil.readHorizon(soilPath, 1)
     totalDepth = soil.horizon.lowerDepth
-    print("Soil depth [m]:", totalDepth)
+    # print("Soil depth [m]:", totalDepth)
 
     C3DStructure.nrLayers, soil.depth, soil.thickness = soil.setLayers(totalDepth,
                                                                        C3DParameters.minThickness,
                                                                        C3DParameters.maxThickness,
                                                                        C3DParameters.maxThicknessAt)
-    print("Nr. of layers:", C3DStructure.nrLayers)
+    # print("Nr. of layers:", C3DStructure.nrLayers)
 
     # Initialize memory
     criteria3D.memoryAllocation(C3DStructure.nrLayers, C3DStructure.nrRectangles)
-    print("Nr. of cells: ", C3DStructure.nrCells)
+    # print("Nr. of cells: ", C3DStructure.nrCells)
 
-    print("Set cell properties...")
+    # print("Set cell properties...")
     for i in range(C3DStructure.nrRectangles):
         [x, y, z] = rectangularMesh.C3DRM[i].centroid
         for layer in range(C3DStructure.nrLayers):
@@ -89,7 +90,7 @@ def main():
 
                 criteria3D.setMatricPotential(index, C3DParameters.initialWaterPotential)
 
-    print("Set links...")
+    # print("Set links...")
     for i in range(C3DStructure.nrRectangles):
         # UP
         for layer in range(1, C3DStructure.nrLayers):
@@ -123,24 +124,24 @@ def main():
     initialState = pd.read_csv(os.path.join(stateFolder, "1630447200.csv"))
     assimilation.assimilate(initialState)
     waterBalance.initializeBalance()
-    print("Initial water storage [m^3]:", format(waterBalance.currentStep.waterStorage, ".3f"))
+    # print("Initial water storage [m^3]:", format(waterBalance.currentStep.waterStorage, ".3f"))
 
-    print("Read drip position...")
+    # print("Read drip position...")
     irrigationConfigurations = pd.read_csv(os.path.join(settingsFolder, "dripper.csv"))
     criteria3D.setDripIrrigationPositions(irrigationConfigurations)
 
-    print("Read plant position...")
+    # print("Read plant position...")
     plantConfiguration = pd.read_csv(os.path.join(settingsFolder, "plant.csv"))
     criteria3D.setPlantPositions(plantConfiguration)
     crop.initializeCrop(plantConfiguration)
 
-    print("Read weather data...")
+    # print("Read weather data...")
     weatherDataFolder = "meteo"
     weatherDataPath = os.path.join(dataPath, weatherDataFolder)
     stationInfo, weatherData = importUtils.readMeteoData(weatherDataPath)
     height = stationInfo.iloc[0]["Height"]
 
-    print("Read irrigation data...")
+    # print("Read irrigation data...")
     waterFolder = "water"
     waterPath = os.path.join(dataPath, waterFolder)
     waterData = importUtils.readWaterData(waterPath, weatherData.iloc[0]["timestamp"],
@@ -152,13 +153,13 @@ def main():
     # TIME LENGTH
     weatherTimeLength = (weatherData.iloc[1]["timestamp"] - weatherData.iloc[0]["timestamp"])  # [s]
     waterTimeLength = (waterData.iloc[1]["timestamp"] - waterData.iloc[0]["timestamp"])  # [s]
-    print("Weather data time length [s]:", weatherTimeLength)
-    print("Water data time length [s]:", waterTimeLength)
+    # print("Weather data time length [s]:", weatherTimeLength)
+    # print("Water data time length [s]:", waterTimeLength)
     if (weatherTimeLength % waterTimeLength) != 0:
         raise Exception("Water time length is not a divider of weather data time length")
     else:
         nrWaterEventsInTimeLength = int(weatherTimeLength / waterTimeLength)
-    print("Total simulation time [hours]:", len(weatherData) * weatherTimeLength / 3600)
+    # print("Total simulation time [hours]:", len(weatherData) * weatherTimeLength / 3600)
 
     # initialize export
     outputPath = os.path.join(dataPath, "output")
@@ -167,11 +168,11 @@ def main():
     latitude = stationInfo.iloc[0]["Latitude"]
     longitude = stationInfo.iloc[0]["Longitude"]
 
-    visual3D.initialize(1280)
-    visual3D.isPause = True
+    #visual3D.initialize(1280)
+    #visual3D.isPause = True
     # wait for start
-    while visual3D.isPause:
-        time.sleep(0.00001)
+    #while visual3D.isPause:
+        #time.sleep(0.00001)
 
     # main cycle
     weatherIndex = 0
@@ -199,7 +200,7 @@ def main():
         normTransmissivity = computeNormTransmissivity(weatherData, weatherIndex, latitude, longitude)
         ET0 = computeHourlyET0(height, airTemperature, globalSWRadiation, airRelHumidity, windSpeed_10m,
                                normTransmissivity)  # mm m^-2
-        print(currentDateTime, "ET0:", format(ET0, ".2f"))
+        # print(currentDateTime, "ET0:", format(ET0, ".2f"))
         criteria3D.initializeSinkSource(ALL)
         crop.setEvapotranspiration(currentDateTime, ET0)
 
@@ -223,13 +224,13 @@ def main():
             else:
                 C3DParameters.deltaT_max = waterTimeLength
 
-            criteria3D.compute(waterTimeLength, True)
+            criteria3D.compute(waterTimeLength, False)
 
         exportUtils.takeScreenshot(obsWeather["timestamp"])
         weatherIndex += 1
 
-    visual3D.isPause = True
-    print("\nEnd simulation.\n")
+    #visual3D.isPause = True
+    # print("\nEnd simulation.\n")
 
 
 main()

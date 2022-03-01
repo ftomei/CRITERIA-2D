@@ -63,7 +63,7 @@ def computeStep(deltaT):
 
         if not solveMatrix(approximation):
             waterBalance.halveTimeStep()
-            print("System not convergent.")
+            # print("System not convergent.")
             return False
 
         # new hydraulic head

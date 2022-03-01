@@ -67,8 +67,8 @@ def computeStep(deltaT):
 
         if ((waterBalance.maxCourant > 1.0)
                 and (deltaT > C3DParameters.deltaT_min)):
-            print("Courant too high:", waterBalance.maxCourant)
-            print("Decrease time step")
+            # print("Courant too high:", waterBalance.maxCourant)
+            # print("Decrease time step")
             while waterBalance.maxCourant > 1.0:
                 waterBalance.halveTimeStep()
                 waterBalance.maxCourant *= 0.5
@@ -76,7 +76,7 @@ def computeStep(deltaT):
 
         if not solveMatrix(approximation):
             waterBalance.halveTimeStep()
-            print("System not convergent.")
+            # print("System not convergent.")
             return False
         # check surface error
         for i in range(C3DStructure.nrRectangles):
