@@ -53,12 +53,16 @@ HH = NODATA  # [m3 m-3] water content at Hygroscopic moisture
 wsThreshold = NODATA  # [m3 m-3] water scarcity stress threshold
 
 
-def initializeCrop(plantConfiguration):
+def initializeCrop(plantConfiguration, rootDepthMax, rootXDeformation, rootZDeformation, kcMax):
     global rootDensity, k_root
     global SAT, FC, WP, HH, wsThreshold
 
     # initialize kiwifruit
     kiwi.setKiwifruit()
+    kiwi.rootDepthMax = rootDepthMax
+    kiwi.rootXDeformation = rootXDeformation
+    kiwi.rootZDeformation = rootZDeformation
+    kiwi.kcMax = kcMax
 
     SAT = soil.horizon.thetaS
     FC = soil.getFieldCapacityWC()

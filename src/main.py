@@ -15,9 +15,16 @@ import numpy as np
 import crop
 import time
 
+from hyperopt import fmin, tpe, hp, STATUS_OK, SparkTrials, Trials, pyll
+from hyperopt.base import miscs_update_idxs_vals
+from hyperopt.pyll.base import dfs, as_apply
+from hyperopt.pyll.stochastic import implicit_stochastic_symbols
+from sklearn.metrics import mean_squared_error, mean_absolute_error
 
-def main():
-    print('Start')
+iteration = 0
+
+def objective(params):
+    global iteration
     # print(os.getcwd())
     dataPath = os.path.join("data", "errano")
     settingsFolder = os.path.join(dataPath, "settings")
@@ -34,6 +41,10 @@ def main():
     soilFile = "soil.txt"
     soilPath = os.path.join(settingsFolder, soilFile)
     soil.readHorizon(soilPath, 1)
+    soil.horizon.VG_alpha = params["VG_alpha"]
+    soil.horizon.VG_n = params["VG_n"]
+    soil.horizon.thetaS = params["thetaS"]
+    soil.horizon.Ks = params["Ks"]
     totalDepth = soil.horizon.lowerDepth
     # print("Soil depth [m]:", totalDepth)
 
@@ -133,7 +144,7 @@ def main():
     # print("Read plant position...")
     plantConfiguration = pd.read_csv(os.path.join(settingsFolder, "plant.csv"))
     criteria3D.setPlantPositions(plantConfiguration)
-    crop.initializeCrop(plantConfiguration)
+    crop.initializeCrop(plantConfiguration, params['rootDepthMax'], params['rootXDeformation'], params['rootZDeformation'], params['kcMax'])
 
     # print("Read weather data...")
     weatherDataFolder = "meteo"
@@ -163,7 +174,10 @@ def main():
 
     # initialize export
     outputPath = os.path.join(dataPath, "output")
-    exportUtils.createExportFile(outputPath)
+    outputFileName = f"output_{str(iteration)}.csv"
+    outputFilePath = os.path.join(outputPath, outputFileName)
+    outputPointsPath = os.path.join(outputPath, "output_points.csv")
+    exportUtils.createExportFile(outputPointsPath, outputFilePath)
 
     latitude = stationInfo.iloc[0]["Latitude"]
     longitude = stationInfo.iloc[0]["Longitude"]
@@ -226,11 +240,68 @@ def main():
 
             criteria3D.compute(waterTimeLength, False)
 
-        exportUtils.takeScreenshot(obsWeather["timestamp"])
+        exportUtils.takeScreenshot(obsWeather["timestamp"], outputFilePath)
         weatherIndex += 1
 
     #visual3D.isPause = True
     # print("\nEnd simulation.\n")
 
+    simulated_data = pd.read_csv(outputFilePath)
+    simulated_data = simulated_data.set_index('timestamp')
+    simulated_data *= -1
+    simulated_data[simulated_data < 20] = 20
+    simulated_data = simulated_data.apply(lambda x: np.log(x))
+
+    
+    original_data = pd.read_csv(os.path.join(dataPath, 'ground_truth.csv'))
+    original_data = original_data.set_index('timestamp')
+    original_data = original_data.loc[simulated_data.index]
+    original_data *= -1
+    original_data[original_data < 20] = 20
+    original_data = original_data.apply(lambda x: np.log(x))
+
+    total_rmse = mean_squared_error(simulated_data, original_data, squared=False)
+    
+    iteration += 1
+    return {'loss': total_rmse, 'status': STATUS_OK}
+
+def main():
+    print('Start')
+    start_time = time.time()
+    dataPath = os.path.join("data", "errano")
+    outputPath = os.path.join(dataPath, "output")
+    space = {
+        'VG_alpha': hp.uniform('VG_alpha', 1.0, 3.0),
+        'VG_n': hp.uniform('VG_n', 1.1, 1.4),
+        'thetaS': hp.uniform('thetaS', 0.3, 0.5),
+        'Ks': hp.loguniform('Ks', -16.1, -12.4),     
+        #'water_table': hp.uniform('water_table', 1.5, 3.5),
+        #'LAI': hp.uniform('LAI', 2, 4),
+        'rootDepthMax': hp.uniform('rootDepthMax', 0.6, 1.0),
+        'rootXDeformation': hp.uniform('rootXDeformation', 0.0, 1.0),
+        'rootZDeformation': hp.uniform('rootZDeformation', 0.0, 1.0),
+        'kcMax': hp.uniform('kcMax', 1.5, 2.5),
+        #'root_max_distance': hp.uniform('root_max_distance', 1.5, 2.5)
+        }
+    trials = SparkTrials()
+    best = fmin(fn=objective,
+                space=space,
+                algo=tpe.suggest,
+                max_evals=150,
+                trials=trials,
+                show_progressbar=True)
+
+    best_parameters = pd.DataFrame.from_records([best])
+    best_parameters.to_csv(os.path.join(outputPath, 'best_parameters.csv'), index=False)
+
+    all_trials = pd.DataFrame(trials.trials)
+    all_trials.to_json(os.path.join(outputPath, 'all_trials.json'), indent=True)
+
+    best_trial = pd.DataFrame(trials.best_trial)
+    best_trial.to_json(os.path.join(outputPath,'best_trial.json'), indent=True)
+
+    objective(best)
+    end_time = time.time()
+    print("Time of execution:", end_time-start_time)
 
 main()

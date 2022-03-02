@@ -5,17 +5,14 @@ import pandas as pd
 
 outputIndices = []
 outputSurfaceIndices = []
-outputFile = ""
 heightSlice = C3DStructure.gridHeight * 0.5
 oneTimestampPerRow = True
 
 
-def createExportFile(outputPath):
-    global outputFile
-    outputFile = os.path.join(outputPath, "output.csv")
+def createExportFile(outputPointsPath, outputFilePath):
 
     if oneTimestampPerRow:
-        outputPoints = pd.read_csv(os.path.join(outputPath, "output_points.csv"))
+        outputPoints = pd.read_csv(outputPointsPath)
         outputIndicesString = takeSelected(outputPoints)
         header = "timestamp," + outputIndicesString + "\n"
     else:
@@ -25,14 +22,16 @@ def createExportFile(outputPath):
             takeSlice()
         header = "timestamp,x,y,z,Se,H\n"
 
-    if not os.path.exists(outputFile):
-        open(outputFile, 'w').close()
+    if not os.path.exists(outputFilePath):
+        open(outputFilePath, 'w').close()
 
-    with open(outputFile, "w") as f:
+    with open(outputFilePath, "w") as f:
         f.write(header)
 
 
 def takeSelected(outputPoints):
+    global outputIndices
+    outputIndices = []
     outputIndicesStrings = []
     for _, position in outputPoints.iterrows():
         x = position['x']
@@ -64,7 +63,7 @@ def takeAll():
         outputIndices.append(index)
 
 
-def takeScreenshot(timestamp):
+def takeScreenshot(timestamp, outputFilePath):
     if oneTimestampPerRow:
         row = str(int(timestamp))
         for index in outputIndices:
@@ -72,7 +71,7 @@ def takeScreenshot(timestamp):
             row += "," + '{:.3f}'.format(psi)
         row += "\n"
 
-        with open(outputFile, "a") as f:
+        with open(outputFilePath, "a") as f:
             f.write(row)
     else:
         for index in outputIndices:
@@ -86,5 +85,5 @@ def takeScreenshot(timestamp):
                 row += "," + '{:.3f}'.format(psi)
                 row += "\n"
 
-                with open(outputFile, "a") as f:
+                with open(outputFilePath, "a") as f:
                     f.write(row)
