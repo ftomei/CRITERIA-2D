@@ -283,7 +283,7 @@ def main():
         'kcMax': hp.uniform('kcMax', 1.5, 2.5),
         #'root_max_distance': hp.uniform('root_max_distance', 1.5, 2.5)
         }
-    trials = SparkTrials()
+    trials = Trials()
     best = fmin(fn=objective,
                 space=space,
                 algo=tpe.suggest,
