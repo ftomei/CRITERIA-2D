@@ -289,7 +289,8 @@ def main():
                 algo=tpe.suggest,
                 max_evals=150,
                 trials=trials,
-                show_progressbar=True)
+                show_progressbar=True,
+                rstate=np.random.RandomState(42))
 
     best_parameters = pd.DataFrame.from_records([best])
     best_parameters.to_csv(os.path.join(outputPath, 'best_parameters.csv'), index=False)
