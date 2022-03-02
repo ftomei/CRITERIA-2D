@@ -1,8 +1,8 @@
 import pandas as pd
 import os
 import criteria3D
-import tkinter
-import tkinter.filedialog
+#import tkinter
+#import tkinter.filedialog
 
 
 def getStateFileName(isSave):
