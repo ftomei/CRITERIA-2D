@@ -5,6 +5,7 @@ from commonConst import EPSILON
 
 colorScaleTIN = np.array([[], []], float)
 colorRangeSE = np.array([[], []], float)
+colorRangeRoot = np.array([[], []], float)
 colorRangeSurfaceWater = np.array([[], []], float)
 
 
@@ -57,6 +58,18 @@ def setColorScaleDegreeOfSaturation():
     colorRangeSE = setColorScale(1024, keyColors)
 
 
+def setColorScaleRoot():
+    global colorRangeRoot
+    keyColors = np.zeros((4, 3), float)
+
+    keyColors[0] = (128, 128, 128)  # gray
+    keyColors[1] = (0, 255, 0)  # green
+    keyColors[2] = (255, 255, 0)  # yellow
+    keyColors[3] = (255, 0, 0)  # red
+
+    colorRangeRoot = setColorScale(1024, keyColors)
+
+
 def setColorScaleSurfaceWater():
     global colorRangeSurfaceWater
     keyColors = np.zeros((3, 3), float)
@@ -69,6 +82,7 @@ def setColorScaleSurfaceWater():
 def setAllColorScale():
     setColorScaleTIN()
     setColorScaleDegreeOfSaturation()
+    setColorScaleRoot()
     setColorScaleSurfaceWater()
 
 
@@ -86,6 +100,13 @@ def getSEColor(degreeSaturation, minimum, maximum):
     percentage = min(1.0, max(percentage, 0.0))
     index = int(percentage * (len(colorRangeSE) - 1))
     return colorRangeSE[index]
+
+
+def getRootColor(rootDensity, minimum, maximum):
+    value = (rootDensity - minimum) / (maximum - minimum)
+    value = min(1.0, max(value, 0.0))
+    index = int(value * (len(colorRangeSE) - 1))
+    return colorRangeRoot[index]
 
 
 def getMatricPotentialColor(signPsi):

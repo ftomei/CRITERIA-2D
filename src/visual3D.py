@@ -80,27 +80,27 @@ def initialize(totalWidth):
 
     # SURFACE CANVAS
     soilCanvas = visual.canvas(width=dx, height=dy, align="left")
-    soilCanvas.background = visual.color.gray(0.92)
-    soilCanvas.center = visual.vector(cX, cY, cZ + (rangeXY * 0.2))
-    # soilCanvas.ambient = visual.vector(0.5, 0.5, 0.5)
+    soilCanvas.background = visual.color.gray(1.0)
+    soilCanvas.center = visual.vector(cX, cY, cZ)
+    soilCanvas.ambient = visual.vector(0.2, 0.2, 0.2)
     soilCanvas.up = visual.vector(0, 0, 1)
     soilCanvas.forward = visual.vector(0, 1, -1)
-    soilCanvas.range = rangeXY
+    soilCanvas.range = rangeXY * 0.5
     layerLabel = visual.label(color=visual.color.black, canvas=soilCanvas, height=h,
-                              pos=visual.vector(cX, cY + rangeXY * 0.8, cZ))
+                              pos=visual.vector(cX, cY + rangeXY * 0.3, cZ))
 
     drawSurface(True)
 
     # SLICE CANVAS
     sliceCanvas = visual.canvas(width=dx, height=dy, align="left")
-    sliceCanvas.background = visual.color.gray(0.9)
+    sliceCanvas.background = visual.color.gray(1.0)
     sliceCanvas.center = visual.vector(cX, cY, cZ - (rangeZ * 0.5))
-    # sliceCanvas.ambient = visual.vector(0.5, 0.5, 0.5)
+    sliceCanvas.ambient = visual.vector(0.2, 0.2, 0.2)
     sliceCanvas.up = visual.vector(0, 0, 1)
     sliceCanvas.forward = visual.vector(0, 1, 0)
-    sliceCanvas.range = max(rangeX, rangeZ) * 0.75
+    sliceCanvas.range = max(rangeX, rangeZ) * 0.5
     sliceLabel = visual.label(color=visual.color.black, canvas=sliceCanvas, height=h,
-                              pos=visual.vector(cX, cY, cZ + (rangeZ * 0.5)))
+                              pos=visual.vector(cX, cY, cZ + (rangeZ * 0.25)))
 
     sliceCanvas.caption = " *** COMMANDS ***\n\n 'r': Run simulation \n 'p': Pause "
     sliceCanvas.caption += "\n '^': move up (soil layer) \n 'v': move down (soil layer) "
@@ -156,15 +156,15 @@ def drawColorScale():
         step = 1 / nrColorLevels
         for i in range(nrColorLevels + 1):
             value = step * i
-            c = getSEColor(value, 0, 1)
+            c = getRootColor(value, 0, 1)
             colorScale[i].background = visual.vector(c[0], c[1], c[2])
             colorScale[i].text = format(value, ".2f")
     elif isPointVisualization:
         i = nrColorLevels
-        colorScale[i].background = visual.color.green
-        colorScale[i].text = "Plant"
+        colorScale[i].background = visual.color.white
+        colorScale[i].text = "  Plant  "
         i -= 1
-        colorScale[i].background = visual.color.blue
+        colorScale[i].background = visual.color.cyan
         colorScale[i].text = "Dripper"
         i -= 1
         colorScale[i].background = visual.color.red
@@ -287,7 +287,7 @@ def getNewRectangle(myColor, myCanvas, v, computeNormal):
 
 def drawSlice(isFirst):
     global sliceRectangles
-    from crop import k_root, rootDensity
+    from crop import k_root, rootDensity, maxRootFactor
     from exportUtils import outputIndices
 
     firstIndex = visualizedSlice * C3DStructure.nrRectanglesInXAxis
@@ -308,11 +308,18 @@ def drawSlice(isFirst):
             index = firstIndex + x + (layer * C3DStructure.nrRectangles)
             i = layer * C3DStructure.nrRectanglesInXAxis + x
             if isRootVisualization:
-                surfaceIndex = firstIndex + x
-                c = getSEColor(k_root[surfaceIndex] * rootDensity[surfaceIndex][layer]
-                               / (soil.thickness[layer] * 3), 0, 1)
+                if index in outputIndices:
+                    c = [1.0, 1.0, 1.0]
+                else:
+                    if layer == 0:
+                        root = 0
+                    else:
+                        surfaceIndex = firstIndex + x
+                        rootFactor = k_root[surfaceIndex] * rootDensity[surfaceIndex][layer] / soil.thickness[layer]
+                        root = rootFactor / maxRootFactor
+                    c = getRootColor(root, 0, 1)
             elif isPointVisualization:
-                c = [0.5, 0.5, 0.5]
+                c = [0, 1, 0]
                 if index in outputIndices:
                     c = [1, 0, 0]
             elif isWaterPotential:
@@ -349,13 +356,13 @@ def drawSurface(isFirst):
         # color
         if visualizedLayer == 0:
             if isRootVisualization:
-                c = getSEColor(crop.k_root[i], 0, 1)
+                c = getRootColor(crop.k_root[i] * 0.5, 0, 1)
             elif isPointVisualization:
-                c = [0.5, 0.5, 0.5]
+                c = [0, 1, 0]
                 if i in plantIndices:
-                    c = [0, 1, 0]
+                    c = [1, 1, 1]
                 elif i in irrigationIndices:
-                    c = [0, 0, 1]
+                    c = [0, 0.5, 1]
                 elif i in outputSurfaceIndices:
                     c = [1, 0, 0]
             else:
@@ -366,10 +373,14 @@ def drawSurface(isFirst):
             if isWaterPotential:
                 c = getMatricPotentialColor(C3DCells[index].H - C3DCells[index].z)
             elif isRootVisualization:
-                c = getSEColor(crop.k_root[i] * crop.rootDensity[i][visualizedLayer]
-                               / (soil.thickness[visualizedLayer] * 3), 0, 1)
+                if index in outputIndices:
+                    c = [1.0, 1.0, 1.0]
+                else:
+                    rootFactor = crop.k_root[i] * crop.rootDensity[i][visualizedLayer] / soil.thickness[visualizedLayer]
+                    root = rootFactor / crop.maxRootFactor
+                    c = getRootColor(root, 0, 1)
             elif isPointVisualization:
-                c = [0.5, 0.5, 0.5]
+                c = [0, 1, 0]
                 if index in outputIndices:
                     c = [1, 0, 0]
             else:

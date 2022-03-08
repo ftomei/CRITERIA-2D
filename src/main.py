@@ -119,8 +119,10 @@ def main():
             criteria3D.SetCellLink(index, linkIndex, DOWN, exchangeArea)
 
     # initial state
+    state = "1630447200.csv"
+    # state = "1631574000.csv"
     stateFolder = os.path.join(dataPath, "state")
-    initialState = pd.read_csv(os.path.join(stateFolder, "1630447200.csv"))
+    initialState = pd.read_csv(os.path.join(stateFolder, state))
     assimilation.assimilate(initialState)
     waterBalance.initializeBalance()
     print("Initial water storage [m^3]:", format(waterBalance.currentStep.waterStorage, ".3f"))
@@ -174,6 +176,7 @@ def main():
         time.sleep(0.00001)
 
     # main cycle
+    # weatherIndex = 314
     weatherIndex = 0
     while weatherIndex < len(weatherData):
         obsWeather = weatherData.loc[weatherIndex]
