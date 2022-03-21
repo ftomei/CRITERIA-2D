@@ -43,7 +43,7 @@ def objective(params):
     soil.readHorizon(soilPath, 1)
     soil.horizon.VG_alpha = params["VG_alpha"]
     soil.horizon.VG_n = params["VG_n"]
-    soil.horizon.thetaS = params["thetaS"]
+    #soil.horizon.thetaS = params["thetaS"]
     soil.horizon.Ks = params["Ks"]
     totalDepth = soil.horizon.lowerDepth
     # print("Soil depth [m]:", totalDepth)
@@ -144,7 +144,7 @@ def objective(params):
     # print("Read plant position...")
     plantConfiguration = pd.read_csv(os.path.join(settingsFolder, "plant.csv"))
     criteria3D.setPlantPositions(plantConfiguration)
-    crop.initializeCrop(plantConfiguration, params['rootDepthMax'], params['rootXDeformation'], params['rootZDeformation'], params['kcMax'])
+    crop.initializeCrop(plantConfiguration, params['rootXDeformation'], params['rootZDeformation'], params['kcMax'])
 
     # print("Read weather data...")
     weatherDataFolder = "meteo"
@@ -273,11 +273,11 @@ def main():
     space = {
         'VG_alpha': hp.uniform('VG_alpha', 1.0, 3.0),
         'VG_n': hp.uniform('VG_n', 1.1, 1.4),
-        'thetaS': hp.uniform('thetaS', 0.3, 0.5),
-        'Ks': hp.loguniform('Ks', -16.1, -12.4),     
+        #'thetaS': hp.uniform('thetaS', 0.3, 0.5),
+        'Ks': hp.loguniform('Ks', -15.4, -13.1),     
         #'water_table': hp.uniform('water_table', 1.5, 3.5),
         #'LAI': hp.uniform('LAI', 2, 4),
-        'rootDepthMax': hp.uniform('rootDepthMax', 0.6, 1.0),
+        #'rootDepthMax': hp.uniform('rootDepthMax', 0.6, 1.0),
         'rootXDeformation': hp.uniform('rootXDeformation', 0.0, 1.0),
         'rootZDeformation': hp.uniform('rootZDeformation', 0.0, 1.0),
         'kcMax': hp.uniform('kcMax', 1.5, 2.5),
