@@ -13,18 +13,10 @@ import importUtils
 import pandas as pd
 import numpy as np
 import crop
-import time
+import argparse
 
-from hyperopt import fmin, tpe, hp, STATUS_OK, SparkTrials, Trials, pyll
-from hyperopt.base import miscs_update_idxs_vals
-from hyperopt.pyll.base import dfs, as_apply
-from hyperopt.pyll.stochastic import implicit_stochastic_symbols
-from sklearn.metrics import mean_squared_error, mean_absolute_error
 
-iteration = 0
-
-def objective(params):
-    global iteration
+def main(args):
     # print(os.getcwd())
     dataPath = os.path.join("data", "errano")
     settingsFolder = os.path.join(dataPath, "settings")
@@ -41,10 +33,10 @@ def objective(params):
     soilFile = "soil.txt"
     soilPath = os.path.join(settingsFolder, soilFile)
     soil.readHorizon(soilPath, 1)
-    soil.horizon.VG_alpha = params["VG_alpha"]
-    soil.horizon.VG_n = params["VG_n"]
-    #soil.horizon.thetaS = params["thetaS"]
-    soil.horizon.Ks = params["Ks"]
+    soil.horizon.VG_alpha = args.VG_alpha
+    soil.horizon.VG_n = args.VG_n
+    soil.horizon.thetaS = args.thetaS
+    soil.horizon.Ks = args.Ks
     totalDepth = soil.horizon.lowerDepth
     # print("Soil depth [m]:", totalDepth)
 
@@ -144,7 +136,7 @@ def objective(params):
     # print("Read plant position...")
     plantConfiguration = pd.read_csv(os.path.join(settingsFolder, "plant.csv"))
     criteria3D.setPlantPositions(plantConfiguration)
-    crop.initializeCrop(plantConfiguration, params['rootXDeformation'], params['rootZDeformation'], params['kcMax'])
+    crop.initializeCrop(plantConfiguration, args.rootDepthMax, args.rootXDeformation, args.rootZDeformation, args.kcMax)
 
     # print("Read weather data...")
     weatherDataFolder = "meteo"
@@ -174,7 +166,7 @@ def objective(params):
 
     # initialize export
     outputPath = os.path.join(dataPath, "output")
-    outputFileName = f"output_{str(iteration)}.csv"
+    outputFileName = f"output_{str(args.iteration)}.csv"
     outputFilePath = os.path.join(outputPath, outputFileName)
     outputPointsPath = os.path.join(outputPath, "output_points.csv")
     exportUtils.createExportFile(outputPointsPath, outputFilePath)
@@ -246,63 +238,43 @@ def objective(params):
     #visual3D.isPause = True
     # print("\nEnd simulation.\n")
 
-    simulated_data = pd.read_csv(outputFilePath)
-    simulated_data = simulated_data.set_index('timestamp')
-    simulated_data *= -1
-    simulated_data[simulated_data < 20] = 20
-    simulated_data = simulated_data.apply(lambda x: np.log(x))
+def parse_args():
 
-    
-    original_data = pd.read_csv(os.path.join(dataPath, 'ground_truth.csv'))
-    original_data = original_data.set_index('timestamp')
-    original_data = original_data.loc[simulated_data.index]
-    original_data *= -1
-    original_data[original_data < 20] = 20
-    original_data = original_data.apply(lambda x: np.log(x))
+    parser = argparse.ArgumentParser(description="CRITERIA-3D - Soil simulation")
 
-    total_rmse = mean_squared_error(simulated_data, original_data, squared=False)
-    
-    iteration += 1
-    return {'loss': total_rmse, 'status': STATUS_OK}
+    # I need to force argparse to do what was descriped in spec
 
-def main():
-    print('Start')
-    start_time = time.time()
-    dataPath = os.path.join("data", "errano")
-    outputPath = os.path.join(dataPath, "output")
-    space = {
-        'VG_alpha': hp.uniform('VG_alpha', 1.0, 3.0),
-        'VG_n': hp.uniform('VG_n', 1.1, 1.4),
-        #'thetaS': hp.uniform('thetaS', 0.3, 0.5),
-        'Ks': hp.loguniform('Ks', -15.4, -13.1),     
-        #'water_table': hp.uniform('water_table', 1.5, 3.5),
-        #'LAI': hp.uniform('LAI', 2, 4),
-        #'rootDepthMax': hp.uniform('rootDepthMax', 0.6, 1.0),
-        'rootXDeformation': hp.uniform('rootXDeformation', 0.0, 1.0),
-        'rootZDeformation': hp.uniform('rootZDeformation', 0.0, 1.0),
-        'kcMax': hp.uniform('kcMax', 1.5, 2.5),
-        #'root_max_distance': hp.uniform('root_max_distance', 1.5, 2.5)
-        }
-    trials = Trials()
-    best = fmin(fn=objective,
-                space=space,
-                algo=tpe.suggest,
-                max_evals=150,
-                trials=trials,
-                show_progressbar=True,
-                rstate=np.random.RandomState(42))
+    parser.add_argument("-it", "--iteration", nargs="?", type=int, required=True,
+                        help="number of the iteration")
 
-    best_parameters = pd.DataFrame.from_records([best])
-    best_parameters.to_csv(os.path.join(outputPath, 'best_parameters.csv'), index=False)
+    parser.add_argument("-vg_alpha", "--VG_alpha", nargs="?", type=float, required=True,
+                        help="the VG_alpha soil parameter")
 
-    all_trials = pd.DataFrame(trials.trials)
-    all_trials.to_json(os.path.join(outputPath, 'all_trials.json'), indent=True)
+    parser.add_argument("-vg_n", "--VG_n", nargs="?", type=float, required=True,
+                        help="the VG_n soil parameter")
 
-    best_trial = pd.DataFrame(trials.best_trial)
-    best_trial.to_json(os.path.join(outputPath,'best_trial.json'), indent=True)
+    parser.add_argument("-theta_s", "--thetaS", nargs="?", type=float, required=True,
+                        help="the thetaS soil parameter")
 
-    objective(best)
-    end_time = time.time()
-    print("Time of execution:", end_time-start_time)
+    parser.add_argument("-ks", "--Ks", nargs="?", type=float, required=True,
+                        help="the Ks soil parameter")
 
-main()
+    parser.add_argument("-root_depth_max", "--rootDepthMax", nargs="?", type=float, required=True,
+                        help="the rootDepthMax plant parameter")
+
+    parser.add_argument("-root_x_def", "--rootXDeformation", nargs="?", type=float, required=True,
+                        help="the rootXDeformation plant parameter")
+
+    parser.add_argument("-root_z_def", "--rootZDeformation", nargs="?", type=float, required=True,
+                        help="the rootZDeformation plant parameter")
+
+    parser.add_argument("-kc_max", "--kcMax", nargs="?", type=float, required=True,
+                        help="the kcMax plant parameter")
+
+    args = parser.parse_args()
+
+    return args
+
+if __name__ == "__main__":
+    args = parse_args()
+    main(args)
