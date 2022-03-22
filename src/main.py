@@ -199,8 +199,6 @@ def main(args):
             airRelHumidity = obsWeather["air_humidity"]
         if not (np.isnan(obsWeather["wind_speed"])):
             windSpeed_10m = obsWeather["wind_speed"]
-        else:
-            print("Missed")
 
         # evapotranspiration
         normTransmissivity = computeNormTransmissivity(weatherData, weatherIndex, latitude, longitude)
