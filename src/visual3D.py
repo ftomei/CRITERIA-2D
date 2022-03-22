@@ -70,6 +70,7 @@ def initialize(totalWidth):
     totalErrorLabel = visual.label(height=h, pos=visual.vector(0, -4, 0), text="", canvas=interface)
 
     # COLOR LEGEND
+    colorScale.clear()
     stepY = 10 / nrColorLevels
     for i in range(nrColorLevels + 1):
         label = visual.label(canvas=interface, pos=visual.vector(4, -5 + (i * stepY), 0), height=h,
@@ -303,6 +304,9 @@ def drawSlice(isFirst):
         var = "Degree of saturation"
     sliceLabel.text = var + " - slice at " + format(posY * 100, ".1f") + "cm"
 
+    if isFirst:
+        sliceRectangles.clear()
+
     for layer in range(C3DStructure.nrLayers):
         for x in range(C3DStructure.nrRectanglesInXAxis):
             index = firstIndex + x + (layer * C3DStructure.nrRectangles)
@@ -351,6 +355,10 @@ def drawSurface(isFirst):
     from exportUtils import outputSurfaceIndices, outputIndices
 
     maxWaterLevel = 0
+
+    if isFirst:
+        subSurfaceRectangles.clear()
+
     for i in range(C3DStructure.nrRectangles):
         index = visualizedLayer * C3DStructure.nrRectangles + i
         # color

@@ -94,6 +94,7 @@ def initializeCrop(plantConfiguration):
         kiwi.currentLAI = 0
 
     # set root density
+    rootDensity.clear()
     for i in range(C3DStructure.nrRectangles):
         rootDensity.append(computeRootDensity(kiwi, C3DStructure.nrLayers, k_root[i]))
         # update max root factor
@@ -172,7 +173,7 @@ def computeRootDensity(crop, nrLayers, rootFactor):
     if crop.currentRootLength <= 0 or rootFactor == 0:
         return myRootDensity
 
-    rootLength = crop.currentRootLength * min(1, math.sqrt(rootFactor))
+    rootLength = crop.currentRootLength * min(1., math.sqrt(rootFactor))
     # decrease = crop.currentRootLength - rootLength
     # rootZero = crop.rootDepthZero + decrease * 0.25
     rootZero = crop.rootDepthZero
