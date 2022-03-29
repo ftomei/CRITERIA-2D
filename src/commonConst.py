@@ -1,6 +1,6 @@
 # commonConst.py
 
-CYTHON = True
+CYTHON = False
 
 CAMPBELL = 1
 IPPISCH_VG = 2
