@@ -61,6 +61,7 @@ C3DRM = []
 
 
 def rectangularMeshCreation():
+    C3DRM.clear()
     index = 0
     dx = C3DStructure.gridWidth * 0.5
     dy = C3DStructure.gridHeight * 0.5

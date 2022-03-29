@@ -23,15 +23,8 @@ def objective(params):
     outputFileName = f"output_{str(iteration)}.csv"
     outputFilePath = os.path.join(outputPath, outputFileName)
 
-    cmd = 'python src/main.py -it {} -vg_alpha {} -vg_n {} -theta_s {} -ks {} -root_depth_max {}  -root_x_def {} -root_z_def {} -kc_max {}'.format(
+    cmd = 'python src/main.py -it {} -kc_max {}'.format(
             iteration,
-            params["VG_alpha"],
-            params["VG_n"],
-            params["thetaS"],
-            params["Ks"],
-            params["rootDepthMax"],
-            params["rootXDeformation"],
-            params["rootZDeformation"],
             params["kcMax"])
     subprocess.call(cmd, shell=True)
 
@@ -60,14 +53,7 @@ def main(args):
     dataPath = os.path.join("data", "errano")
     outputPath = os.path.join(dataPath, "output")
     space = {
-        'VG_alpha': hp.uniform('VG_alpha', 1.0, 3.0),
-        'VG_n': hp.uniform('VG_n', 1.1, 1.4),
-        'thetaS': hp.uniform('thetaS', 0.3, 0.5),
-        'Ks': hp.loguniform('Ks', -16.1, -12.4),
-        'rootDepthMax': hp.uniform('rootDepthMax', 0.6, 1.0),
-        'rootXDeformation': hp.uniform('rootXDeformation', 0.0, 1.0),
-        'rootZDeformation': hp.uniform('rootZDeformation', 0.0, 1.0),
-        'kcMax': hp.uniform('kcMax', 1.5, 2.5),
+        'kcMax': hp.uniform('kcMax', 2, 3),
         }
     trials = Trials()
     best = fmin(fn=objective,

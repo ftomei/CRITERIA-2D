@@ -33,6 +33,8 @@ def takeSelected(outputPoints):
     global outputIndices
     outputIndices = []
     outputIndicesStrings = []
+    outputSurfaceIndices.clear()
+    outputIndices.clear()
     for _, position in outputPoints.iterrows():
         x = position['x']
         y = position['y']
@@ -47,8 +49,8 @@ def takeSelected(outputPoints):
     return ",".join(outputIndicesStrings)
 
 
-
 def takeSlice():
+    outputIndices.clear()
     offset = C3DStructure.nrRectanglesInYAxis / (C3DStructure.gridHeight / heightSlice)
     i = offset * C3DStructure.nrRectanglesInXAxis
     for layer in range(C3DStructure.nrLayers):
@@ -59,6 +61,7 @@ def takeSlice():
 
 
 def takeAll():
+    outputIndices.clear()
     for index in range(C3DStructure.nrCells):
         outputIndices.append(index)
 
@@ -67,7 +70,7 @@ def takeScreenshot(timestamp, outputFilePath):
     if oneTimestampPerRow:
         row = str(int(timestamp))
         for index in outputIndices:
-            psi = (C3DCells[index].H - C3DCells[index].z) * 9.81    # water potential [kPa] equivalent to [centibar]
+            psi = (C3DCells[index].H - C3DCells[index].z) * 9.81  # water potential [kPa] equivalent to [centibar]
             row += "," + '{:.3f}'.format(psi)
         row += "\n"
 
@@ -81,7 +84,7 @@ def takeScreenshot(timestamp, outputFilePath):
                 row += "," + '{:.3f}'.format(C3DCells[index].y)
                 row += "," + '{:.3f}'.format(C3DCells[index].z)
                 row += "," + '{:.3f}'.format(C3DCells[index].Se)
-                psi = (C3DCells[index].H - C3DCells[index].z) * 9.81    # water potential [kPa] equivalent to [centibar]
+                psi = (C3DCells[index].H - C3DCells[index].z) * 9.81  # water potential [kPa] equivalent to [centibar]
                 row += "," + '{:.3f}'.format(psi)
                 row += "\n"
 

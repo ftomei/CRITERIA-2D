@@ -22,6 +22,7 @@ def memoryAllocation(nrLayers, nrRectangles):
     C3DStructure.nrLayers = nrLayers
     C3DStructure.nrCells = nrLayers * nrRectangles
     solver.setCriteria3DArrays(C3DStructure.nrCells, C3DStructure.nrMaxLinks)
+    C3DCells.clear()
     for i in range(C3DStructure.nrCells):
         C3DCells.append(Ccell())
 
@@ -45,6 +46,7 @@ def setBoundaryProperties(i, area, slope):
 
 
 def setDripIrrigationPositions(irrigationConfigurations):
+    irrigationIndices.clear()
     for _, position in irrigationConfigurations.iterrows():
         x = position['x']
         y = position['y']
@@ -54,6 +56,7 @@ def setDripIrrigationPositions(irrigationConfigurations):
 
 
 def setPlantPositions(plantConfigurations):
+    plantIndices.clear()
     for _, position in plantConfigurations.iterrows():
         x = position['plant_x']
         y = position['plant_y']

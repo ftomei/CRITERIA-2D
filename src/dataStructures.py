@@ -13,7 +13,7 @@ class C3DStructure:
     slopeY = -0.025     # [-] slope on y axis
     slopeSide = 1.0     # [m] side of baulatura
 
-    gridStep = 0.125     # [m]
+    gridStep = 0.125    # [m]
     DX = 2.5            # [m]
     DY = 0.66           # [m]
 

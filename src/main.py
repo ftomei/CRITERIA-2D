@@ -33,10 +33,6 @@ def main(args):
     soilFile = "soil.txt"
     soilPath = os.path.join(settingsFolder, soilFile)
     soil.readHorizon(soilPath, 1)
-    soil.horizon.VG_alpha = args.VG_alpha
-    soil.horizon.VG_n = args.VG_n
-    soil.horizon.thetaS = args.thetaS
-    soil.horizon.Ks = args.Ks
     totalDepth = soil.horizon.lowerDepth
     # print("Soil depth [m]:", totalDepth)
 
@@ -123,8 +119,10 @@ def main(args):
             criteria3D.SetCellLink(index, linkIndex, DOWN, exchangeArea)
 
     # initial state
+    state = "1630447200.csv"
+    # state = "1631574000.csv"
     stateFolder = os.path.join(dataPath, "state")
-    initialState = pd.read_csv(os.path.join(stateFolder, "1630447200.csv"))
+    initialState = pd.read_csv(os.path.join(stateFolder, state))
     assimilation.assimilate(initialState)
     waterBalance.initializeBalance()
     # print("Initial water storage [m^3]:", format(waterBalance.currentStep.waterStorage, ".3f"))
@@ -136,7 +134,8 @@ def main(args):
     # print("Read plant position...")
     plantConfiguration = pd.read_csv(os.path.join(settingsFolder, "plant.csv"))
     criteria3D.setPlantPositions(plantConfiguration)
-    crop.initializeCrop(plantConfiguration, args.rootDepthMax, args.rootXDeformation, args.rootZDeformation, args.kcMax)
+    #crop.initializeCrop(plantConfiguration, args.rootDepthMax, args.rootXDeformation, args.rootZDeformation, args.kcMax)
+    crop.initializeCrop(plantConfiguration, args.kcMax)
 
     # print("Read weather data...")
     weatherDataFolder = "meteo"
@@ -181,6 +180,7 @@ def main(args):
         #time.sleep(0.00001)
 
     # main cycle
+    # weatherIndex = 314
     weatherIndex = 0
     while weatherIndex < len(weatherData):
         obsWeather = weatherData.loc[weatherIndex]
@@ -244,27 +244,6 @@ def parse_args():
 
     parser.add_argument("-it", "--iteration", nargs="?", type=int, required=True,
                         help="number of the iteration")
-
-    parser.add_argument("-vg_alpha", "--VG_alpha", nargs="?", type=float, required=True,
-                        help="the VG_alpha soil parameter")
-
-    parser.add_argument("-vg_n", "--VG_n", nargs="?", type=float, required=True,
-                        help="the VG_n soil parameter")
-
-    parser.add_argument("-theta_s", "--thetaS", nargs="?", type=float, required=True,
-                        help="the thetaS soil parameter")
-
-    parser.add_argument("-ks", "--Ks", nargs="?", type=float, required=True,
-                        help="the Ks soil parameter")
-
-    parser.add_argument("-root_depth_max", "--rootDepthMax", nargs="?", type=float, required=True,
-                        help="the rootDepthMax plant parameter")
-
-    parser.add_argument("-root_x_def", "--rootXDeformation", nargs="?", type=float, required=True,
-                        help="the rootXDeformation plant parameter")
-
-    parser.add_argument("-root_z_def", "--rootZDeformation", nargs="?", type=float, required=True,
-                        help="the rootZDeformation plant parameter")
 
     parser.add_argument("-kc_max", "--kcMax", nargs="?", type=float, required=True,
                         help="the kcMax plant parameter")

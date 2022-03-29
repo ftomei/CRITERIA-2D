@@ -6,6 +6,7 @@ import rectangularMesh
 import numpy as np
 
 MAX_EVAPORATION_DEPTH = 0.15  # [m]
+maxRootFactor = 0.0
 
 
 class CCrop:
@@ -33,11 +34,11 @@ class CCrop:
         self.laiMin = 1.0  # [m2 m-2]
         self.laiMax = 4.0  # [m2 m-2]
         self.rootDepthZero = 0.1  # [m]
-        self.rootDepthMax = 0.75  # [m]
-        self.rootWidth = 2.0  # [m]
-        self.rootXDeformation = 0.5  # [-]
-        self.rootZDeformation = 0.5  # [-] 0: symmetric 1: cardioid 2: cardioid more accentuated
-        self.kcMax = 2.2  # [-]
+        self.rootDepthMax = 0.7  # [m]
+        self.rootWidth = 2.1  # [m]
+        self.rootXDeformation = 0.48   # [-]
+        self.rootZDeformation = 0.5  # [-] 0:symmetric / 1:cardioid / 2:cardioid more accentuated
+        self.kcMax = 2.5  # [-]
         self.fRAW = 0.6  # [-]
         self.setMaxValues()
 
@@ -53,15 +54,12 @@ HH = NODATA  # [m3 m-3] water content at Hygroscopic moisture
 wsThreshold = NODATA  # [m3 m-3] water scarcity stress threshold
 
 
-def initializeCrop(plantConfiguration, rootDepthMax, rootXDeformation, rootZDeformation, kcMax):
-    global rootDensity, k_root
+def initializeCrop(plantConfiguration, kcMax):
+    global rootDensity, k_root, maxRootFactor
     global SAT, FC, WP, HH, wsThreshold
 
     # initialize kiwifruit
     kiwi.setKiwifruit()
-    kiwi.rootDepthMax = rootDepthMax
-    kiwi.rootXDeformation = rootXDeformation
-    kiwi.rootZDeformation = rootZDeformation
     kiwi.kcMax = kcMax
 
     SAT = soil.horizon.thetaS
@@ -97,8 +95,13 @@ def initializeCrop(plantConfiguration, rootDepthMax, rootXDeformation, rootZDefo
         kiwi.currentLAI = 0
 
     # set root density
+    rootDensity.clear()
     for i in range(C3DStructure.nrRectangles):
         rootDensity.append(computeRootDensity(kiwi, C3DStructure.nrLayers, k_root[i]))
+        # update max root factor
+        for layer in range(1, C3DStructure.nrLayers):
+            root_factor = k_root[i] * rootDensity[i][layer] / soil.thickness[layer]
+            maxRootFactor = max(root_factor, maxRootFactor)
 
 
 def getCropSurfaceCover(currentLAI):
@@ -171,7 +174,7 @@ def computeRootDensity(crop, nrLayers, rootFactor):
     if crop.currentRootLength <= 0 or rootFactor == 0:
         return myRootDensity
 
-    rootLength = crop.currentRootLength * min(1, math.sqrt(rootFactor))
+    rootLength = crop.currentRootLength * min(1., math.sqrt(rootFactor))
     # decrease = crop.currentRootLength - rootLength
     # rootZero = crop.rootDepthZero + decrease * 0.25
     rootZero = crop.rootDepthZero
