@@ -47,26 +47,20 @@ class CCrop:
 kiwi = CCrop()
 rootDensity = []
 k_root = np.array([], np.float64)
-SAT = NODATA  # [m3 m-3] water content at saturation
-FC = NODATA  # [m3 m-3] water content at field capacity
-WP = NODATA  # [m3 m-3] water content at wilting point
-HH = NODATA  # [m3 m-3] water content at Hygroscopic moisture
-wsThreshold = NODATA  # [m3 m-3] water scarcity stress threshold
 
 
 def initializeCrop(plantConfiguration):
     global rootDensity, k_root, maxRootFactor
-    global SAT, SAT_FC, FC, WP, HH, wsThreshold
+    global SAT, FC, WP, HH, wsThreshold
 
     # initialize kiwifruit
     kiwi.setKiwifruit()
 
-    SAT = soil.horizon.thetaS
-    FC = soil.getFieldCapacityWC()
-    SAT_FC = (SAT + FC) * 0.5
-    WP = soil.getWiltingPointWC()
-    HH = soil.getHygroscopicWC()
-    wsThreshold = FC - kiwi.fRAW * (FC - WP)
+    SAT = soil.horizon.thetaS           # [m3 m-3] water content at saturation
+    FC = soil.getFieldCapacityWC()      # [m3 m-3] water content at field capacity
+    WP = soil.getWiltingPointWC()       # [m3 m-3] water content at wilting point
+    HH = soil.getHygroscopicWC()        # [m3 m-3] water content at Hygroscopic moisture
+    wsThreshold = FC - kiwi.fRAW * (FC - WP)    # [m3 m-3] water scarcity stress threshold
 
     # initialize root factor
     k_root = np.zeros(C3DStructure.nrRectangles)
@@ -227,11 +221,8 @@ def setTranspiration(surfaceIndex, myRootDensity, maxTranspiration):
             theta = soil.getVolumetricWaterContent(i)
             # water surplus
             if theta > FC:
-                if theta > SAT_FC:
-                    layerTranspiration[layer] = 0
-                else:
-                    layerTranspiration[layer] = maxTranspiration * myRootDensity[layer] \
-                                                * (1.0 - (theta - FC) / (SAT_FC - FC))
+                layerTranspiration[layer] = maxTranspiration * myRootDensity[layer] \
+                                            * (1.0 - (theta - FC) / (SAT - FC))
                 isLayerStressed[layer] = True
             else:
                 # water scarcity
