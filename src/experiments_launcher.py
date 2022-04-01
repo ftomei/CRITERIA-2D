@@ -23,9 +23,10 @@ def objective(params):
     outputFileName = f"output_{str(iteration)}.csv"
     outputFilePath = os.path.join(outputPath, outputFileName)
 
-    cmd = 'python src/main.py -it {} -kc_max {}'.format(
+    cmd = 'python src/main.py -it {} -f {} -c {}'.format(
             iteration,
-            params["kcMax"])
+            params["fRAW"],
+            params["clay"])
     subprocess.call(cmd, shell=True)
 
     simulated_data = pd.read_csv(outputFilePath)
@@ -53,7 +54,8 @@ def main(args):
     dataPath = os.path.join("data", "errano")
     outputPath = os.path.join(dataPath, "output")
     space = {
-        'kcMax': hp.uniform('kcMax', 2, 3),
+        'fRAW': hp.uniform('fRAW', 0.4, 0.7),
+        'clay': hp.uniform('clay', 20, 40),
         }
     trials = Trials()
     best = fmin(fn=objective,

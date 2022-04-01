@@ -32,7 +32,7 @@ def main(args):
     # print("Load soil...")
     soilFile = "soil.txt"
     soilPath = os.path.join(settingsFolder, soilFile)
-    soil.readHorizon(soilPath, 1)
+    soil.readHorizon(soilPath, 1, args.clay)
     totalDepth = soil.horizon.lowerDepth
     # print("Soil depth [m]:", totalDepth)
 
@@ -135,7 +135,7 @@ def main(args):
     plantConfiguration = pd.read_csv(os.path.join(settingsFolder, "plant.csv"))
     criteria3D.setPlantPositions(plantConfiguration)
     #crop.initializeCrop(plantConfiguration, args.rootDepthMax, args.rootXDeformation, args.rootZDeformation, args.kcMax)
-    crop.initializeCrop(plantConfiguration, args.kcMax)
+    crop.initializeCrop(plantConfiguration, args.fRAW)
 
     # print("Read weather data...")
     weatherDataFolder = "meteo"
@@ -245,8 +245,11 @@ def parse_args():
     parser.add_argument("-it", "--iteration", nargs="?", type=int, required=True,
                         help="number of the iteration")
 
-    parser.add_argument("-kc_max", "--kcMax", nargs="?", type=float, required=True,
-                        help="the kcMax plant parameter")
+    parser.add_argument("-f", "--fRAW", nargs="?", type=float, required=True,
+                        help="the fRAW soil parameter")
+
+    parser.add_argument("-c", "--clay", nargs="?", type=float, required=True,
+                        help="the clay soil parameter")
 
     args = parser.parse_args()
 

@@ -49,13 +49,13 @@ rootDensity = []
 k_root = np.array([], np.float64)
 
 
-def initializeCrop(plantConfiguration, kcMax):
+def initializeCrop(plantConfiguration, fRAW):
     global rootDensity, k_root, maxRootFactor
     global SAT, FC, WP, HH, wsThreshold
 
     # initialize kiwifruit
     kiwi.setKiwifruit()
-    kiwi.kcMax = kcMax
+    kiwi.fRAW = fRAW
 
     SAT = soil.horizon.thetaS           # [m3 m-3] water content at saturation
     FC = soil.getFieldCapacityWC()      # [m3 m-3] water content at field capacity
