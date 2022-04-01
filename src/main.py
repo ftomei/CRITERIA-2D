@@ -181,7 +181,7 @@ def main(args):
 
     # main cycle
     # weatherIndex = 314
-    weatherIndex = 0
+    weatherIndex = 1
     while weatherIndex < len(weatherData):
         obsWeather = weatherData.loc[weatherIndex]
         currentDateTime = pd.to_datetime(obsWeather["timestamp"], unit='s')

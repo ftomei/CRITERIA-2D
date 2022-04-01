@@ -34,12 +34,12 @@ class CCrop:
         self.laiMin = 1.0  # [m2 m-2]
         self.laiMax = 4.0  # [m2 m-2]
         self.rootDepthZero = 0.1  # [m]
-        self.rootDepthMax = 0.7  # [m]
+        self.rootDepthMax = 0.7   # [m]
         self.rootWidth = 2.1  # [m]
         self.rootXDeformation = 0.48   # [-]
         self.rootZDeformation = 0.5  # [-] 0:symmetric / 1:cardioid / 2:cardioid more accentuated
-        self.kcMax = 2.5  # [-]
-        self.fRAW = 0.6  # [-]
+        self.kcMax = 2.6  # [-]
+        self.fRAW = 0.55  # [-]
         self.setMaxValues()
 
 
@@ -47,11 +47,6 @@ class CCrop:
 kiwi = CCrop()
 rootDensity = []
 k_root = np.array([], np.float64)
-SAT = NODATA  # [m3 m-3] water content at saturation
-FC = NODATA  # [m3 m-3] water content at field capacity
-WP = NODATA  # [m3 m-3] water content at wilting point
-HH = NODATA  # [m3 m-3] water content at Hygroscopic moisture
-wsThreshold = NODATA  # [m3 m-3] water scarcity stress threshold
 
 
 def initializeCrop(plantConfiguration, kcMax):
@@ -62,11 +57,11 @@ def initializeCrop(plantConfiguration, kcMax):
     kiwi.setKiwifruit()
     kiwi.kcMax = kcMax
 
-    SAT = soil.horizon.thetaS
-    FC = soil.getFieldCapacityWC()
-    WP = soil.getWiltingPointWC()
-    HH = soil.getHygroscopicWC()
-    wsThreshold = FC - kiwi.fRAW * (FC - WP)
+    SAT = soil.horizon.thetaS           # [m3 m-3] water content at saturation
+    FC = soil.getFieldCapacityWC()      # [m3 m-3] water content at field capacity
+    WP = soil.getWiltingPointWC()       # [m3 m-3] water content at wilting point
+    HH = soil.getHygroscopicWC()        # [m3 m-3] water content at Hygroscopic moisture
+    wsThreshold = FC - kiwi.fRAW * (FC - WP)    # [m3 m-3] water scarcity stress threshold
 
     # initialize root factor
     k_root = np.zeros(C3DStructure.nrRectangles)
