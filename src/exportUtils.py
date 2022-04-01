@@ -2,17 +2,20 @@ import os
 from dataStructures import *
 import rectangularMesh
 import pandas as pd
+import soil
 
 outputIndices = []
 outputSurfaceIndices = []
 outputFile = ""
+outputFileWC = ""
 heightSlice = C3DStructure.gridHeight * 0.5
 oneTimestampPerRow = True
 
 
 def createExportFile(outputPath):
-    global outputFile
+    global outputFile, outputFileWC
     outputFile = os.path.join(outputPath, "output.csv")
+    outputFileWC = os.path.join(outputPath, "outputWaterContent.csv")
 
     if oneTimestampPerRow:
         outputPoints = pd.read_csv(os.path.join(outputPath, "output_points.csv"))
@@ -30,6 +33,13 @@ def createExportFile(outputPath):
 
     with open(outputFile, "w") as f:
         f.write(header)
+
+    if oneTimestampPerRow:
+        if not os.path.exists(outputFileWC):
+            open(outputFileWC, 'w').close()
+
+        with open(outputFileWC, "w") as f:
+            f.write(header)
 
 
 def takeSelected(outputPoints):
@@ -69,14 +79,20 @@ def takeAll():
 
 def takeScreenshot(timestamp):
     if oneTimestampPerRow:
-        row = str(int(timestamp))
+        rowPotential = str(int(timestamp))
+        rowWaterContent = str(int(timestamp))
         for index in outputIndices:
-            psi = (C3DCells[index].H - C3DCells[index].z) * 9.81  # water potential [kPa] equivalent to [centibar]
-            row += "," + '{:.3f}'.format(psi)
-        row += "\n"
+            psi = (C3DCells[index].H - C3DCells[index].z) * 9.81    # water potential [kPa] equivalent to [centibar]
+            theta = soil.getVolumetricWaterContent(index)           # volumetric water content [m3 m-3]
+            rowPotential += "," + '{:.3f}'.format(psi)
+            rowWaterContent += "," + '{:.4f}'.format(theta)
+        rowPotential += "\n"
+        rowWaterContent += "\n"
 
         with open(outputFile, "a") as f:
-            f.write(row)
+            f.write(rowPotential)
+        with open(outputFileWC, "a") as f:
+            f.write(rowWaterContent)
     else:
         for index in outputIndices:
             if C3DCells[index].z != 0.0 and C3DCells[index].x >= 1.0:
