@@ -34,11 +34,11 @@ class CCrop:
         self.laiMin = 1.0  # [m2 m-2]
         self.laiMax = 4.0  # [m2 m-2]
         self.rootDepthZero = 0.1  # [m]
-        self.rootDepthMax = 0.7  # [m]
+        self.rootDepthMax = 0.7   # [m]
         self.rootWidth = 2.1  # [m]
         self.rootXDeformation = 0.48   # [-]
         self.rootZDeformation = 0.5  # [-] 0:symmetric / 1:cardioid / 2:cardioid more accentuated
-        self.kcMax = 2.5  # [-]
+        self.kcMax = 2.6  # [-]
         self.fRAW = 0.55  # [-]
         self.setMaxValues()
 
