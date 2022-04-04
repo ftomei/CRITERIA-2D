@@ -34,9 +34,9 @@ class CCrop:
         self.laiMin = 1.0  # [m2 m-2]
         self.laiMax = 4.0  # [m2 m-2]
         self.rootDepthZero = 0.1  # [m]
-        self.rootDepthMax = 0.7   # [m]
+        self.rootDepthMax = 0.7  # [m]
         self.rootWidth = 2.1  # [m]
-        self.rootXDeformation = 0.48   # [-]
+        self.rootXDeformation = 0.48  # [-]
         self.rootZDeformation = 0.5  # [-] 0:symmetric / 1:cardioid / 2:cardioid more accentuated
         self.kcMax = 2.6  # [-]
         self.fRAW = 0.55  # [-]
@@ -56,11 +56,11 @@ def initializeCrop(plantConfiguration):
     # initialize kiwifruit
     kiwi.setKiwifruit()
 
-    SAT = soil.horizon.thetaS           # [m3 m-3] water content at saturation
-    FC = soil.getFieldCapacityWC()      # [m3 m-3] water content at field capacity
-    WP = soil.getWiltingPointWC()       # [m3 m-3] water content at wilting point
-    HH = soil.getHygroscopicWC()        # [m3 m-3] water content at Hygroscopic moisture
-    wsThreshold = FC - kiwi.fRAW * (FC - WP)    # [m3 m-3] water scarcity stress threshold
+    SAT = soil.horizon.thetaS  # [m3 m-3] water content at saturation
+    FC = soil.getFieldCapacityWC()  # [m3 m-3] water content at field capacity
+    WP = soil.getWiltingPointWC()  # [m3 m-3] water content at wilting point
+    HH = soil.getHygroscopicWC()  # [m3 m-3] water content at Hygroscopic moisture
+    wsThreshold = FC - kiwi.fRAW * (FC - WP)  # [m3 m-3] water scarcity stress threshold
 
     # initialize root factor
     k_root = np.zeros(C3DStructure.nrRectangles)
@@ -221,8 +221,8 @@ def setTranspiration(surfaceIndex, myRootDensity, maxTranspiration):
             theta = soil.getVolumetricWaterContent(i)
             # water surplus
             if theta > FC:
-                layerTranspiration[layer] = maxTranspiration * myRootDensity[layer] \
-                                            * (1.0 - (theta - FC) / (SAT - FC))
+                fraction = 1.0 - (theta - FC) / (SAT - FC)
+                layerTranspiration[layer] = maxTranspiration * fraction * myRootDensity[layer]
                 isLayerStressed[layer] = True
             else:
                 # water scarcity
