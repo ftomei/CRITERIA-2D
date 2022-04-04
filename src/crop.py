@@ -38,7 +38,7 @@ class CCrop:
         self.rootWidth = 2.1  # [m]
         self.rootXDeformation = 0.48  # [-]
         self.rootZDeformation = 0.5  # [-] 0:symmetric / 1:cardioid / 2:cardioid more accentuated
-        self.kcMax = 2.6  # [-]
+        self.kcMax = 2.5  # [-]
         self.fRAW = 0.55  # [-]
         self.setMaxValues()
 
@@ -98,28 +98,25 @@ def initializeCrop(plantConfiguration):
             maxRootFactor = max(root_factor, maxRootFactor)
 
 
-def getCropSurfaceCover(currentLAI):
-    k = 0.6  # [-] light extinction coefficient
+# fraction of intercepted photosynthetically active radiation [-]
+def fPARi(currentLAI):
+    ke = 0.6  # light extinction coefficient [-]
     if (currentLAI == NODATA) or (currentLAI <= 0):
         return 0.
     else:
-        return 1. - math.exp(-k * currentLAI)
+        # Beer–Lambert Equation
+        return 1. - math.exp(-ke * currentLAI)
 
 
 def getMaxEvaporation(currentLAI, ET0):
-    maxEvaporationRatio = 1.0
-    cropSurfaceCover = getCropSurfaceCover(currentLAI)
-    return ET0 * maxEvaporationRatio * (1. - cropSurfaceCover)
+    return ET0 * (1. - fPARi(currentLAI))
 
 
 def getMaxTranspiration(currentLAI, kcMax, ET0):
     if (currentLAI == NODATA) or (currentLAI <= 0):
         return 0.
     else:
-        cropSurfaceCover = getCropSurfaceCover(currentLAI)
-        kcMaxFactor = 1. + (kcMax - 1.) * cropSurfaceCover
-        kc = cropSurfaceCover * kcMaxFactor
-        return ET0 * kc
+        return ET0 * fPARi(currentLAI) * kcMax
 
 
 def cardioidDistribution(deformationFactor, nrLayersWithRoot):
@@ -169,8 +166,6 @@ def computeRootDensity(crop, nrLayers, rootFactor):
         return myRootDensity
 
     rootLength = crop.currentRootLength * min(1., math.sqrt(rootFactor))
-    # decrease = crop.currentRootLength - rootLength
-    # rootZero = crop.rootDepthZero + decrease * 0.25
     rootZero = crop.rootDepthZero
     if rootLength < 0.001:
         return myRootDensity
@@ -338,16 +333,16 @@ def setEvaporation(surfaceIndex, maxEvaporation):
 
 
 # todo improve with LAI curve
-def getCurrentKc(crop, currentDate):
+def getCurrentLAI(crop, currentDate):
     if 3 <= currentDate.month <= 9:
-        return crop.kcMax
+        return crop.laiMax
     else:
-        return crop.kcMax * 0.33
+        return 0.2
 
 
 def setEvapotranspiration(currentDate, ET0):
+    kiwi.currentLAI = getCurrentLAI(kiwi, currentDate)
     if C3DParameters.computeTranspiration:
-        kiwi.currentKc = getCurrentKc(kiwi, currentDate)
         for i in range(C3DStructure.nrRectangles):
             maxTrKiwi = getMaxTranspiration(kiwi.currentLAI, kiwi.currentKc, ET0)
             maxTranspiration = maxTrKiwi * k_root[i]
