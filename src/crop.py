@@ -38,7 +38,7 @@ class CCrop:
         self.rootWidth = 2.1  # [m]
         self.rootXDeformation = 0.48  # [-]
         self.rootZDeformation = 0.5  # [-] 0:symmetric / 1:cardioid / 2:cardioid more accentuated
-        self.kcMax = 2.5  # [-]
+        self.kcMax = 2.4  # [-]
         self.fRAW = 0.55  # [-]
         self.setMaxValues()
 
@@ -337,14 +337,14 @@ def getCurrentLAI(crop, currentDate):
     if 3 <= currentDate.month <= 9:
         return crop.laiMax
     else:
-        return 0.2
+        return 0.1
 
 
 def setEvapotranspiration(currentDate, ET0):
     kiwi.currentLAI = getCurrentLAI(kiwi, currentDate)
     if C3DParameters.computeTranspiration:
         for i in range(C3DStructure.nrRectangles):
-            maxTrKiwi = getMaxTranspiration(kiwi.currentLAI, kiwi.currentKc, ET0)
+            maxTrKiwi = getMaxTranspiration(kiwi.currentLAI, kiwi.kcMax, ET0)
             maxTranspiration = maxTrKiwi * k_root[i]
             setTranspiration(i, rootDensity[i], maxTranspiration)
 
