@@ -31,15 +31,15 @@ class CCrop:
         self.currentRootLength = self.currentRootDepth - self.rootDepthZero
 
     def setKiwifruit(self):
-        self.laiMin = 1.0  # [m2 m-2]
+        self.laiMin = 0.2  # [m2 m-2]
         self.laiMax = 4.0  # [m2 m-2]
         self.rootDepthZero = 0.1  # [m]
         self.rootDepthMax = 0.7  # [m]
         self.rootWidth = 2.1  # [m]
-        self.rootXDeformation = 0.48  # [-]
+        self.rootXDeformation = 0.5  # [-]
         self.rootZDeformation = 0.5  # [-] 0:symmetric / 1:cardioid / 2:cardioid more accentuated
         self.kcMax = 2.4  # [-]
-        self.fRAW = 0.55  # [-]
+        self.fRAW = 0.50  # [-]
         self.setMaxValues()
 
 
@@ -165,7 +165,7 @@ def computeRootDensity(crop, nrLayers, rootFactor):
     if crop.currentRootLength <= 0 or rootFactor == 0:
         return myRootDensity
 
-    rootLength = crop.currentRootLength * min(1., math.sqrt(rootFactor))
+    rootLength = crop.currentRootLength * min(1.0, math.sqrt(rootFactor))
     rootZero = crop.rootDepthZero
     if rootLength < 0.001:
         return myRootDensity
@@ -217,6 +217,7 @@ def setTranspiration(surfaceIndex, myRootDensity, maxTranspiration):
             # water surplus
             if theta > FC:
                 fraction = 1.0 - (theta - FC) / (SAT - FC)
+                fraction = fraction**3
                 layerTranspiration[layer] = maxTranspiration * fraction * myRootDensity[layer]
                 isLayerStressed[layer] = True
             else:
@@ -293,7 +294,7 @@ def setEvaporation(surfaceIndex, maxEvaporation):
 
     nrEvapLayers = lastIndex
 
-    # evaporation coefficient: 1 at first layer, ~0.1 at MAX_EVAPORATION_DEPTH
+    # depth coefficient: 1 at first layer, ~0.1 at MAX_EVAPORATION_DEPTH
     coeffEvap = np.zeros(nrEvapLayers, np.float64)
     sumCoefficient = 0
     for i in range(1, nrEvapLayers):
@@ -337,7 +338,7 @@ def getCurrentLAI(crop, currentDate):
     if 3 <= currentDate.month <= 9:
         return crop.laiMax
     else:
-        return 0.1
+        return crop.laiMin
 
 
 def setEvapotranspiration(currentDate, ET0):
