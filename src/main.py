@@ -32,7 +32,7 @@ def main():
     print("Load soil...")
     soilFile = "soil.txt"
     soilPath = os.path.join(settingsFolder, soilFile)
-    soil.readHorizon(soilPath, 1)
+    soil.readHorizon(soilPath)
     totalDepth = soil.horizon.lowerDepth
     print("Soil depth [m]:", totalDepth)
 
@@ -177,7 +177,7 @@ def main():
 
     # main cycle
     # weatherIndex = 314
-    weatherIndex = 0
+    weatherIndex = 1
     while weatherIndex < len(weatherData):
         obsWeather = weatherData.loc[weatherIndex]
         currentDateTime = pd.to_datetime(obsWeather["timestamp"], unit='s')

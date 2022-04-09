@@ -31,15 +31,15 @@ class CCrop:
         self.currentRootLength = self.currentRootDepth - self.rootDepthZero
 
     def setKiwifruit(self):
-        self.laiMin = 1.0  # [m2 m-2]
+        self.laiMin = 0.2  # [m2 m-2]
         self.laiMax = 4.0  # [m2 m-2]
         self.rootDepthZero = 0.1  # [m]
         self.rootDepthMax = 0.7  # [m]
         self.rootWidth = 2.1  # [m]
-        self.rootXDeformation = 0.48   # [-]
+        self.rootXDeformation = 0.5  # [-]
         self.rootZDeformation = 0.5  # [-] 0:symmetric / 1:cardioid / 2:cardioid more accentuated
-        self.kcMax = 2.5  # [-]
-        self.fRAW = 0.6  # [-]
+        self.kcMax = 2.4  # [-]
+        self.fRAW = 0.50  # [-]
         self.setMaxValues()
 
 
@@ -47,11 +47,6 @@ class CCrop:
 kiwi = CCrop()
 rootDensity = []
 k_root = np.array([], np.float64)
-SAT = NODATA  # [m3 m-3] water content at saturation
-FC = NODATA  # [m3 m-3] water content at field capacity
-WP = NODATA  # [m3 m-3] water content at wilting point
-HH = NODATA  # [m3 m-3] water content at Hygroscopic moisture
-wsThreshold = NODATA  # [m3 m-3] water scarcity stress threshold
 
 
 def initializeCrop(plantConfiguration):
@@ -61,11 +56,11 @@ def initializeCrop(plantConfiguration):
     # initialize kiwifruit
     kiwi.setKiwifruit()
 
-    SAT = soil.horizon.thetaS
-    FC = soil.getFieldCapacityWC()
-    WP = soil.getWiltingPointWC()
-    HH = soil.getHygroscopicWC()
-    wsThreshold = FC - kiwi.fRAW * (FC - WP)
+    SAT = soil.horizon.thetaS  # [m3 m-3] water content at saturation
+    FC = soil.getFieldCapacityWC()  # [m3 m-3] water content at field capacity
+    WP = soil.getWiltingPointWC()  # [m3 m-3] water content at wilting point
+    HH = soil.getHygroscopicWC()  # [m3 m-3] water content at Hygroscopic moisture
+    wsThreshold = FC - kiwi.fRAW * (FC - WP)  # [m3 m-3] water scarcity stress threshold
 
     # initialize root factor
     k_root = np.zeros(C3DStructure.nrRectangles)
@@ -103,28 +98,25 @@ def initializeCrop(plantConfiguration):
             maxRootFactor = max(root_factor, maxRootFactor)
 
 
-def getCropSurfaceCover(currentLAI):
-    k = 0.6  # [-] light extinction coefficient
+# fraction of intercepted photosynthetically active radiation [-]
+def fPARi(currentLAI):
+    ke = 0.6  # light extinction coefficient [-]
     if (currentLAI == NODATA) or (currentLAI <= 0):
         return 0.
     else:
-        return 1. - math.exp(-k * currentLAI)
+        # Beer–Lambert Equation
+        return 1. - math.exp(-ke * currentLAI)
 
 
 def getMaxEvaporation(currentLAI, ET0):
-    maxEvaporationRatio = 1.0
-    cropSurfaceCover = getCropSurfaceCover(currentLAI)
-    return ET0 * maxEvaporationRatio * (1. - cropSurfaceCover)
+    return ET0 * (1. - fPARi(currentLAI))
 
 
 def getMaxTranspiration(currentLAI, kcMax, ET0):
     if (currentLAI == NODATA) or (currentLAI <= 0):
         return 0.
     else:
-        cropSurfaceCover = getCropSurfaceCover(currentLAI)
-        kcMaxFactor = 1. + (kcMax - 1.) * cropSurfaceCover
-        kc = cropSurfaceCover * kcMaxFactor
-        return ET0 * kc
+        return ET0 * fPARi(currentLAI) * kcMax
 
 
 def cardioidDistribution(deformationFactor, nrLayersWithRoot):
@@ -173,9 +165,7 @@ def computeRootDensity(crop, nrLayers, rootFactor):
     if crop.currentRootLength <= 0 or rootFactor == 0:
         return myRootDensity
 
-    rootLength = crop.currentRootLength * min(1., math.sqrt(rootFactor))
-    # decrease = crop.currentRootLength - rootLength
-    # rootZero = crop.rootDepthZero + decrease * 0.25
+    rootLength = crop.currentRootLength * min(1.0, math.sqrt(rootFactor))
     rootZero = crop.rootDepthZero
     if rootLength < 0.001:
         return myRootDensity
@@ -226,8 +216,9 @@ def setTranspiration(surfaceIndex, myRootDensity, maxTranspiration):
             theta = soil.getVolumetricWaterContent(i)
             # water surplus
             if theta > FC:
-                layerTranspiration[layer] = maxTranspiration * myRootDensity[layer] \
-                                            * (1.0 - (theta - FC) / (SAT - FC))
+                fraction = 1.0 - (theta - FC) / (SAT - FC)
+                fraction = fraction**3
+                layerTranspiration[layer] = maxTranspiration * fraction * myRootDensity[layer]
                 isLayerStressed[layer] = True
             else:
                 # water scarcity
@@ -303,7 +294,7 @@ def setEvaporation(surfaceIndex, maxEvaporation):
 
     nrEvapLayers = lastIndex
 
-    # evaporation coefficient: 1 at first layer, ~0.1 at MAX_EVAPORATION_DEPTH
+    # depth coefficient: 1 at first layer, ~0.1 at MAX_EVAPORATION_DEPTH
     coeffEvap = np.zeros(nrEvapLayers, np.float64)
     sumCoefficient = 0
     for i in range(1, nrEvapLayers):
@@ -343,18 +334,18 @@ def setEvaporation(surfaceIndex, maxEvaporation):
 
 
 # todo improve with LAI curve
-def getCurrentKc(crop, currentDate):
+def getCurrentLAI(crop, currentDate):
     if 3 <= currentDate.month <= 9:
-        return crop.kcMax
+        return crop.laiMax
     else:
-        return crop.kcMax * 0.33
+        return crop.laiMin
 
 
 def setEvapotranspiration(currentDate, ET0):
+    kiwi.currentLAI = getCurrentLAI(kiwi, currentDate)
     if C3DParameters.computeTranspiration:
-        kiwi.currentKc = getCurrentKc(kiwi, currentDate)
         for i in range(C3DStructure.nrRectangles):
-            maxTrKiwi = getMaxTranspiration(kiwi.currentLAI, kiwi.currentKc, ET0)
+            maxTrKiwi = getMaxTranspiration(kiwi.currentLAI, kiwi.kcMax, ET0)
             maxTranspiration = maxTrKiwi * k_root[i]
             setTranspiration(i, rootDensity[i], maxTranspiration)
 
