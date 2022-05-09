@@ -95,9 +95,9 @@ class C3DParameters:
     computeTranspiration = True
 
     # surface flow
-    computeSurfaceFlow = False
+    computeSurfaceFlow = True
     roughness = 0.24                    # [s m^0.33]
-    pondIrrigation = 0.01               # [m]
+    pondIrrigation = 0.005              # [m]
     pondRainfall = 0.002                # [m]
     pond = pondRainfall                 # [m]
 
