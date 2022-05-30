@@ -34,9 +34,16 @@ def buildDataStructuresForInterpolation(initialState):
     for i in range(x.shape[-1]):
         for j in range(y.shape[-1]):
             for k in range(z.shape[-1]):
-                value = \
+                psi = \
                 initialState[(initialState["x"] == x[i]) & (initialState["y"] == y[j]) & (initialState["z"] == z[k])][
                     "value"]
+
+                # compute residual
+                index = rectangularMesh.getCellIndex(x[i], y[j], z[k])
+                currentMatricPotential = criteria3D.getMatricPotential(index)
+                # from kPa to meters
+                value = (psi / 9.81) - currentMatricPotential
+
                 if len(points) == 1:
                     # Even though we do not know which is the coordinate that has not one unique value,
                     # we can sum all of the coordinates because the index of the ones that has just one unique value would be 0
@@ -101,9 +108,6 @@ def interpolate(initialState):
 
                 value = interpn(points, values, point, bounds_error=False)
                 interpolated_points[index] = value[0]
-                # water potential - from [kPa] to [m]
-                psi = value / 9.81
-                criteria3D.setMatricPotential(index, psi)
     return interpolated_points
 
 
@@ -131,9 +135,11 @@ def assimilate(initialState):
     indices = interpolated_points.keys()
     for i in range(C3DStructure.nrCells):
         x, y, depth = rectangularMesh.getXYDepth(i)
-        if (i not in indices) and (depth != 0):
-            min_index = getCloserIndex(i, indices)
-            value = interpolated_points[min_index]
-            # water potential - from [kPa] to [m]
-            psi = value / 9.81
-            criteria3D.setMatricPotential(i, psi)
+        if depth != 0:
+            if i in indices:
+                value = interpolated_points[i]
+            else:
+                min_index = getCloserIndex(i, indices)
+                value = interpolated_points[min_index]
+            currentMatricPotential = criteria3D.getMatricPotential(i)
+            criteria3D.setMatricPotential(i, min(currentMatricPotential + value, 0.0))

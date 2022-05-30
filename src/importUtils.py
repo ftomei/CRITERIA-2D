@@ -1,6 +1,8 @@
 import pandas as pd
 import os
 import criteria3D
+import assimilation
+import waterBalance
 import tkinter
 import tkinter.filedialog
 
@@ -90,6 +92,13 @@ def transformDates(meteoData, waterData):
 
 
 def loadState(fileName):
+    currentState = pd.read_csv(fileName)
+    assimilation.assimilate(currentState)
+    waterBalance.updateStorage()
+    return True
+
+
+def loadState_old(fileName):
     if not os.path.isfile(fileName):
         return False
 

@@ -123,7 +123,16 @@ def main():
     # state = "1631574000.csv"
     stateFolder = os.path.join(dataPath, "state")
     initialState = pd.read_csv(os.path.join(stateFolder, state))
+    # print("Load obs water potential...")
+    # obsPath = os.path.join(dataPath, "obs_data")
+    # obsFile = "waterPotential.csv"
+    # obsWaterPotential = pd.read_csv(os.path.join(obsPath, obsFile))
+    # initialState = obsWaterPotential.iloc[0]
+    # convert
+    # print(obsWaterPotential.columns[1])
     assimilation.assimilate(initialState)
+
+    # initialize balance
     waterBalance.initializeBalance()
     print("Initial water storage [m^3]:", format(waterBalance.currentStep.waterStorage, ".3f"))
 
