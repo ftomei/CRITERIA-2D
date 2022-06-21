@@ -4,7 +4,6 @@ import waterBalance
 import rectangularMesh
 import criteria3D
 import visual3D
-import assimilation
 import os
 from PenmanMonteith import computeHourlyET0
 from transmissivity import computeNormTransmissivity
@@ -118,20 +117,6 @@ def main():
             linkIndex = index + C3DStructure.nrRectangles
             criteria3D.SetCellLink(index, linkIndex, DOWN, exchangeArea)
 
-    # initial state
-    state = "1630447200.csv"
-    # state = "1631574000.csv"
-    stateFolder = os.path.join(dataPath, "state")
-    initialState = pd.read_csv(os.path.join(stateFolder, state))
-    # print("Load obs water potential...")
-    # obsPath = os.path.join(dataPath, "obs_data")
-    # obsFile = "waterPotential.csv"
-    # obsWaterPotential = pd.read_csv(os.path.join(obsPath, obsFile))
-    # initialState = obsWaterPotential.iloc[0]
-    # convert
-    # print(obsWaterPotential.columns[1])
-    assimilation.assimilate(initialState)
-
     # initialize balance
     waterBalance.initializeBalance()
     print("Initial water storage [m^3]:", format(waterBalance.currentStep.waterStorage, ".3f"))
@@ -178,6 +163,19 @@ def main():
     latitude = stationInfo.iloc[0]["Latitude"]
     longitude = stationInfo.iloc[0]["Longitude"]
 
+    print("Load obs water potential...")
+    obsPath = os.path.join(dataPath, "obs_data")
+    obsWaterPotential = pd.read_csv(os.path.join(obsPath, "waterPotential.csv"))
+
+    # initial state
+    weatherIndex = 1
+    assimilationInterval = 24
+    obsWeather = weatherData.loc[weatherIndex]
+    stateFolder = os.path.join(dataPath, "state")
+    stateFileName = os.path.join(stateFolder, "state.csv")
+    importUtils.writeState(stateFileName, obsWaterPotential, obsWeather["timestamp"])
+    importUtils.loadState(stateFileName)
+
     visual3D.initialize(1280)
     visual3D.isPause = True
     # wait for start
@@ -185,8 +183,6 @@ def main():
         time.sleep(0.00001)
 
     # main cycle
-    # weatherIndex = 314
-    weatherIndex = 1
     while weatherIndex < len(weatherData):
         obsWeather = weatherData.loc[weatherIndex]
         currentDateTime = pd.to_datetime(obsWeather["timestamp"], unit='s')
@@ -238,6 +234,12 @@ def main():
             criteria3D.compute(waterTimeLength, True)
 
         exportUtils.takeScreenshot(obsWeather["timestamp"])
+
+        # assimilation
+        if (weatherIndex % assimilationInterval) == 0:
+            importUtils.writeState(stateFileName, obsWaterPotential, obsWeather["timestamp"])
+            importUtils.loadState(stateFileName)
+
         weatherIndex += 1
 
     visual3D.isPause = True

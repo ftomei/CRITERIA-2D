@@ -119,4 +119,30 @@ def loadState_old(fileName):
 
     criteria3D.setModelState(pos, potential)
     return True
+
+
+def writeState(stateFileName, obsData, timeStamp):
+    header = "x,y,z,value\n"
+    f = open(stateFileName, "w")
+    f.write(header)
+
+    for i in range(len(obsData)):
+        currentTime = obsData.iloc[i].at["timestamp"]
+        if currentTime == timeStamp:
+            y = 0
+            z = 0.6
+            x = 0
+            for j in range(1, len(obsData.columns)):
+                psi = obsData.iloc[i].at[obsData.columns[j]]
+                row = '{:.2f}'.format(x) + "," + '{:.1f}'.format(y) + "," + '{:.1f}'.format(z) + ","
+                row += '{:.1f}'.format(psi) + "\n"
+                f.write(row)
+                x += 0.25
+                if (x == 0.75):
+                    x = 0.8
+                if (x > 1):
+                    x = 0
+                    z -= 0.2
+            return True
+    return False
     

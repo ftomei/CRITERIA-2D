@@ -3,6 +3,7 @@
 from dataStructures import *
 import rectangularMesh
 import criteria3D
+import soil
 import numpy as np
 from scipy.interpolate import interpn
 
@@ -34,15 +35,19 @@ def buildDataStructuresForInterpolation(initialState):
     for i in range(x.shape[-1]):
         for j in range(y.shape[-1]):
             for k in range(z.shape[-1]):
-                psi = \
-                initialState[(initialState["x"] == x[i]) & (initialState["y"] == y[j]) & (initialState["z"] == z[k])][
-                    "value"]
-
-                # compute residual
-                index = rectangularMesh.getCellIndex(x[i], y[j], z[k])
-                currentMatricPotential = criteria3D.getMatricPotential(index)
+                psi = initialState[(initialState["x"] == x[i]) & (initialState["y"] == y[j])
+                                   & (initialState["z"] == z[k])]["value"]
                 # from kPa to meters
-                value = (psi / 9.81) - currentMatricPotential
+                observedPsi = float(psi / 9.81)
+                curve = C3DParameters.waterRetentionCurve
+                theta = soil.thetaFromPsi(curve, observedPsi)
+                index = rectangularMesh.getCellIndex(x[i], y[j], z[k])
+                currentTheta = soil.getVolumetricWaterContent(index)
+                # check validity range of sensors
+                if (abs(theta) > 0.27) and (abs(currentTheta) > 0.27):
+                    value = 0
+                else:
+                    value = theta - currentTheta
 
                 if len(points) == 1:
                     # Even though we do not know which is the coordinate that has not one unique value,
@@ -141,5 +146,9 @@ def assimilate(initialState):
             else:
                 min_index = getCloserIndex(i, indices)
                 value = interpolated_points[min_index]
-            currentMatricPotential = criteria3D.getMatricPotential(i)
-            criteria3D.setMatricPotential(i, min(currentMatricPotential + value, 0.0))
+            # assign residual of volumetric water content
+            currentTheta = soil.getVolumetricWaterContent(i)
+            theta = currentTheta + value
+            curve = C3DParameters.waterRetentionCurve
+            psi = soil.psiFromTheta(curve, theta)
+            criteria3D.setMatricPotential(i, psi)
