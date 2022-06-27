@@ -131,10 +131,10 @@ def writeState(stateFileName, obsData, timeStamp):
         for column in [column for column in list(df.columns) if column != "timestamp"]:
             splitted_column = column.split("_")
             f.write(
-                "{:.2f}".format(float(splitted_column[2][1:])) + ","    # x
-                + "{:.1f}".format(float(splitted_column[1][1:])) + ","  # y
-                + "{:.1f}".format(float(splitted_column[0][1:])) + ","  # z
-                + "{:.1f}".format(df[column].values[0]) + "\n"          # psi
+                "{:.2f}".format(float(splitted_column[2][1:])/100) + ","    # x
+                + "{:.1f}".format(float(splitted_column[1][1:])/100) + ","  # y
+                + "{:.1f}".format(float(splitted_column[0][1:])/100) + ","  # z
+                + "{:.1f}".format(df[column].values[0]) + "\n"              # psi
             )
     return not df.empty
     
