@@ -126,23 +126,15 @@ def writeState(stateFileName, obsData, timeStamp):
     f = open(stateFileName, "w")
     f.write(header)
 
-    for i in range(len(obsData)):
-        currentTime = obsData.iloc[i].at["timestamp"]
-        if currentTime == timeStamp:
-            y = 0
-            z = 0.6
-            x = 0
-            for j in range(1, len(obsData.columns)):
-                psi = obsData.iloc[i].at[obsData.columns[j]]
-                row = '{:.2f}'.format(x) + "," + '{:.1f}'.format(y) + "," + '{:.1f}'.format(z) + ","
-                row += '{:.1f}'.format(psi) + "\n"
-                f.write(row)
-                x += 0.25
-                if (x == 0.75):
-                    x = 0.8
-                if (x > 1):
-                    x = 0
-                    z -= 0.2
-            return True
-    return False
+    df = obsData[obsData["timestamp"] == timeStamp]
+    if not df.empty:
+        for column in [column for column in list(df.columns) if column != "timestamp"]:
+            splitted_column = column.split("_")
+            f.write(
+                "{:.2f}".format(float(splitted_column[2][1:])) + ","    # x
+                + "{:.1f}".format(float(splitted_column[1][1:])) + ","  # y
+                + "{:.1f}".format(float(splitted_column[0][1:])) + ","  # z
+                + "{:.1f}".format(df[column].values[0]) + "\n"          # psi
+            )
+    return not df.empty
     
