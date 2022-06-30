@@ -91,9 +91,9 @@ def transformDates(meteoData, waterData):
     return meteoData, waterData
 
 
-def loadState(fileName):
-    currentState = pd.read_csv(fileName)
-    assimilation.assimilate(currentState)
+def loadObsState(fileName):
+    obsState = pd.read_csv(fileName)
+    assimilation.assimilate(obsState)
     waterBalance.updateStorage()
     return True
 
@@ -121,7 +121,7 @@ def loadState_old(fileName):
     return True
 
 
-def writeState(stateFileName, obsData, timeStamp):
+def writeObsState(stateFileName, obsData, timeStamp):
     header = "x,y,z,value\n"
     f = open(stateFileName, "w")
     f.write(header)

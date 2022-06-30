@@ -170,11 +170,12 @@ def main():
     # initial state
     weatherIndex = 1
     assimilationInterval = 24
+    forecastPeriod = 24*6
     obsWeather = weatherData.loc[weatherIndex]
     stateFolder = os.path.join(dataPath, "state")
     stateFileName = os.path.join(stateFolder, "state.csv")
-    importUtils.writeState(stateFileName, obsWaterPotential, obsWeather["timestamp"])
-    importUtils.loadState(stateFileName)
+    importUtils.writeObsState(stateFileName, obsWaterPotential, obsWeather["timestamp"])
+    importUtils.loadObsState(stateFileName)
 
     visual3D.initialize(1280)
     visual3D.isPause = True
@@ -183,7 +184,13 @@ def main():
         time.sleep(0.00001)
 
     # main cycle
+    currentIndex = 1
     while weatherIndex < len(weatherData):
+        if currentIndex == (assimilationInterval + forecastPeriod):
+            # load previous state
+            currentIndex = 1
+            weatherIndex = restartIndex
+
         obsWeather = weatherData.loc[weatherIndex]
         currentDateTime = pd.to_datetime(obsWeather["timestamp"], unit='s')
 
@@ -201,13 +208,15 @@ def main():
         if not (np.isnan(obsWeather["wind_speed"])):
             windSpeed_10m = obsWeather["wind_speed"]
         else:
-            print("Missed")
+            print("Missed data")
 
-        # evapotranspiration
         normTransmissivity = computeNormTransmissivity(weatherData, weatherIndex, latitude, longitude)
-        ET0 = computeHourlyET0(height, airTemperature, globalSWRadiation, airRelHumidity, windSpeed_10m,
-                               normTransmissivity)  # mm m^-2
+
+        # evapotranspiration [mm m-2]
+        ET0 = computeHourlyET0(height, airTemperature, globalSWRadiation, airRelHumidity,
+                               windSpeed_10m, normTransmissivity)
         print(currentDateTime, "ET0:", format(ET0, ".2f"))
+
         criteria3D.initializeSinkSource(ALL)
         crop.setEvapotranspiration(currentDateTime, ET0)
 
@@ -233,14 +242,19 @@ def main():
 
             criteria3D.compute(waterTimeLength, True)
 
-        exportUtils.takeScreenshot(obsWeather["timestamp"])
-
         # assimilation
-        if (weatherIndex % assimilationInterval) == 0:
-            importUtils.writeState(stateFileName, obsWaterPotential, obsWeather["timestamp"])
-            importUtils.loadState(stateFileName)
+        if currentIndex == assimilationInterval:
+            importUtils.writeObsState(stateFileName, obsWaterPotential, obsWeather["timestamp"])
+            importUtils.loadObsState(stateFileName)
+            #save current state
+            restartIndex = weatherIndex
+
+        # save output
+        if currentIndex > forecastPeriod:
+            exportUtils.takeScreenshot(obsWeather["timestamp"])
 
         weatherIndex += 1
+        currentIndex += 1
 
     visual3D.isPause = True
     print("\nEnd simulation.\n")
