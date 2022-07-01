@@ -15,7 +15,7 @@ class C3DStructure:
 
     gridStep = 0.125    # [m]
     DX = 2.5            # [m]
-    DY = 2.0           # [m]
+    DY = 0.66           # [m]
 
     nrRectanglesInXAxis = int(DX / gridStep)
     if (nrRectanglesInXAxis % 2) == 0:
