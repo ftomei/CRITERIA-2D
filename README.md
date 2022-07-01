@@ -1,6 +1,6 @@
 # CRITERIA3D-Python
 Python version of CRITERIA-3D agro-hydrological model
-!(https://github.com/ftomei/CRITERIA-2D/blob/main/doc/criteria3d.png)
+![](https://github.com/ftomei/CRITERIA-2D/blob/main/doc/criteria3d.png)
 
 ## Authors
 - Fausto Tomei    <ftomei@arpae.it>
