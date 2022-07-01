@@ -1,4 +1,4 @@
-# CRITERIA3D-PYTHON
+# CRITERIA3D-Python
 Python version of CRITERIA-3D agro-hydrological model
 
 ## Authors
