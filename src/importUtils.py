@@ -6,6 +6,9 @@ import waterBalance
 import tkinter
 import tkinter.filedialog
 
+from dataStructures import C3DCells
+from array import array
+
 
 def getStateFileName(isSave):
     root = tkinter.Tk()
@@ -98,29 +101,6 @@ def loadObsState(fileName):
     return True
 
 
-def loadState_old(fileName):
-    if not os.path.isfile(fileName):
-        return False
-
-    state = pd.read_csv(fileName)
-    pos = []
-    potential = []
-    for _, position in state.iterrows():
-        x = position['x']                   # [m]
-        y = position['y']                   # [m]
-        depth = position['z']               # [m]
-        psi = position['value'] / 9.81      # water potential - from [kPa] to [m]
-        pos.append([x, y, depth])
-        potential.append(psi)
-        # symmetric values
-        if x != 0:
-            pos.append([-x, y, depth])
-            potential.append(psi)
-
-    criteria3D.setModelState(pos, potential)
-    return True
-
-
 def writeObsState(stateFileName, obsData, timeStamp):
     header = "x,y,z,value\n"
     f = open(stateFileName, "w")
@@ -137,4 +117,31 @@ def writeObsState(stateFileName, obsData, timeStamp):
                 + "{:.1f}".format(df[column].values[0]) + "\n"              # psi
             )
     return not df.empty
+
+
+def saveCurrentModelState(stateFileName):
+    float_array = array('d')
+    for i in range(len(C3DCells)):
+        float_array.append(C3DCells[i].H)
+
+    f = open(stateFileName, "wb")
+    float_array.tofile(f)
+    f.close()
+
+
+def loadModelState(stateFileName):
+    f = open(stateFileName, "rb")
+    float_array = array('d')
+    float_array.fromfile (f, len(C3DCells))
+    f.close()
+
+    for i in range(len(C3DCells)):
+        H = float_array[i]
+        signPsi = H - C3DCells[i].z
+        criteria3D.setMatricPotential(i, signPsi)
+
+    waterBalance.updateStorage()
+
+
+
     

@@ -170,12 +170,13 @@ def main():
     # initial state
     weatherIndex = 1
     assimilationInterval = 24
-    forecastPeriod = 24*6
+    forecastPeriod = 24*7
     obsWeather = weatherData.loc[weatherIndex]
     stateFolder = os.path.join(dataPath, "state")
-    stateFileName = os.path.join(stateFolder, "state.csv")
-    importUtils.writeObsState(stateFileName, obsWaterPotential, obsWeather["timestamp"])
-    importUtils.loadObsState(stateFileName)
+    obsStateFileName = os.path.join(stateFolder, "obsState.csv")
+    modelStateFileName = os.path.join(stateFolder, "modelState.bin")
+    importUtils.writeObsState(obsStateFileName, obsWaterPotential, obsWeather["timestamp"])
+    importUtils.loadObsState(obsStateFileName)
 
     visual3D.initialize(1280)
     visual3D.isPause = True
@@ -185,12 +186,9 @@ def main():
 
     # main cycle
     currentIndex = 1
+    restartIndex = 1
+    isFirstRun = True
     while weatherIndex < len(weatherData):
-        if currentIndex == (assimilationInterval + forecastPeriod):
-            # load previous state
-            currentIndex = 1
-            weatherIndex = restartIndex
-
         obsWeather = weatherData.loc[weatherIndex]
         currentDateTime = pd.to_datetime(obsWeather["timestamp"], unit='s')
 
@@ -242,19 +240,32 @@ def main():
 
             criteria3D.compute(waterTimeLength, True)
 
-        # assimilation
+        # save model state
         if currentIndex == assimilationInterval:
-            importUtils.writeObsState(stateFileName, obsWaterPotential, obsWeather["timestamp"])
-            importUtils.loadObsState(stateFileName)
-            #save current state
+            importUtils.saveCurrentModelState(modelStateFileName)
             restartIndex = weatherIndex
 
         # save output
-        if currentIndex > forecastPeriod:
+        if currentIndex > (forecastPeriod - assimilationInterval) or isFirstRun:
             exportUtils.takeScreenshot(obsWeather["timestamp"])
 
-        weatherIndex += 1
-        currentIndex += 1
+        # restart
+        if currentIndex == forecastPeriod:
+            importUtils.loadModelState(modelStateFileName)
+            # assimilation
+            obsWeather = weatherData.loc[restartIndex]
+            importUtils.writeObsState(obsStateFileName, obsWaterPotential, obsWeather["timestamp"])
+            importUtils.loadObsState(obsStateFileName)
+            # redraw
+            waterBalance.totalTime = restartIndex * 3600
+            visual3D.redraw()
+            # re-initialize index
+            weatherIndex = restartIndex + 1
+            currentIndex = 1
+            isFirstRun = False
+        else:
+            weatherIndex += 1
+            currentIndex += 1
 
     visual3D.isPause = True
     print("\nEnd simulation.\n")
