@@ -3,15 +3,13 @@
 import vpython as visual
 from dataStructures import *
 from color import *
+from copy import copy
 import waterBalance
 import rectangularMesh
 import soil
 import crop
 import importUtils
 
-from copy import copy
-
-# surfaceRectangles = []
 sliceRectangles = []
 subSurfaceRectangles = []
 visualizedLayer = 0
@@ -88,7 +86,7 @@ def initialize(totalWidth):
     soilCanvas.forward = visual.vector(0, 1, -1)
     soilCanvas.range = rangeXY * 0.5
     layerLabel = visual.label(color=visual.color.black, canvas=soilCanvas, height=h,
-                              pos=visual.vector(cX, cY + rangeXY * 0.3, cZ))
+                              pos=visual.vector(cX, cY + rangeXY * 1.0, cZ))
 
     drawSurface(True)
 
@@ -246,7 +244,7 @@ def keyInput(evt):
         isPause = True
         print("Load State...")
         fileName = importUtils.getStateFileName(False)
-        if importUtils.loadState(fileName):
+        if importUtils.loadObsState(fileName):
             redraw()
     elif s == "c":
         if isPause:

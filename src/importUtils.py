@@ -5,7 +5,6 @@ import assimilation
 import waterBalance
 import tkinter
 import tkinter.filedialog
-
 from dataStructures import C3DCells
 from array import array
 
@@ -141,7 +140,3 @@ def loadModelState(stateFileName):
         criteria3D.setMatricPotential(i, signPsi)
 
     waterBalance.updateStorage()
-
-
-
-    

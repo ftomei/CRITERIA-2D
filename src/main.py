@@ -178,7 +178,7 @@ def main():
     importUtils.writeObsState(obsStateFileName, obsWaterPotential, obsWeather["timestamp"])
     importUtils.loadObsState(obsStateFileName)
 
-    visual3D.initialize(1280)
+    visual3D.initialize(1100)
     visual3D.isPause = True
     # wait for start
     while visual3D.isPause:
