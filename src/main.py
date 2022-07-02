@@ -21,7 +21,6 @@ def main():
     settingsFolder = os.path.join(dataPath, "settings")
     fieldSettings = os.path.join(settingsFolder, "field.ini")
 
-    # set mesh and plant/dripper positions
     if not importUtils.setField(fieldSettings):
         return
 
@@ -30,94 +29,22 @@ def main():
     soilFile = "soil.txt"
     soilPath = os.path.join(settingsFolder, soilFile)
     soil.readHorizon(soilPath)
-    totalDepth = soil.horizon.lowerDepth
-    print("Soil depth [m]:", totalDepth)
+    print("Soil depth [m]:", soil.horizon.lowerDepth)
 
-    C3DStructure.nrLayers, soil.depth, soil.thickness = soil.setLayers(totalDepth,
+    C3DStructure.nrLayers, soil.depth, soil.thickness = soil.setLayers(soil.horizon.lowerDepth,
                                                                        C3DParameters.minThickness,
                                                                        C3DParameters.maxThickness,
                                                                        C3DParameters.maxThicknessAt)
     print("Nr. of layers:", C3DStructure.nrLayers)
 
+    criteria3D.memoryAllocation(C3DStructure.nrLayers, C3DStructure.nrRectangles)
+    print("Nr. of cells: ", C3DStructure.nrCells)
+
     # todo modificare
     plantConfiguration = pd.read_csv(os.path.join(settingsFolder, "plant.csv"))
     crop.initializeCrop(plantConfiguration)
 
-    # Initialize memory
-    criteria3D.memoryAllocation(C3DStructure.nrLayers, C3DStructure.nrRectangles)
-    print("Nr. of cells: ", C3DStructure.nrCells)
-
-    print("Set cell properties...")
-    for i in range(C3DStructure.nrRectangles):
-        [x, y, z] = rectangularMesh.C3DRM[i].centroid
-        for layer in range(C3DStructure.nrLayers):
-            index = i + C3DStructure.nrRectangles * layer
-            elevation = z - soil.depth[layer]
-            volume = float(rectangularMesh.C3DRM[i].area * soil.thickness[layer])
-            criteria3D.setCellGeometry(index, x, y,
-                                       elevation, volume, rectangularMesh.C3DRM[i].area)
-            if layer == 0:
-                # surface
-                if rectangularMesh.C3DRM[i].isBoundary and C3DParameters.isSurfaceRunoff:
-                    criteria3D.setCellProperties(index, True, BOUNDARY_RUNOFF)
-                    criteria3D.setBoundaryProperties(index,
-                                                     rectangularMesh.C3DRM[i].boundarySide,
-                                                     rectangularMesh.C3DRM[i].boundarySlope)
-                else:
-                    criteria3D.setCellProperties(index, True, BOUNDARY_NONE)
-
-                criteria3D.setMatricPotential(index, 0.0)
-
-            elif layer == (C3DStructure.nrLayers - 1):
-                # last layer
-                if C3DParameters.isWaterTable:
-                    criteria3D.setCellProperties(index, False, BOUNDARY_PRESCRIBEDTOTALPOTENTIAL)
-                elif C3DParameters.isFreeDrainage:
-                    criteria3D.setCellProperties(index, False, BOUNDARY_FREEDRAINAGE)
-                else:
-                    criteria3D.setCellProperties(index, False, BOUNDARY_NONE)
-
-                criteria3D.setMatricPotential(index, C3DParameters.initialWaterPotential)
-
-            else:
-                if rectangularMesh.C3DRM[i].isBoundary and C3DParameters.isFreeLateralDrainage:
-                    criteria3D.setCellProperties(index, False, BOUNDARY_FREELATERALDRAINAGE)
-                    criteria3D.setBoundaryProperties(index,
-                                                     rectangularMesh.C3DRM[i].boundarySide * soil.thickness[layer],
-                                                     rectangularMesh.C3DRM[i].boundarySlope)
-                else:
-                    criteria3D.setCellProperties(index, False, BOUNDARY_NONE)
-
-                criteria3D.setMatricPotential(index, C3DParameters.initialWaterPotential)
-
-    print("Set links...")
-    for i in range(C3DStructure.nrRectangles):
-        # UP
-        for layer in range(1, C3DStructure.nrLayers):
-            exchangeArea = rectangularMesh.C3DRM[i].area
-            index = C3DStructure.nrRectangles * layer + i
-            linkIndex = index - C3DStructure.nrRectangles
-            criteria3D.SetCellLink(index, linkIndex, UP, exchangeArea)
-        # LATERAL
-        for neighbour in rectangularMesh.C3DRM[i].neighbours:
-            if neighbour != NOLINK:
-                linkSide = rectangularMesh.getAdjacentSide(i, neighbour)
-                for layer in range(C3DStructure.nrLayers):
-                    if layer == 0:
-                        # surface: boundary length [m]
-                        exchangeArea = linkSide
-                    else:
-                        # sub-surface: boundary area [m2]
-                        exchangeArea = soil.thickness[layer] * linkSide
-                    index = C3DStructure.nrRectangles * layer + i
-                    linkIndex = C3DStructure.nrRectangles * layer + neighbour
-                    criteria3D.SetCellLink(index, linkIndex, LATERAL, exchangeArea)
-        # DOWN
-        for layer in range(C3DStructure.nrLayers - 1):
-            exchangeArea = rectangularMesh.C3DRM[i].area
-            index = C3DStructure.nrRectangles * layer + i
-            linkIndex = index + C3DStructure.nrRectangles
-            criteria3D.SetCellLink(index, linkIndex, DOWN, exchangeArea)
+    criteria3D.initializeMesh()
 
     # initialize balance
     waterBalance.initializeBalance()
@@ -126,8 +53,7 @@ def main():
     print("Read weather data...")
     weatherDataFolder = "meteo"
     weatherDataPath = os.path.join(dataPath, weatherDataFolder)
-    stationInfo, weatherData = importUtils.readMeteoData(weatherDataPath)
-    height = stationInfo.iloc[0]["Height"]
+    weatherData = importUtils.readMeteoData(weatherDataPath)
 
     print("Read irrigation data...")
     waterFolder = "water"
@@ -137,118 +63,73 @@ def main():
     weatherData.set_index(["timestamp"])
     waterData.set_index(["timestamp"])
     weatherData, waterData = importUtils.transformDates(weatherData, waterData)
-
-    # TIME LENGTH
-    weatherTimeLength = (weatherData.iloc[1]["timestamp"] - weatherData.iloc[0]["timestamp"])  # [s]
-    waterTimeLength = (waterData.iloc[1]["timestamp"] - waterData.iloc[0]["timestamp"])  # [s]
-    print("Weather data time length [s]:", weatherTimeLength)
-    print("Water data time length [s]:", waterTimeLength)
-    if (weatherTimeLength % waterTimeLength) != 0:
-        raise Exception("Water time length is not a divider of weather data time length")
-    else:
-        nrWaterEventsInTimeLength = int(weatherTimeLength / waterTimeLength)
-    print("Total simulation time [hours]:", len(weatherData) * weatherTimeLength / 3600)
+    print("Total simulation time [hours]:", len(weatherData))
 
     # initialize export
     outputPath = os.path.join(dataPath, "output")
     exportUtils.createExportFile(outputPath)
-
-    latitude = stationInfo.iloc[0]["Latitude"]
-    longitude = stationInfo.iloc[0]["Longitude"]
-
-    print("Load obs water potential...")
-    obsPath = os.path.join(dataPath, "obs_data")
-    obsWaterPotential = pd.read_csv(os.path.join(obsPath, "waterPotential.csv"))
-
-    # initial state
-    weatherIndex = 1
-    assimilationInterval = 24
-    forecastPeriod = 24*7
-    obsWeather = weatherData.loc[weatherIndex]
     stateFolder = os.path.join(dataPath, "state")
-    obsStateFileName = os.path.join(stateFolder, "obsState.csv")
     modelStateFileName = os.path.join(stateFolder, "modelState.bin")
-    importUtils.writeObsState(obsStateFileName, obsWaterPotential, obsWeather["timestamp"])
-    importUtils.loadObsState(obsStateFileName)
 
     visual3D.initialize(1200)
+
+    if C3DParameters.isAssimilation:
+        print("Load obs water potential...")
+        obsPath = os.path.join(dataPath, "obs_data")
+        obsWaterPotential = pd.read_csv(os.path.join(obsPath, "waterPotential.csv"))
+        obsStateFileName = os.path.join(stateFolder, "obsState.csv")
+
+        for weatherIndex in range(1, 25):
+            obsWeather = weatherData.loc[weatherIndex]
+            waterEvent = waterData.loc[weatherIndex]
+            currentDateTime = pd.to_datetime(obsWeather["timestamp"], unit='s')
+            normTransmissivity = computeNormTransmissivity(weatherData, weatherIndex, C3DStructure.latitude,
+                                                           C3DStructure.longitude)
+
+            criteria3D.computeOneHour(obsWeather, waterEvent, normTransmissivity, currentDateTime)
+            exportUtils.takeScreenshot(obsWeather["timestamp"])
+
+            importUtils.writeObsState(obsStateFileName, obsWaterPotential, obsWeather["timestamp"])
+            importUtils.loadObsState(obsStateFileName)
+            
+    # wait for start (press 'r')
     visual3D.isPause = True
-    # wait for start
     while visual3D.isPause:
         time.sleep(0.00001)
 
     # main cycle
     currentIndex = 1
+    weatherIndex = 25
     restartIndex = 1
     isFirstRun = True
     while weatherIndex < len(weatherData):
         obsWeather = weatherData.loc[weatherIndex]
+        waterEvent = waterData.loc[weatherIndex]
         currentDateTime = pd.to_datetime(obsWeather["timestamp"], unit='s')
+        normTransmissivity = computeNormTransmissivity(weatherData, weatherIndex, C3DStructure.latitude, C3DStructure.longitude)
 
-        # waterTable
-        # for i in range(len(waterTableDepth)):
-        #    if currentDateTime > waterTableDate[i]:
-        #        C3DParameters.waterTableDepth = waterTableDepth[i]
-
-        if not (np.isnan(obsWeather["air_temperature"])):
-            airTemperature = obsWeather["air_temperature"]
-        if not (np.isnan(obsWeather["solar_radiation"])):
-            globalSWRadiation = obsWeather["solar_radiation"]
-        if not (np.isnan(obsWeather["air_humidity"])):
-            airRelHumidity = obsWeather["air_humidity"]
-        if not (np.isnan(obsWeather["wind_speed"])):
-            windSpeed_10m = obsWeather["wind_speed"]
-        else:
-            print("Missed data")
-
-        normTransmissivity = computeNormTransmissivity(weatherData, weatherIndex, latitude, longitude)
-
-        # evapotranspiration [mm m-2]
-        ET0 = computeHourlyET0(height, airTemperature, globalSWRadiation, airRelHumidity,
-                               windSpeed_10m, normTransmissivity)
-        print(currentDateTime, "ET0:", format(ET0, ".2f"))
-
-        criteria3D.initializeSinkSource(ALL)
-        crop.setEvapotranspiration(currentDateTime, ET0)
-
-        for i in range(nrWaterEventsInTimeLength):
-            waterIndex = weatherIndex * nrWaterEventsInTimeLength + i
-            waterEvent = waterData.loc[waterIndex]
-            precipitation = 0 if np.isnan(waterEvent["precipitation"]) else waterEvent["precipitation"]
-            irrigation = 0 if np.isnan(waterEvent["irrigation"]) else waterEvent["irrigation"]
-
-            criteria3D.initializeSinkSource(ONLY_SURFACE)
-            waterBalance.currentPrec = precipitation / waterTimeLength * 3600.  # [mm m-2 hour-1]
-            criteria3D.setRainfall(precipitation, waterTimeLength)
-
-            if C3DParameters.assignIrrigation:
-                waterBalance.currentIrr = irrigation / waterTimeLength * 3600.  # [l hour-1]
-                criteria3D.setDripIrrigation(irrigation, waterTimeLength)
-
-            if (waterBalance.currentIrr > 0) or (waterBalance.currentPrec > 0):
-                C3DParameters.deltaT_max = 300
-                C3DParameters.currentDeltaT = min(C3DParameters.currentDeltaT, C3DParameters.deltaT_max)
-            else:
-                C3DParameters.deltaT_max = waterTimeLength
-
-            criteria3D.compute(waterTimeLength, True)
+        criteria3D.computeOneHour(obsWeather, waterEvent, normTransmissivity, currentDateTime)
 
         # save model state
-        if currentIndex == assimilationInterval:
+        if C3DParameters.isAssimilation and currentIndex == C3DParameters.assimilationInterval:
             importUtils.saveCurrentModelState(modelStateFileName)
             restartIndex = weatherIndex
 
         # save output
-        if currentIndex > (forecastPeriod - assimilationInterval) or isFirstRun:
+        if not C3DParameters.isForecast or isFirstRun:
             exportUtils.takeScreenshot(obsWeather["timestamp"])
+        else:
+            if currentIndex > (C3DParameters.forecastPeriod - C3DParameters.assimilationInterval):
+                exportUtils.takeScreenshot(obsWeather["timestamp"])
 
         # restart
-        if currentIndex == forecastPeriod:
+        if C3DParameters.isForecast and currentIndex == C3DParameters.forecastPeriod:
             importUtils.loadModelState(modelStateFileName)
             # assimilation
-            obsWeather = weatherData.loc[restartIndex]
-            importUtils.writeObsState(obsStateFileName, obsWaterPotential, obsWeather["timestamp"])
-            importUtils.loadObsState(obsStateFileName)
+            if C3DParameters.isAssimilation:
+                obsWeather = weatherData.loc[restartIndex]
+                importUtils.writeObsState(obsStateFileName, obsWaterPotential, obsWeather["timestamp"])
+                importUtils.loadObsState(obsStateFileName)
             # redraw
             waterBalance.totalTime = restartIndex * 3600
             visual3D.redraw()
@@ -262,6 +143,5 @@ def main():
 
     visual3D.isPause = True
     print("\nEnd simulation.\n")
-
 
 main()

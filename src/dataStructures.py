@@ -9,7 +9,10 @@ class C3DStructure:
     nrLateralLinks = 4
     nrMaxLinks = 6
 
-    z0 = NODATA                 # [m] topographic elevation (center grid)
+    latitude = NODATA
+    longitude = NODATA
+    z = NODATA                  # [m] topographic elevation (center grid)
+
     gridStep = NODATA           # [m] step on x and y axis
     gridWidth = NODATA          # [m] grid width (axis x)
     gridHeight = NODATA         # [m] grid height (axis y)
@@ -44,40 +47,6 @@ def initialize3DStructure(width, height, gridStep):
 
     C3DStructure.gridWidth = C3DStructure.nrRectanglesInXAxis * gridStep
     C3DStructure.gridHeight = C3DStructure.nrRectanglesInYAxis * gridStep
-
-
-class C3DStructure_old:
-    nrDimensions = 3
-    nrVerticesPerRectangle = 4
-
-    z0 = 100.0          # [m] topographic elevation
-    slopePlant = 0.2    # [-] slope around plant (baulatura)
-    slopeX = -0.01      # [-] slope on x axis
-    slopeY = -0.025     # [-] slope on y axis
-    slopeSide = 1.0     # [m] side of baulatura
-
-    gridStep = 0.125    # [m]
-    DX = 2.5            # [m]
-    DY = 0.66           # [m]
-
-    nrRectanglesInXAxis = int(DX / gridStep)
-    if (nrRectanglesInXAxis % 2) == 0:
-        nrRectanglesInXAxis += 1
-
-    nrRectanglesInYAxis = int(DY / gridStep)
-    if (nrRectanglesInYAxis % 2) == 0:
-        nrRectanglesInYAxis += 1
-
-    gridWidth = nrRectanglesInXAxis * gridStep      # [m] x axis
-    gridHeight = nrRectanglesInYAxis * gridStep     # [m] x axis
-
-    nrRectangles = nrRectanglesInXAxis * nrRectanglesInYAxis
-
-    nrLayers = 0
-    nrCells = 0
-    nrLateralLinks = 4
-    nrMaxLinks = 6
-    totalArea = 0
 
 
 class Clink:
@@ -117,12 +86,12 @@ class Ccell:
 
 # model parameters
 class C3DParameters:
-    initialWaterPotential = -4.0        # [m]
-
     # water retention curve and conductivity
     waterRetentionCurve = IPPISCH_VG
     conductivityMean = LOGARITHMIC
     conductivityHVRatio = 1.0
+
+    initialWaterPotential = -4.0  # [m]
 
     # infiltration
     computeInfiltration = True
@@ -140,13 +109,11 @@ class C3DParameters:
     # surface flow
     computeSurfaceFlow = False
     roughness = 0.24                    # [s m^0.33]
-    pondIrrigation = 0.005              # [m]
-    pondRainfall = 0.002                # [m]
-    pond = pondRainfall                 # [m]
+    pond = 0.005                        # [m]
 
     # boundary
     isSurfaceRunoff = False
-    isFreeLateralDrainage = True
+    isFreeLateralDrainage = False
     isFreeDrainage = True
     isWaterTable = False
     waterTableDepth = -6.0              # [m]
@@ -159,6 +126,12 @@ class C3DParameters:
     maxApproximationsNr = 10
     residualTolerance = 1E-12
     MBRThreshold = 1E-5
+
+    # simulation type
+    isAssimilation = True
+    isForecast = False
+    assimilationInterval = 24
+    forecastPeriod = 24 * 7
 
 
 # global

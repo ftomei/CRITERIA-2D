@@ -84,10 +84,10 @@ def getRectangleVertices(x, y):
     dzy2 = C3DStructure.slopeY * (y + C3DStructure.gridStep)
     dzPlant = C3DStructure.plantSlope * min(C3DStructure.plantSlopeWidth, fabs(x))
     dzPlant2 = C3DStructure.plantSlope * min(C3DStructure.plantSlopeWidth, fabs(x + C3DStructure.gridStep))
-    v[0] = [x, y, C3DStructure.z0 - dzPlant - dzy]
-    v[1] = [x + C3DStructure.gridStep, y, C3DStructure.z0 - dzPlant2 - dzy]
-    v[2] = [x + C3DStructure.gridStep, y + C3DStructure.gridStep, C3DStructure.z0 - dzPlant2 - dzy2]
-    v[3] = [x, y + C3DStructure.gridStep, C3DStructure.z0 - dzPlant - dzy2]
+    v[0] = [x, y, C3DStructure.z - dzPlant - dzy]
+    v[1] = [x + C3DStructure.gridStep, y, C3DStructure.z - dzPlant2 - dzy]
+    v[2] = [x + C3DStructure.gridStep, y + C3DStructure.gridStep, C3DStructure.z - dzPlant2 - dzy2]
+    v[3] = [x, y + C3DStructure.gridStep, C3DStructure.z - dzPlant - dzy2]
     return v
 
 

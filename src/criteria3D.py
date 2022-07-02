@@ -7,6 +7,9 @@ import waterBalance
 import visual3D
 import soil
 import time
+import numpy as np
+from PenmanMonteith import computeHourlyET0
+import crop
 
 if CYTHON:
     import solverCython as solver
@@ -74,6 +77,77 @@ def SetCellLink(i, linkIndex, direction, interfaceArea):
         return LINK_ERROR
 
 
+def initializeMesh():
+    print("Set cell properties...")
+    for i in range(C3DStructure.nrRectangles):
+        [x, y, z] = rectangularMesh.C3DRM[i].centroid
+        for layer in range(C3DStructure.nrLayers):
+            index = i + C3DStructure.nrRectangles * layer
+            elevation = z - soil.depth[layer]
+            volume = float(rectangularMesh.C3DRM[i].area * soil.thickness[layer])
+            setCellGeometry(index, x, y, elevation, volume, rectangularMesh.C3DRM[i].area)
+            if layer == 0:
+                # surface
+                if rectangularMesh.C3DRM[i].isBoundary and C3DParameters.isSurfaceRunoff:
+                    setCellProperties(index, True, BOUNDARY_RUNOFF)
+                    setBoundaryProperties(index, rectangularMesh.C3DRM[i].boundarySide,
+                                          rectangularMesh.C3DRM[i].boundarySlope)
+                else:
+                    setCellProperties(index, True, BOUNDARY_NONE)
+
+                setMatricPotential(index, 0.0)
+
+            elif layer == (C3DStructure.nrLayers - 1):
+                # last layer
+                if C3DParameters.isWaterTable:
+                    setCellProperties(index, False, BOUNDARY_PRESCRIBEDTOTALPOTENTIAL)
+                elif C3DParameters.isFreeDrainage:
+                    setCellProperties(index, False, BOUNDARY_FREEDRAINAGE)
+                else:
+                    setCellProperties(index, False, BOUNDARY_NONE)
+
+                setMatricPotential(index, C3DParameters.initialWaterPotential)
+
+            else:
+                if rectangularMesh.C3DRM[i].isBoundary and C3DParameters.isFreeLateralDrainage:
+                    setCellProperties(index, False, BOUNDARY_FREELATERALDRAINAGE)
+                    setBoundaryProperties(index, rectangularMesh.C3DRM[i].boundarySide * soil.thickness[layer],
+                                          rectangularMesh.C3DRM[i].boundarySlope)
+                else:
+                    setCellProperties(index, False, BOUNDARY_NONE)
+
+                setMatricPotential(index, C3DParameters.initialWaterPotential)
+
+    print("Set links...")
+    for i in range(C3DStructure.nrRectangles):
+        # UP
+        for layer in range(1, C3DStructure.nrLayers):
+            exchangeArea = rectangularMesh.C3DRM[i].area
+            index = C3DStructure.nrRectangles * layer + i
+            linkIndex = index - C3DStructure.nrRectangles
+            SetCellLink(index, linkIndex, UP, exchangeArea)
+        # LATERAL
+        for neighbour in rectangularMesh.C3DRM[i].neighbours:
+            if neighbour != NOLINK:
+                linkSide = rectangularMesh.getAdjacentSide(i, neighbour)
+                for layer in range(C3DStructure.nrLayers):
+                    if layer == 0:
+                        # surface: boundary length [m]
+                        exchangeArea = linkSide
+                    else:
+                        # sub-surface: boundary area [m2]
+                        exchangeArea = soil.thickness[layer] * linkSide
+                    index = C3DStructure.nrRectangles * layer + i
+                    linkIndex = C3DStructure.nrRectangles * layer + neighbour
+                    SetCellLink(index, linkIndex, LATERAL, exchangeArea)
+        # DOWN
+        for layer in range(C3DStructure.nrLayers - 1):
+            exchangeArea = rectangularMesh.C3DRM[i].area
+            index = C3DStructure.nrRectangles * layer + i
+            linkIndex = index + C3DStructure.nrRectangles
+            SetCellLink(index, linkIndex, DOWN, exchangeArea)
+
+
 def setMatricPotential(i, signPsi):
     if C3DCells[i].isSurface:
         C3DCells[i].H = C3DCells[i].z + max(signPsi, 0.0)
@@ -122,10 +196,6 @@ def setRainfall(rain, duration):
 # -----------------------------------------------------------
 def setDripIrrigation(irrigation, duration):
     rate = irrigation / duration  # [l s^-1]
-    if rate > 0:
-        C3DParameters.pond = C3DParameters.pondIrrigation
-    else:
-        C3DParameters.pond = C3DParameters.pondRainfall
 
     for index in dripperIndices:
         C3DCells[index].sinkSource += rate * 0.001  # [m^3 s^-1]
@@ -185,3 +255,49 @@ def compute(timeLength, isRedraw):
         if isRedraw:
             visual3D.redraw()
         currentTime += deltaT
+
+
+def computeOneHour(obsWeather, waterEvent, normTransmissivity, currentDateTime):
+    # waterTable
+    # for i in range(len(waterTableDepth)):
+    #    if currentDateTime > waterTableDate[i]:
+    #        C3DParameters.waterTableDepth = waterTableDepth[i]
+
+    if not (np.isnan(obsWeather["air_temperature"])):
+        airTemperature = obsWeather["air_temperature"]
+    if not (np.isnan(obsWeather["solar_radiation"])):
+        globalSWRadiation = obsWeather["solar_radiation"]
+    if not (np.isnan(obsWeather["air_humidity"])):
+        airRelHumidity = obsWeather["air_humidity"]
+    if not (np.isnan(obsWeather["wind_speed"])):
+        windSpeed_10m = obsWeather["wind_speed"]
+    else:
+        print("Missed data")
+
+    # evapotranspiration [mm m-2]
+    ET0 = computeHourlyET0(C3DStructure.z, airTemperature, globalSWRadiation, airRelHumidity,
+                           windSpeed_10m, normTransmissivity)
+    print(currentDateTime, "ET0:", format(ET0, ".2f"))
+
+    initializeSinkSource(ALL)
+    crop.setEvapotranspiration(currentDateTime, ET0)
+
+    precipitation = 0 if np.isnan(waterEvent["precipitation"]) else waterEvent["precipitation"]
+    irrigation = 0 if np.isnan(waterEvent["irrigation"]) else waterEvent["irrigation"]
+
+    initializeSinkSource(ONLY_SURFACE)
+    waterBalance.currentPrec = precipitation  # [mm hour-1]
+    setRainfall(precipitation, 3600)
+
+    if C3DParameters.assignIrrigation:
+        waterBalance.currentIrr = irrigation  # [l hour-1]
+        setDripIrrigation(irrigation, 3600)
+
+    if (waterBalance.currentIrr > 0) or (waterBalance.currentPrec > 0):
+        C3DParameters.deltaT_max = 300
+        C3DParameters.currentDeltaT = min(C3DParameters.currentDeltaT, C3DParameters.deltaT_max)
+    else:
+        C3DParameters.deltaT_max = 3600
+
+    isRedraw = True
+    compute(3600, isRedraw)

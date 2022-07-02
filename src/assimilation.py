@@ -42,12 +42,15 @@ def buildDataStructuresForInterpolation(initialState):
                 curve = C3DParameters.waterRetentionCurve
                 theta = soil.thetaFromPsi(curve, observedPsi)
                 index = rectangularMesh.getCellIndex(x[i], y[j], z[k])
-                currentTheta = soil.getVolumetricWaterContent(index)
-                # check validity range of sensors
-                if (abs(theta) > 0.27) and (abs(currentTheta) > 0.27):
-                    value = 0
+                if index != NODATA:
+                    currentTheta = soil.getVolumetricWaterContent(index)
+                    # check validity range of sensors
+                    if (abs(theta) > 0.27) and (abs(currentTheta) > 0.27):
+                        value = 0
+                    else:
+                        value = theta - currentTheta
                 else:
-                    value = theta - currentTheta
+                    value = 0
 
                 if len(points) == 1:
                     # Even though we do not know which is the coordinate that has not one unique value,

@@ -12,25 +12,69 @@ from configparser import ConfigParser
 
 def setField(settingsFilename):
     config = ConfigParser()
+    print("Read field settings...")
     config.read(settingsFilename)
 
+    # location
+    try:
+        C3DStructure.latitude = config.getfloat('location', 'lat')
+    except:
+        print("ERROR! Missing location.lat in field.ini")
+        return False
+
+    try:
+        C3DStructure.longitude = config.getfloat('location', 'lon')
+    except:
+        print("ERROR! Missing location.lon in field.ini")
+        return False
+
+    try:
+        C3DStructure.z = config.getfloat('location', 'z')
+    except:
+        print("ERROR! Missing location.z in field.ini")
+        return False
+
     # size
-    print("Read field settings...")
     try:
         width = config.getfloat('size', 'width')
     except:
         print("ERROR! Missing size.width in field.ini")
         return False
-    height = config.getfloat('size', 'height')
-    gridStep = config.getfloat('size', 'gridStep')
-    C3DStructure.z0 = config.getfloat('size', 'z0')
+
+    try:
+        height = config.getfloat('size', 'height')
+    except:
+        print("ERROR! Missing size.height in field.ini")
+        return False
+
+    try:
+        gridStep = config.getfloat('size', 'gridStep')
+    except:
+        print("ERROR! Missing size.gridStep in field.ini")
+        return False
+
     initialize3DStructure(width, height, gridStep)
 
     # slope
-    C3DStructure.slopeX = config.getfloat('slope', 'slopeX')
-    C3DStructure.slopeY = config.getfloat('slope', 'slopeY')
-    C3DStructure.plantSlope = config.getfloat('slope', 'plantSlope')
-    C3DStructure.plantSlopeWidth = config.getfloat('slope', 'plantSlopeWidth')
+    try:
+        C3DStructure.slopeX = config.getfloat('slope', 'slopeX')
+    except:
+        C3DStructure.slopeX = 0
+
+    try:
+        C3DStructure.slopeY = config.getfloat('slope', 'slopeY')
+    except:
+        C3DStructure.slopeY = 0
+
+    try:
+        C3DStructure.plantSlope = config.getfloat('slope', 'plantSlope')
+    except:
+        C3DStructure.plantSlope = 0
+
+    try:
+        C3DStructure.plantSlopeWidth = config.getfloat('slope', 'plantSlopeWidth')
+    except:
+        C3DStructure.plantSlopeWidth = 0
 
     # Build rectangular mesh
     print("Building rectangle mesh...")
@@ -39,19 +83,28 @@ def setField(settingsFilename):
     print("Total area [m^2]:", C3DStructure.totalArea)
 
     # set plant
-    print("set plant positions...")
-    xStr = config.get('plant', 'x').split(',')
-    x = [float(each) for each in xStr]
-    yStr = config.get('plant', 'y').split(',')
-    y = [float(each) for each in yStr]
-    if len(x) != len(y):
-        print("ERROR! Different number of plant.x,y in field.ini")
-        return False
     plantIndices.clear()
-    for i in range(len(x)):
-        surfaceIndex = rectangularMesh.getSurfaceIndex(x[i], y[i])
-        if surfaceIndex != NODATA:
-            plantIndices.append(surfaceIndex)
+    try:
+        xStr = config.get('plant', 'x').split(',')
+    except:
+        xStr = []
+    try:
+        yStr = config.get('plant', 'y').split(',')
+    except:
+        yStr = []
+    if len(xStr) > 0 and len(yStr) > 0:
+        print("set plant positions...")
+        x = [float(each) for each in xStr]
+        y = [float(each) for each in yStr]
+
+        if len(x) != len(y):
+            print("ERROR! Different number of plant.x,y in field.ini")
+            return False
+
+        for i in range(len(x)):
+            surfaceIndex = rectangularMesh.getSurfaceIndex(x[i], y[i])
+            if surfaceIndex != NODATA:
+                plantIndices.append(surfaceIndex)
 
     # set dripper
     print("set dripper positions...")
@@ -93,9 +146,6 @@ def readWaterTable(waterPath):
 
 
 def readMeteoData(meteoPath):
-    stationInfoFile = "station_info.csv"
-    stationInfo = pd.read_csv(os.path.join(meteoPath, stationInfoFile))
-
     humidityFile = "air_humidity.csv"
     humidity = pd.read_csv(os.path.join(meteoPath, humidityFile))
 
@@ -121,7 +171,7 @@ def readMeteoData(meteoPath):
     for i in range(1, len(meteoData)):
         mergedDf = mergedDf.merge(meteoData[i], how='outer', left_index=True, right_index=True)
 
-    return stationInfo, mergedDf.reset_index()
+    return mergedDf.reset_index()
 
 
 def readWaterData(waterPath, meteo_start, meteo_end):
