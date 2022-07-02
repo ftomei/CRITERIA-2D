@@ -13,7 +13,7 @@ import importUtils
 sliceRectangles = []
 subSurfaceRectangles = []
 visualizedLayer = 0
-visualizedSlice = int(C3DStructure.nrRectanglesInYAxis / 2)
+visualizedSlice = 0
 nrColorLevels = 10
 degreeMaximum = 1.0
 degreeMinimum = 0.2
@@ -32,6 +32,7 @@ def initialize(totalWidth):
     global colorScale, visualizedSlice, visualizedLayer
 
     setAllColorScale()
+    visualizedSlice = int(C3DStructure.nrRectanglesInYAxis / 2)
 
     # CANVAS DIMENSION
     interfaceWidth = int(totalWidth * 0.2)
@@ -349,7 +350,6 @@ def drawSlice(isFirst):
 
 def drawSurface(isFirst):
     global subSurfaceRectangles
-    from criteria3D import irrigationIndices, plantIndices
     from exportUtils import outputSurfaceIndices, outputIndices
 
     maxWaterLevel = 0
@@ -367,7 +367,7 @@ def drawSurface(isFirst):
                 c = [0, 1, 0]
                 if i in plantIndices:
                     c = [1, 1, 1]
-                elif i in irrigationIndices:
+                elif i in dripperIndices:
                     c = [0, 0.5, 1]
                 elif i in outputSurfaceIndices:
                     c = [1, 0, 0]

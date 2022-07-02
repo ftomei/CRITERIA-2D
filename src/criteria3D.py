@@ -13,9 +13,6 @@ if CYTHON:
 else:
     import solver as solver
 
-irrigationIndices = []
-plantIndices = []
-
 
 def memoryAllocation(nrLayers, nrRectangles):
     C3DStructure.nrRectangles = nrRectangles
@@ -43,26 +40,6 @@ def setCellProperties(i, isSurface, boundaryType):
 def setBoundaryProperties(i, area, slope):
     C3DCells[i].boundary.area = area
     C3DCells[i].boundary.slope = slope
-
-
-def setDripIrrigationPositions(irrigationConfigurations):
-    irrigationIndices.clear()
-    for _, position in irrigationConfigurations.iterrows():
-        x = position['x']
-        y = position['y']
-        surfaceIndex = rectangularMesh.getSurfaceIndex(x, y)
-        if surfaceIndex != NODATA:
-            irrigationIndices.append(surfaceIndex)
-
-
-def setPlantPositions(plantConfigurations):
-    plantIndices.clear()
-    for _, position in plantConfigurations.iterrows():
-        x = position['plant_x']
-        y = position['plant_y']
-        surfaceIndex = rectangularMesh.getSurfaceIndex(x, y)
-        if surfaceIndex != NODATA:
-            plantIndices.append(surfaceIndex)
 
 
 def getCellDistance(i, j):
@@ -150,7 +127,7 @@ def setDripIrrigation(irrigation, duration):
     else:
         C3DParameters.pond = C3DParameters.pondRainfall
 
-    for index in irrigationIndices:
+    for index in dripperIndices:
         C3DCells[index].sinkSource += rate * 0.001  # [m^3 s^-1]
 
 

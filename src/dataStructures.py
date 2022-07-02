@@ -6,6 +6,49 @@ from commonConst import *
 class C3DStructure:
     nrDimensions = 3
     nrVerticesPerRectangle = 4
+    nrLateralLinks = 4
+    nrMaxLinks = 6
+
+    z0 = NODATA                 # [m] topographic elevation (center grid)
+    gridStep = NODATA           # [m] step on x and y axis
+    gridWidth = NODATA          # [m] grid width (axis x)
+    gridHeight = NODATA         # [m] grid height (axis y)
+
+    slopeX = NODATA             # [-] slope on x axis
+    slopeY = NODATA             # [-] slope on y axis
+
+    plantSlope = NODATA         # [-] slope around plant (baulatura)
+    plantSlopeWidth = NODATA    # [m] width of baulatura
+
+    nrLayers = NODATA
+    nrCells = NODATA
+    totalArea = NODATA
+
+    nrRectanglesInXAxis = NODATA
+    nrRectanglesInYAxis = NODATA
+    nrRectangles = NODATA
+
+
+def initialize3DStructure(width, height, gridStep):
+    C3DStructure.gridStep = gridStep
+
+    C3DStructure.nrRectanglesInXAxis = int(width / gridStep)
+    if (C3DStructure.nrRectanglesInXAxis % 2) == 0:
+        C3DStructure.nrRectanglesInXAxis += 1
+
+    C3DStructure.nrRectanglesInYAxis = int(height / gridStep)
+    if (C3DStructure.nrRectanglesInYAxis % 2) == 0:
+        C3DStructure.nrRectanglesInYAxis += 1
+
+    C3DStructure.nrRectangles = C3DStructure.nrRectanglesInXAxis * C3DStructure.nrRectanglesInYAxis
+
+    C3DStructure.gridWidth = C3DStructure.nrRectanglesInXAxis * gridStep
+    C3DStructure.gridHeight = C3DStructure.nrRectanglesInYAxis * gridStep
+
+
+class C3DStructure_old:
+    nrDimensions = 3
+    nrVerticesPerRectangle = 4
 
     z0 = 100.0          # [m] topographic elevation
     slopePlant = 0.2    # [-] slope around plant (baulatura)
@@ -120,3 +163,5 @@ class C3DParameters:
 
 # global
 C3DCells = []
+dripperIndices = []
+plantIndices = []

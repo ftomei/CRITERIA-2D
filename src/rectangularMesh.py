@@ -15,7 +15,7 @@ class Neighbours(Enum):
     Down = 4
 
 
-class CheaderRM:
+class CRectangularMeshHeader:
     xMin = NODATA
     xMax = NODATA
     yMin = NODATA
@@ -26,7 +26,12 @@ class CheaderRM:
     magnify = NODATA
 
 
-class Crectangle:
+# global structures
+header = CRectangularMeshHeader()
+C3DRM = []
+
+
+class CRectangle:
     def __init__(self, index, v=np.zeros((C3DStructure.nrVerticesPerRectangle, C3DStructure.nrDimensions), float)):
         self.index = index
         self.v = copy(v)
@@ -55,31 +60,30 @@ class Crectangle:
             self.boundarySlope = NODATA
 
 
-# global structures
-header = CheaderRM()
-C3DRM = []
-
-
 def rectangularMeshCreation():
+    global header
     C3DRM.clear()
-    index = 0
+    C3DStructure.totalArea = 0
     dx = C3DStructure.gridWidth * 0.5
     dy = C3DStructure.gridHeight * 0.5
+
+    index = 0
     for y in np.arange(-dy, dy, C3DStructure.gridStep):
         for x in np.arange(-dx, dx, C3DStructure.gridStep):
             if (x < dx) and (y < dy):
-                rectangle = Crectangle(index, getRectangleVertices(x, y))
+                rectangle = CRectangle(index, getRectangleVertices(x, y))
                 C3DRM.append(copy(rectangle))
                 C3DStructure.totalArea += rectangle.area
                 index += 1
+    header = getHeader(C3DRM)
 
 
 def getRectangleVertices(x, y):
     v = np.zeros((C3DStructure.nrVerticesPerRectangle, C3DStructure.nrDimensions), float)
     dzy = C3DStructure.slopeY * y
     dzy2 = C3DStructure.slopeY * (y + C3DStructure.gridStep)
-    dzPlant = C3DStructure.slopePlant * min(C3DStructure.slopeSide, fabs(x))
-    dzPlant2 = C3DStructure.slopePlant * min(C3DStructure.slopeSide, fabs(x + C3DStructure.gridStep))
+    dzPlant = C3DStructure.plantSlope * min(C3DStructure.plantSlopeWidth, fabs(x))
+    dzPlant2 = C3DStructure.plantSlope * min(C3DStructure.plantSlopeWidth, fabs(x + C3DStructure.gridStep))
     v[0] = [x, y, C3DStructure.z0 - dzPlant - dzy]
     v[1] = [x + C3DStructure.gridStep, y, C3DStructure.z0 - dzPlant2 - dzy]
     v[2] = [x + C3DStructure.gridStep, y + C3DStructure.gridStep, C3DStructure.z0 - dzPlant2 - dzy2]
@@ -172,7 +176,7 @@ def getArea2D(vertices):
 
 
 def getHeader(rectangleList):
-    myHeader = CheaderRM()
+    myHeader = CRectangularMeshHeader()
     myHeader.xMin = rectangleList[0].centroid[0]
     myHeader.yMin = rectangleList[0].centroid[1]
     myHeader.zMin = rectangleList[0].centroid[2]

@@ -19,15 +19,13 @@ def main():
     print(os.getcwd())
     dataPath = os.path.join("data", "errano")
     settingsFolder = os.path.join(dataPath, "settings")
+    fieldSettings = os.path.join(settingsFolder, "field.ini")
 
-    print("Building rectangle mesh...")
-    rectangularMesh.rectangularMeshCreation()
-    print("Nr. of rectangles:", C3DStructure.nrRectangles)
-    print("Total area [m^2]:", C3DStructure.totalArea)
+    # set mesh and plant/dripper positions
+    if not importUtils.setField(fieldSettings):
+        return
 
-    rectangularMesh.header = rectangularMesh.getHeader(rectangularMesh.C3DRM)
-
-    # SOIL
+    # Soil
     print("Load soil...")
     soilFile = "soil.txt"
     soilPath = os.path.join(settingsFolder, soilFile)
@@ -40,6 +38,10 @@ def main():
                                                                        C3DParameters.maxThickness,
                                                                        C3DParameters.maxThicknessAt)
     print("Nr. of layers:", C3DStructure.nrLayers)
+
+    # todo modificare
+    plantConfiguration = pd.read_csv(os.path.join(settingsFolder, "plant.csv"))
+    crop.initializeCrop(plantConfiguration)
 
     # Initialize memory
     criteria3D.memoryAllocation(C3DStructure.nrLayers, C3DStructure.nrRectangles)
@@ -121,15 +123,6 @@ def main():
     waterBalance.initializeBalance()
     print("Initial water storage [m^3]:", format(waterBalance.currentStep.waterStorage, ".3f"))
 
-    print("Read drip position...")
-    irrigationConfigurations = pd.read_csv(os.path.join(settingsFolder, "dripper.csv"))
-    criteria3D.setDripIrrigationPositions(irrigationConfigurations)
-
-    print("Read plant position...")
-    plantConfiguration = pd.read_csv(os.path.join(settingsFolder, "plant.csv"))
-    criteria3D.setPlantPositions(plantConfiguration)
-    crop.initializeCrop(plantConfiguration)
-
     print("Read weather data...")
     weatherDataFolder = "meteo"
     weatherDataPath = os.path.join(dataPath, weatherDataFolder)
@@ -178,7 +171,7 @@ def main():
     importUtils.writeObsState(obsStateFileName, obsWaterPotential, obsWeather["timestamp"])
     importUtils.loadObsState(obsStateFileName)
 
-    visual3D.initialize(1100)
+    visual3D.initialize(1200)
     visual3D.isPause = True
     # wait for start
     while visual3D.isPause:

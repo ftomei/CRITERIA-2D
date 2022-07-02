@@ -3,10 +3,72 @@ import os
 import criteria3D
 import assimilation
 import waterBalance
-import tkinter
 import tkinter.filedialog
-from dataStructures import C3DCells
+from dataStructures import *
+import rectangularMesh
 from array import array
+from configparser import ConfigParser
+
+
+def setField(settingsFilename):
+    config = ConfigParser()
+    config.read(settingsFilename)
+
+    # size
+    print("Read field settings...")
+    try:
+        width = config.getfloat('size', 'width')
+    except:
+        print("ERROR! Missing size.width in field.ini")
+        return False
+    height = config.getfloat('size', 'height')
+    gridStep = config.getfloat('size', 'gridStep')
+    C3DStructure.z0 = config.getfloat('size', 'z0')
+    initialize3DStructure(width, height, gridStep)
+
+    # slope
+    C3DStructure.slopeX = config.getfloat('slope', 'slopeX')
+    C3DStructure.slopeY = config.getfloat('slope', 'slopeY')
+    C3DStructure.plantSlope = config.getfloat('slope', 'plantSlope')
+    C3DStructure.plantSlopeWidth = config.getfloat('slope', 'plantSlopeWidth')
+
+    # Build rectangular mesh
+    print("Building rectangle mesh...")
+    rectangularMesh.rectangularMeshCreation()
+    print("Nr. of rectangles:", C3DStructure.nrRectangles)
+    print("Total area [m^2]:", C3DStructure.totalArea)
+
+    # set plant
+    print("set plant positions...")
+    xStr = config.get('plant', 'x').split(',')
+    x = [float(each) for each in xStr]
+    yStr = config.get('plant', 'y').split(',')
+    y = [float(each) for each in yStr]
+    if len(x) != len(y):
+        print("ERROR! Different number of plant.x,y in field.ini")
+        return False
+    plantIndices.clear()
+    for i in range(len(x)):
+        surfaceIndex = rectangularMesh.getSurfaceIndex(x[i], y[i])
+        if surfaceIndex != NODATA:
+            plantIndices.append(surfaceIndex)
+
+    # set dripper
+    print("set dripper positions...")
+    xStr = config.get('dripper', 'x').split(',')
+    x = [float(each) for each in xStr]
+    yStr = config.get('dripper', 'y').split(',')
+    y = [float(each) for each in yStr]
+    if len(x) != len(y):
+        print("ERROR: different number of dripper x,y positions.")
+        return False
+    dripperIndices.clear()
+    for i in range(len(x)):
+        surfaceIndex = rectangularMesh.getSurfaceIndex(x[i], y[i])
+        if surfaceIndex != NODATA:
+            dripperIndices.append(surfaceIndex)
+
+    return True
 
 
 def getStateFileName(isSave):
@@ -31,7 +93,7 @@ def readWaterTable(waterPath):
 
 
 def readMeteoData(meteoPath):
-    stationInfoFile = "station_info.csv" 
+    stationInfoFile = "station_info.csv"
     stationInfo = pd.read_csv(os.path.join(meteoPath, stationInfoFile))
 
     humidityFile = "air_humidity.csv"
@@ -110,10 +172,10 @@ def writeObsState(stateFileName, obsData, timeStamp):
         for column in [column for column in list(df.columns) if column != "timestamp"]:
             splitted_column = column.split("_")
             f.write(
-                "{:.2f}".format(float(splitted_column[2][1:])/100) + ","    # x
-                + "{:.1f}".format(float(splitted_column[1][1:])/100) + ","  # y
-                + "{:.1f}".format(float(splitted_column[0][1:])/100) + ","  # z
-                + "{:.1f}".format(df[column].values[0]) + "\n"              # psi
+                "{:.2f}".format(float(splitted_column[2][1:]) / 100) + ","  # x
+                + "{:.1f}".format(float(splitted_column[1][1:]) / 100) + ","  # y
+                + "{:.1f}".format(float(splitted_column[0][1:]) / 100) + ","  # z
+                + "{:.1f}".format(df[column].values[0]) + "\n"  # psi
             )
     return not df.empty
 
@@ -131,7 +193,7 @@ def saveCurrentModelState(stateFileName):
 def loadModelState(stateFileName):
     f = open(stateFileName, "rb")
     float_array = array('d')
-    float_array.fromfile (f, len(C3DCells))
+    float_array.fromfile(f, len(C3DCells))
     f.close()
 
     for i in range(len(C3DCells)):
