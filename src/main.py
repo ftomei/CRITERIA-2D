@@ -87,11 +87,11 @@ def main():
                                                            C3DStructure.longitude)
 
             criteria3D.computeOneHour(obsWeather, waterEvent, normTransmissivity, currentDateTime)
-            exportUtils.takeScreenshot(obsWeather["timestamp"])
 
             importUtils.writeObsState(obsStateFileName, obsWaterPotential, obsWeather["timestamp"])
             importUtils.loadObsState(obsStateFileName)
-            
+            exportUtils.takeScreenshot(obsWeather["timestamp"])
+
     # wait for start (press 'r')
     visual3D.isPause = True
     while visual3D.isPause:
