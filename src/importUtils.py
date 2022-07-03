@@ -48,12 +48,18 @@ def setField(settingsFilename):
         return False
 
     try:
-        gridStep = config.getfloat('size', 'gridStep')
+        C3DStructure.gridDepth = config.getfloat('size', 'depth')
     except:
-        print("ERROR! Missing size.gridStep in field.ini")
+        print("ERROR! Missing size.depth in field.ini")
         return False
 
-    initialize3DStructure(width, height, gridStep)
+    try:
+        C3DStructure.cellSize = config.getfloat('size', 'cellSize')
+    except:
+        print("ERROR! Missing size.cellSize in field.ini")
+        return False
+
+    initialize3DStructure(width, height, C3DStructure.cellSize)
 
     # slope
     try:
@@ -205,16 +211,16 @@ def transformDates(meteoData, waterData):
     return meteoData, waterData
 
 
-def loadObsState(fileName):
+def loadObsData(fileName):
     obsState = pd.read_csv(fileName)
     assimilation.assimilate(obsState)
     waterBalance.updateStorage()
     return True
 
 
-def writeObsState(stateFileName, obsData, timeStamp):
+def writeObsData(fileName, obsData, timeStamp):
     header = "x,y,z,value\n"
-    f = open(stateFileName, "w")
+    f = open(fileName, "w")
     f.write(header)
 
     df = obsData[obsData["timestamp"] == timeStamp]

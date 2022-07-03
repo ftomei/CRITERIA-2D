@@ -36,10 +36,14 @@ def doubleTimeStep():
 
 def halveTimeStep():
     if C3DParameters.currentDeltaT == C3DParameters.deltaT_min:
-        incMBRThreshold()
+        if C3DParameters.MBRThreshold < 1E-2:
+            incMBRThreshold()
+        else:
+            return False
     else:
         C3DParameters.currentDeltaT = max(C3DParameters.currentDeltaT * 0.5,
                                           C3DParameters.deltaT_min)
+    return True
 
 
 def incMBRThreshold():
@@ -166,8 +170,11 @@ def waterBalance(deltaT, approximation):
     # case 3: decrease time step (or increase threshold)
     isLastApprox = (approximation == C3DParameters.maxApproximationsNr)
     if isLastApprox or nrMBRWrong > 0:
-        # print("Decrease time step or increase threshold.")
-        halveTimeStep()
-        forceExit = True
+        if halveTimeStep():
+            forceExit = True
+        else:
+            # accept error
+            updateBalance(deltaT)
+            return True
 
     return False

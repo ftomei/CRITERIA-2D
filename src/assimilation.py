@@ -45,7 +45,7 @@ def buildDataStructuresForInterpolation(initialState):
                 if index != NODATA:
                     currentTheta = soil.getVolumetricWaterContent(index)
                     # check validity range of sensors
-                    if (abs(theta) > 0.27) and (abs(currentTheta) > 0.27):
+                    if (abs(theta) > 0.3) and (abs(currentTheta) > 0.3):
                         value = 0
                     else:
                         value = theta - currentTheta

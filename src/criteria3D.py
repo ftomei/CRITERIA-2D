@@ -269,10 +269,12 @@ def computeOneHour(obsWeather, waterEvent, normTransmissivity, currentDateTime):
         globalSWRadiation = obsWeather["solar_radiation"]
     if not (np.isnan(obsWeather["air_humidity"])):
         airRelHumidity = obsWeather["air_humidity"]
+
     if not (np.isnan(obsWeather["wind_speed"])):
         windSpeed_10m = obsWeather["wind_speed"]
     else:
-        print("Missed data")
+        windSpeed_10m = 2.0
+        print("Missing data: windspeed")
 
     # evapotranspiration [mm m-2]
     ET0 = computeHourlyET0(C3DStructure.z, airTemperature, globalSWRadiation, airRelHumidity,

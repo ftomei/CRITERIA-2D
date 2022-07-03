@@ -48,7 +48,7 @@ def initialize(totalWidth):
     # RANGE
     rx = rectangularMesh.header.xMax - rectangularMesh.header.xMin
     ry = rectangularMesh.header.yMax - rectangularMesh.header.yMin
-    rz = rectangularMesh.header.zMax - rectangularMesh.header.zMin + soil.horizon.lowerDepth
+    rz = rectangularMesh.header.zMax - rectangularMesh.header.zMin + C3DStructure.gridDepth
     rangeX = rx * rectangularMesh.header.magnify
     rangeXY = max(rx, ry) * rectangularMesh.header.magnify
     rangeZ = rz * rectangularMesh.header.magnify

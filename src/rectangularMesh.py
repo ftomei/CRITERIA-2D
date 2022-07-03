@@ -68,8 +68,8 @@ def rectangularMeshCreation():
     dy = C3DStructure.gridHeight * 0.5
 
     index = 0
-    for y in np.arange(-dy, dy, C3DStructure.gridStep):
-        for x in np.arange(-dx, dx, C3DStructure.gridStep):
+    for y in np.arange(-dy, dy, C3DStructure.cellSize):
+        for x in np.arange(-dx, dx, C3DStructure.cellSize):
             if (x < dx) and (y < dy):
                 rectangle = CRectangle(index, getRectangleVertices(x, y))
                 C3DRM.append(copy(rectangle))
@@ -81,13 +81,13 @@ def rectangularMeshCreation():
 def getRectangleVertices(x, y):
     v = np.zeros((C3DStructure.nrVerticesPerRectangle, C3DStructure.nrDimensions), float)
     dzy = C3DStructure.slopeY * y
-    dzy2 = C3DStructure.slopeY * (y + C3DStructure.gridStep)
+    dzy2 = C3DStructure.slopeY * (y + C3DStructure.cellSize)
     dzPlant = C3DStructure.plantSlope * min(C3DStructure.plantSlopeWidth, fabs(x))
-    dzPlant2 = C3DStructure.plantSlope * min(C3DStructure.plantSlopeWidth, fabs(x + C3DStructure.gridStep))
+    dzPlant2 = C3DStructure.plantSlope * min(C3DStructure.plantSlopeWidth, fabs(x + C3DStructure.cellSize))
     v[0] = [x, y, C3DStructure.z - dzPlant - dzy]
-    v[1] = [x + C3DStructure.gridStep, y, C3DStructure.z - dzPlant2 - dzy]
-    v[2] = [x + C3DStructure.gridStep, y + C3DStructure.gridStep, C3DStructure.z - dzPlant2 - dzy2]
-    v[3] = [x, y + C3DStructure.gridStep, C3DStructure.z - dzPlant - dzy2]
+    v[1] = [x + C3DStructure.cellSize, y, C3DStructure.z - dzPlant2 - dzy]
+    v[2] = [x + C3DStructure.cellSize, y + C3DStructure.cellSize, C3DStructure.z - dzPlant2 - dzy2]
+    v[3] = [x, y + C3DStructure.cellSize, C3DStructure.z - dzPlant - dzy2]
     return v
 
 
@@ -140,7 +140,7 @@ def boundaryProperties(index, vertices, centroid):
         check_limit = neighbours_map[key]["comparator"]
 
         if check_limit(move_coordinate(
-                centroid[coordinate_to_check], C3DStructure.gridStep),
+                centroid[coordinate_to_check], C3DStructure.cellSize),
                 limit_to_check):
             neighbours.append(neighbours_map[key]["index"])
             boundarySides.append(NODATA)
@@ -195,7 +195,7 @@ def getHeader(rectangleList):
         myHeader.yMax = max(myHeader.yMax, y)
         myHeader.zMax = max(myHeader.zMax, z)
 
-    halfStep = C3DStructure.gridStep * 0.5
+    halfStep = C3DStructure.cellSize * 0.5
     myHeader.xMin -= halfStep
     myHeader.xMax += halfStep
     myHeader.yMin -= halfStep

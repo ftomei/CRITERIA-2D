@@ -65,8 +65,7 @@ def computeStep(deltaT):
 
             arrangeMatrix(i, deltaT)
 
-        if ((waterBalance.maxCourant > 1.0)
-                and (deltaT > C3DParameters.deltaT_min)):
+        if (waterBalance.maxCourant > 1.0) and (deltaT > C3DParameters.deltaT_min):
             print("Courant too high:", waterBalance.maxCourant)
             print("Decrease time step")
             while waterBalance.maxCourant > 1.0:
@@ -76,17 +75,20 @@ def computeStep(deltaT):
 
         if not solveMatrix(approximation):
             waterBalance.halveTimeStep()
-            print("System not convergent.")
+            print("System is not convergent.")
             return False
+
         # check surface error
         for i in range(C3DStructure.nrRectangles):
             if C3DCells[i].isSurface:
                 if x[i] < C3DCells[i].z:
                     x[i] = C3DCells[i].z
+
         # new hydraulic head
         for i in range(0, C3DStructure.nrCells):
             C3DCells[i].H = x[i]
             C3DCells[i].Se = soil.getDegreeOfSaturation(i)
+
         # waterBalance
         isValidStep = waterBalance.waterBalance(deltaT, approximation)
         if waterBalance.forceExit:

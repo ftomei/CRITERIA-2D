@@ -13,9 +13,10 @@ class C3DStructure:
     longitude = NODATA
     z = NODATA                  # [m] topographic elevation (center grid)
 
-    gridStep = NODATA           # [m] step on x and y axis
+    cellSize = NODATA           # [m] cell size
     gridWidth = NODATA          # [m] grid width (axis x)
     gridHeight = NODATA         # [m] grid height (axis y)
+    gridDepth = NODATA          # [m] grid depth (axis z)
 
     slopeX = NODATA             # [-] slope on x axis
     slopeY = NODATA             # [-] slope on y axis
@@ -32,21 +33,21 @@ class C3DStructure:
     nrRectangles = NODATA
 
 
-def initialize3DStructure(width, height, gridStep):
-    C3DStructure.gridStep = gridStep
+def initialize3DStructure(width, height, cellSize):
+    C3DStructure.cellSize = cellSize
 
-    C3DStructure.nrRectanglesInXAxis = int(width / gridStep)
+    C3DStructure.nrRectanglesInXAxis = int(width / cellSize)
     if (C3DStructure.nrRectanglesInXAxis % 2) == 0:
         C3DStructure.nrRectanglesInXAxis += 1
 
-    C3DStructure.nrRectanglesInYAxis = int(height / gridStep)
+    C3DStructure.nrRectanglesInYAxis = int(height / cellSize)
     if (C3DStructure.nrRectanglesInYAxis % 2) == 0:
         C3DStructure.nrRectanglesInYAxis += 1
 
     C3DStructure.nrRectangles = C3DStructure.nrRectanglesInXAxis * C3DStructure.nrRectanglesInYAxis
 
-    C3DStructure.gridWidth = C3DStructure.nrRectanglesInXAxis * gridStep
-    C3DStructure.gridHeight = C3DStructure.nrRectanglesInYAxis * gridStep
+    C3DStructure.gridWidth = C3DStructure.nrRectanglesInXAxis * cellSize
+    C3DStructure.gridHeight = C3DStructure.nrRectanglesInYAxis * cellSize
 
 
 class Clink:

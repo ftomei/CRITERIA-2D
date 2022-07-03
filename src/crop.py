@@ -44,29 +44,37 @@ class CCrop:
 
 
 # global variables
-kiwi = CCrop()
+myCrop = CCrop()
 rootDensity = []
 k_root = np.array([], np.float64)
+
+
+# todo improve with LAI curve
+def getCurrentLAI(crop, currentDate):
+    if 3 <= currentDate.month <= 9:
+        return crop.laiMax
+    else:
+        return crop.laiMin
 
 
 def initializeCrop(plantConfiguration):
     global rootDensity, k_root, maxRootFactor
     global SAT, FC, WP, HH, wsThreshold
 
-    # initialize kiwifruit
-    kiwi.setKiwifruit()
+    # todo sostituire
+    myCrop.setKiwifruit()
 
     SAT = soil.horizon.thetaS  # [m3 m-3] water content at saturation
     FC = soil.getFieldCapacityWC()  # [m3 m-3] water content at field capacity
     WP = soil.getWiltingPointWC()  # [m3 m-3] water content at wilting point
     HH = soil.getHygroscopicWC()  # [m3 m-3] water content at Hygroscopic moisture
-    wsThreshold = FC - kiwi.fRAW * (FC - WP)  # [m3 m-3] water scarcity stress threshold
+    wsThreshold = FC - myCrop.fRAW * (FC - WP)  # [m3 m-3] water scarcity stress threshold
 
     # initialize root factor
     k_root = np.zeros(C3DStructure.nrRectangles)
     if C3DParameters.computeTranspiration:
         # line plant
-        max_distance = kiwi.rootWidth * 0.5
+        max_distance = myCrop.rootWidth * 0.5
         x1 = plantConfiguration.iloc[0]['plant_x']
         y1 = plantConfiguration.iloc[0]['plant_y']
         x2 = plantConfiguration.iloc[1]['plant_x']
@@ -82,16 +90,16 @@ def initializeCrop(plantConfiguration):
 
             if line_distance < max_distance or math.fabs(line_distance - max_distance) < EPSILON:
                 factor = 1.0 - line_distance / (max_distance * 0.5)
-                k_root[i] = 1.0 + factor * kiwi.rootXDeformation
+                k_root[i] = 1.0 + factor * myCrop.rootXDeformation
             else:
                 k_root[i] = 0.0
     else:
-        kiwi.currentLAI = 0
+        myCrop.currentLAI = 0
 
     # set root density
     rootDensity.clear()
     for i in range(C3DStructure.nrRectangles):
-        rootDensity.append(computeRootDensity(kiwi, C3DStructure.nrLayers, k_root[i]))
+        rootDensity.append(computeRootDensity(myCrop, C3DStructure.nrLayers, k_root[i]))
         # update max root factor
         for layer in range(1, C3DStructure.nrLayers):
             root_factor = k_root[i] * rootDensity[i][layer] / soil.thickness[layer]
@@ -335,23 +343,14 @@ def setEvaporation(surfaceIndex, maxEvaporation):
     return actualEvaporation
 
 
-# todo improve with LAI curve
-def getCurrentLAI(crop, currentDate):
-    if 3 <= currentDate.month <= 9:
-        return crop.laiMax
-    else:
-        return crop.laiMin
-
-
 def setEvapotranspiration(currentDate, ET0):
-    kiwi.currentLAI = getCurrentLAI(kiwi, currentDate)
+    myCrop.currentLAI = getCurrentLAI(myCrop, currentDate)
     if C3DParameters.computeTranspiration:
         for i in range(C3DStructure.nrRectangles):
-            maxTrKiwi = getMaxTranspiration(kiwi.currentLAI, kiwi.kcMax, ET0)
-            maxTranspiration = maxTrKiwi * k_root[i]
+            maxTranspiration = getMaxTranspiration(myCrop.currentLAI, myCrop.kcMax, ET0) * k_root[i]
             setTranspiration(i, rootDensity[i], maxTranspiration)
 
     if C3DParameters.computeEvaporation:
-        maxEvaporation = getMaxEvaporation(kiwi.currentLAI, ET0)
+        maxEvaporation = getMaxEvaporation(myCrop.currentLAI, ET0)
         for i in range(C3DStructure.nrRectangles):
             setEvaporation(i, maxEvaporation)
