@@ -3,10 +3,10 @@
 import math
 import datetime
 import pandas as pd
+from dataStructures import C3DStructure
 
 SOLAR_CONSTANT = 1367  # [W/m²]
 TRANSMISSIVITY_THRESHOLD = 300  # [W/m²]
-TIMEZONE = 1
 MAXIMUM_TRANSMISSIVITY = 0.75
 
 
@@ -23,9 +23,9 @@ def dateToDOY(year, month, day):
 # return clear sky solar radiation
 def clearSkyRad(myDate, finalHourUTC, latDegrees, lonDegrees):
     latRad = degreeToRadians(latDegrees)
-    longitudeCorrection = ((TIMEZONE * 15.) - lonDegrees) / 15.
+    longitudeCorrection = (C3DStructure.timeZone * 15. - lonDegrees) / 15.
 
-    solarTime = finalHourUTC - 0.5 + TIMEZONE
+    solarTime = finalHourUTC - 0.5 + C3DStructure.timeZone
     if solarTime < 0:
         solarTime += 24
         myDate = myDate - 1

@@ -12,6 +12,7 @@ class C3DStructure:
     latitude = NODATA
     longitude = NODATA
     z = NODATA                  # [m] topographic elevation (center grid)
+    timeZone = NODATA           # [-] time zone
 
     cellSize = NODATA           # [m] cell size
     gridWidth = NODATA          # [m] grid width (axis x)

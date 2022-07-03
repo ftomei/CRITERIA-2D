@@ -15,7 +15,7 @@ def setField(settingsFilename):
     print("Read field settings...")
     config.read(settingsFilename)
 
-    # location
+    # [location]
     try:
         C3DStructure.latitude = config.getfloat('location', 'lat')
     except:
@@ -34,7 +34,13 @@ def setField(settingsFilename):
         print("ERROR! Missing location.z in field.ini")
         return False
 
-    # size
+    try:
+        C3DStructure.timeZone = config.getint('location', 'timeZone')
+    except:
+        print("ERROR! Missing location.timeZone in field.ini")
+        return False
+
+    # [size]
     try:
         width = config.getfloat('size', 'width')
     except:
@@ -61,7 +67,7 @@ def setField(settingsFilename):
 
     initialize3DStructure(width, height, C3DStructure.cellSize)
 
-    # slope
+    # [slope]
     try:
         C3DStructure.slopeX = config.getfloat('slope', 'slopeX')
     except:
@@ -88,7 +94,7 @@ def setField(settingsFilename):
     print("Nr. of rectangles:", C3DStructure.nrRectangles)
     print("Total area [m^2]:", C3DStructure.totalArea)
 
-    # set plant
+    # [plant]
     plantIndices.clear()
     try:
         xStr = config.get('plant', 'x').split(',')
@@ -112,20 +118,29 @@ def setField(settingsFilename):
             if surfaceIndex != NODATA:
                 plantIndices.append(surfaceIndex)
 
-    # set dripper
-    print("set dripper positions...")
-    xStr = config.get('dripper', 'x').split(',')
-    x = [float(each) for each in xStr]
-    yStr = config.get('dripper', 'y').split(',')
-    y = [float(each) for each in yStr]
-    if len(x) != len(y):
-        print("ERROR: different number of dripper x,y positions.")
-        return False
+    # [dripper]
     dripperIndices.clear()
-    for i in range(len(x)):
-        surfaceIndex = rectangularMesh.getSurfaceIndex(x[i], y[i])
-        if surfaceIndex != NODATA:
-            dripperIndices.append(surfaceIndex)
+    try:
+        xStr = config.get('dripper', 'x').split(',')
+    except:
+        xStr = []
+    try:
+        yStr = config.get('dripper', 'y').split(',')
+    except:
+        yStr = []
+    if len(xStr) > 0 and len(yStr) > 0:
+        print("set dripper positions...")
+        x = [float(each) for each in xStr]
+        y = [float(each) for each in yStr]
+
+        if len(x) != len(y):
+            print("ERROR: different number of dripper x,y positions.")
+            return False
+
+        for i in range(len(x)):
+            surfaceIndex = rectangularMesh.getSurfaceIndex(x[i], y[i])
+            if surfaceIndex != NODATA:
+                dripperIndices.append(surfaceIndex)
 
     return True
 
