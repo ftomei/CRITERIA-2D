@@ -87,7 +87,7 @@ def initialize(totalWidth):
     soilCanvas.forward = visual.vector(0, 1, -1)
     soilCanvas.range = rangeXY * 0.5
     layerLabel = visual.label(color=visual.color.black, canvas=soilCanvas, height=h,
-                              pos=visual.vector(cX, cY + rangeXY * 1.0, cZ))
+                              pos=visual.vector(cX, cY + rangeXY * 0.8, cZ))
 
     drawSurface(True)
 
