@@ -69,8 +69,8 @@ def main():
     modelStateFileName = os.path.join(stateFolder, "modelState.bin")
 
     weatherIndex = 1
-    if C3DParameters.isAssimilation:
-        print("Load obs water potential...")
+    if C3DParameters.isFirstAssimilation:
+        print("Assimilate observed water potential...")
         obsWaterPotential = pd.read_csv(os.path.join(obsDataFolder, "waterPotential.csv"))
         obsFileName = os.path.join(stateFolder, "obsState.csv")
         obsWeather = weatherData.loc[weatherIndex]
@@ -96,7 +96,7 @@ def main():
         criteria3D.computeOneHour(obsWeather, waterEvent, normTransmissivity, currentDateTime)
 
         # assimilation
-        if C3DParameters.isAssimilation and not C3DParameters.isForecast:
+        if C3DParameters.isPeriodicAssimilation and not C3DParameters.isForecast:
             if (currentIndex % C3DParameters.assimilationInterval) == 0:
                 importUtils.writeObsData(obsFileName, obsWaterPotential, obsWeather["timestamp"])
                 importUtils.loadObsData(obsFileName)
@@ -117,10 +117,9 @@ def main():
         if C3DParameters.isForecast and currentIndex == C3DParameters.forecastPeriod:
             importUtils.loadModelState(modelStateFileName)
             # assimilation
-            if C3DParameters.isAssimilation:
-                obsWeather = weatherData.loc[restartIndex]
-                importUtils.writeObsData(obsFileName, obsWaterPotential, obsWeather["timestamp"])
-                importUtils.loadObsData(obsFileName)
+            obsWeather = weatherData.loc[restartIndex]
+            importUtils.writeObsData(obsFileName, obsWaterPotential, obsWeather["timestamp"])
+            importUtils.loadObsData(obsFileName)
             # redraw
             waterBalance.totalTime = restartIndex * 3600
             visual3D.redraw()

@@ -130,9 +130,10 @@ class C3DParameters:
     MBRThreshold = 1E-5
 
     # simulation type
-    isAssimilation = True
-    isForecast = False
+    isFirstAssimilation = True
+    isPeriodicAssimilation = False
     assimilationInterval = 24
+    isForecast = False
     forecastPeriod = 24 * 7
 
 
