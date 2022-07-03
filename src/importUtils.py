@@ -13,7 +13,10 @@ from configparser import ConfigParser
 def setField(settingsFilename):
     config = ConfigParser()
     print("Read field settings...")
-    config.read(settingsFilename)
+    settings = config.read(settingsFilename)
+    if len(settings) == 0:
+        print("ERROR! Missing field settings file: " + settingsFilename)
+        return False
 
     # [location]
     try:
