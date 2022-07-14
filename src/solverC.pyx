@@ -1,4 +1,6 @@
-# solverC.pyx
+#!python
+#cython: language_level=3
+
 
 # it needs Cython and a C compiler to work
 # on windows you can use MinGW or VS compiler
@@ -89,16 +91,17 @@ def set_indices(int i, short int j, int index):
 def set_A(int i, short int j, double value):
     A[i * nrLinks + j] = value
     
-    
-def meanK(meanType, double k1, double k2):
-    if (meanType == LOGARITHMIC):
-        if (k1 != k2):
-            k = (k1-k2) / log(k1/k2)
-        else:
-            k = k1
-    elif (meanType == HARMONIC): 
-        k = 2.0 / (1.0 / k1 + 1.0 / k2)
-    elif (meanType == GEOMETRIC): 
+def meanK(int meanType, double k1, double k2):	
+    if (meanType == GEOMETRIC):
         k = sqrt(k1 * k2)
+    else:
+        if (meanType == HARMONIC): 
+            k = 2.0 / (1.0/k1 + 1.0/k2)
+        else: # LOGARITHMIC
+            if (k1 != k2):
+                k = (k1-k2) / log(k1/k2)
+            else:
+                k = k1
+	
     return k
 

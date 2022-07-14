@@ -32,7 +32,7 @@ thickness = np.array([], np.float64)
 horizon = CSoilHorizon()
 
 
-def readHorizon(soilFileName, i, clay):
+def readHorizon(soilFileName, clay):
     global horizon
     soilDataFrame = pd.read_csv(soilFileName)
     soilData = soilDataFrame.loc[0]

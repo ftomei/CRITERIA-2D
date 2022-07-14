@@ -364,7 +364,7 @@ def drawSurface(isFirst):
         # color
         if visualizedLayer == 0:
             if isRootVisualization:
-                c = getRootColor(crop.k_root[i] * 0.5, 0, 1)
+                c = getRootColor(crop.k_root[i], 0, 1.5)
             elif isPointVisualization:
                 c = [0, 1, 0]
                 if i in plantIndices:

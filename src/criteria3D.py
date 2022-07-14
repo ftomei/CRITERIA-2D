@@ -110,6 +110,13 @@ def setMatricPotential(i, signPsi):
     return OK
 
 
+def getMatricPotential(i):
+    if C3DCells[i].isSurface:
+        return max(C3DCells[i].H - C3DCells[i].z, 0.0)
+    else:
+        return C3DCells[i].H - C3DCells[i].z
+
+
 def initializeSinkSource(cellType):
     if cellType == ONLY_SURFACE:
         for i in range(C3DStructure.nrRectangles):
@@ -170,7 +177,7 @@ def setModelState(position, psiValues):
                 psi = (sumPsi / sumWeights)
                 setMatricPotential(i, psi)
 
-    waterBalance.initializeBalance()
+    waterBalance.updateStorage()
 
 
 # timeLength        [s]          

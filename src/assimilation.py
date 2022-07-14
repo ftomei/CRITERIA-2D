@@ -3,6 +3,7 @@
 from dataStructures import *
 import rectangularMesh
 import criteria3D
+import soil
 import numpy as np
 from scipy.interpolate import interpn
 
@@ -34,9 +35,20 @@ def buildDataStructuresForInterpolation(initialState):
     for i in range(x.shape[-1]):
         for j in range(y.shape[-1]):
             for k in range(z.shape[-1]):
-                value = \
-                initialState[(initialState["x"] == x[i]) & (initialState["y"] == y[j]) & (initialState["z"] == z[k])][
-                    "value"]
+                psi = initialState[(initialState["x"] == x[i]) & (initialState["y"] == y[j])
+                                   & (initialState["z"] == z[k])]["value"]
+                # from kPa to meters
+                observedPsi = float(psi / 9.81)
+                curve = C3DParameters.waterRetentionCurve
+                theta = soil.thetaFromPsi(curve, observedPsi)
+                index = rectangularMesh.getCellIndex(x[i], y[j], z[k])
+                currentTheta = soil.getVolumetricWaterContent(index)
+                # check validity range of sensors
+                if (abs(theta) > 0.27) and (abs(currentTheta) > 0.27):
+                    value = 0
+                else:
+                    value = theta - currentTheta
+
                 if len(points) == 1:
                     # Even though we do not know which is the coordinate that has not one unique value,
                     # we can sum all of the coordinates because the index of the ones that has just one unique value would be 0
@@ -101,9 +113,6 @@ def interpolate(initialState):
 
                 value = interpn(points, values, point, bounds_error=False)
                 interpolated_points[index] = value[0]
-                # water potential - from [kPa] to [m]
-                psi = value / 9.81
-                criteria3D.setMatricPotential(index, psi)
     return interpolated_points
 
 
@@ -131,9 +140,15 @@ def assimilate(initialState):
     indices = interpolated_points.keys()
     for i in range(C3DStructure.nrCells):
         x, y, depth = rectangularMesh.getXYDepth(i)
-        if (i not in indices) and (depth != 0):
-            min_index = getCloserIndex(i, indices)
-            value = interpolated_points[min_index]
-            # water potential - from [kPa] to [m]
-            psi = value / 9.81
+        if depth != 0:
+            if i in indices:
+                value = interpolated_points[i]
+            else:
+                min_index = getCloserIndex(i, indices)
+                value = interpolated_points[min_index]
+            # assign residual of volumetric water content
+            currentTheta = soil.getVolumetricWaterContent(i)
+            theta = currentTheta + value
+            curve = C3DParameters.waterRetentionCurve
+            psi = soil.psiFromTheta(curve, theta)
             criteria3D.setMatricPotential(i, psi)

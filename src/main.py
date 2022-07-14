@@ -32,7 +32,7 @@ def main(args):
     # print("Load soil...")
     soilFile = "soil.txt"
     soilPath = os.path.join(settingsFolder, soilFile)
-    soil.readHorizon(soilPath, 1, args.clay)
+    soil.readHorizon(soilPath, args.clay)
     totalDepth = soil.horizon.lowerDepth
     # print("Soil depth [m]:", totalDepth)
 
@@ -118,12 +118,14 @@ def main(args):
             linkIndex = index + C3DStructure.nrRectangles
             criteria3D.SetCellLink(index, linkIndex, DOWN, exchangeArea)
 
-    # initial state
-    state = "1630447200.csv"
-    # state = "1631574000.csv"
-    stateFolder = os.path.join(dataPath, "state")
-    initialState = pd.read_csv(os.path.join(stateFolder, state))
-    assimilation.assimilate(initialState)
+    # # initial state
+    # state = "1630447200.csv"
+    # # state = "1631574000.csv"
+    # stateFolder = os.path.join(dataPath, "state")
+    # initialState = pd.read_csv(os.path.join(stateFolder, state))
+    # assimilation.assimilate(initialState)
+
+    # initialize balance
     waterBalance.initializeBalance()
     # print("Initial water storage [m^3]:", format(waterBalance.currentStep.waterStorage, ".3f"))
 
@@ -165,23 +167,39 @@ def main(args):
 
     # initialize export
     outputPath = os.path.join(dataPath, "output")
-    outputFileName = f"output_{str(args.iteration)}.csv"
-    outputFilePath = os.path.join(outputPath, outputFileName)
-    outputPointsPath = os.path.join(outputPath, "output_points.csv")
-    exportUtils.createExportFile(outputPointsPath, outputFilePath)
+    outputFile = os.path.join(outputPath, f"output_{str(args.iteration)}.csv")
+    outputFileWC = os.path.join(outputPath, f"outputWaterContent_{str(args.iteration)}.csv")
+    outputPointsFile = os.path.join(outputPath, "output_points.csv")
+    exportUtils.createExportFile(outputFile, outputFileWC, outputPointsFile)
 
     latitude = stationInfo.iloc[0]["Latitude"]
     longitude = stationInfo.iloc[0]["Longitude"]
 
-    #visual3D.initialize(1280)
-    #visual3D.isPause = True
+    print("Load obs water potential...")
+    obsPath = os.path.join(dataPath, "obs_data")
+    obsWaterPotential = pd.read_csv(os.path.join(obsPath, "waterPotential.csv"))
+
+    # initial state
+    weatherIndex = 1
+    assimilationInterval = 24
+    forecastPeriod = 24*7
+    obsWeather = weatherData.loc[weatherIndex]
+    stateFolder = os.path.join(dataPath, "state")
+    obsStateFileName = os.path.join(stateFolder, "obsState.csv")
+    modelStateFileName = os.path.join(stateFolder, "modelState.bin")
+    importUtils.writeObsState(obsStateFileName, obsWaterPotential, obsWeather["timestamp"])
+    importUtils.loadObsState(obsStateFileName)
+
+    # visual3D.initialize(1280)
+    # visual3D.isPause = True
     # wait for start
     #while visual3D.isPause:
         #time.sleep(0.00001)
 
     # main cycle
-    # weatherIndex = 314
-    weatherIndex = 1
+    currentIndex = 1
+    restartIndex = 1
+    isFirstRun = True
     while weatherIndex < len(weatherData):
         obsWeather = weatherData.loc[weatherIndex]
         currentDateTime = pd.to_datetime(obsWeather["timestamp"], unit='s')
@@ -199,12 +217,16 @@ def main(args):
             airRelHumidity = obsWeather["air_humidity"]
         if not (np.isnan(obsWeather["wind_speed"])):
             windSpeed_10m = obsWeather["wind_speed"]
+        else:
+            print("Missed data")
 
-        # evapotranspiration
         normTransmissivity = computeNormTransmissivity(weatherData, weatherIndex, latitude, longitude)
-        ET0 = computeHourlyET0(height, airTemperature, globalSWRadiation, airRelHumidity, windSpeed_10m,
-                               normTransmissivity)  # mm m^-2
-        # print(currentDateTime, "ET0:", format(ET0, ".2f"))
+
+        # evapotranspiration [mm m-2]
+        ET0 = computeHourlyET0(height, airTemperature, globalSWRadiation, airRelHumidity,
+                               windSpeed_10m, normTransmissivity)
+        # prinst(currentDateTime, "ET0:", format(ET0, ".2f"))
+
         criteria3D.initializeSinkSource(ALL)
         crop.setEvapotranspiration(currentDateTime, ET0)
 
@@ -230,8 +252,32 @@ def main(args):
 
             criteria3D.compute(waterTimeLength, False)
 
-        exportUtils.takeScreenshot(obsWeather["timestamp"], outputFilePath)
-        weatherIndex += 1
+        # save model state
+        if currentIndex == assimilationInterval:
+            importUtils.saveCurrentModelState(modelStateFileName)
+            restartIndex = weatherIndex
+
+        # save output
+        if currentIndex > (forecastPeriod - assimilationInterval) or isFirstRun:
+            exportUtils.takeScreenshot(obsWeather["timestamp"], outputFile, outputFileWC)
+
+        # restart
+        if currentIndex == forecastPeriod:
+            importUtils.loadModelState(modelStateFileName)
+            # assimilation
+            obsWeather = weatherData.loc[restartIndex]
+            importUtils.writeObsState(obsStateFileName, obsWaterPotential, obsWeather["timestamp"])
+            importUtils.loadObsState(obsStateFileName)
+            # redraw
+            waterBalance.totalTime = restartIndex * 3600
+            # visual3D.redraw()
+            # re-initialize index
+            weatherIndex = restartIndex + 1
+            currentIndex = 1
+            isFirstRun = False
+        else:
+            weatherIndex += 1
+            currentIndex += 1
 
     #visual3D.isPause = True
     # print("\nEnd simulation.\n")

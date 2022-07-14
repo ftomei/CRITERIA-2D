@@ -71,6 +71,13 @@ def initializeBalance():
     allSimulation.MBE = 0
 
 
+def updateStorage():
+    storage = getWaterStorage()
+    currentStep.waterStorage = storage
+    previousStep.waterStorage = storage
+    allSimulation.waterStorage = storage
+
+
 def updateBalance(deltaT):
     global totalTime
     totalTime += deltaT

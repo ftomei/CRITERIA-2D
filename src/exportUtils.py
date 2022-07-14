@@ -2,6 +2,7 @@ import os
 from dataStructures import *
 import rectangularMesh
 import pandas as pd
+import soil
 
 outputIndices = []
 outputSurfaceIndices = []
@@ -9,10 +10,10 @@ heightSlice = C3DStructure.gridHeight * 0.5
 oneTimestampPerRow = True
 
 
-def createExportFile(outputPointsPath, outputFilePath):
+def createExportFile(outputFile, outputFileWC, outputPointsFile):
 
     if oneTimestampPerRow:
-        outputPoints = pd.read_csv(outputPointsPath)
+        outputPoints = pd.read_csv(outputPointsFile)
         outputIndicesString = takeSelected(outputPoints)
         header = "timestamp," + outputIndicesString + "\n"
     else:
@@ -22,11 +23,18 @@ def createExportFile(outputPointsPath, outputFilePath):
             takeSlice()
         header = "timestamp,x,y,z,Se,H\n"
 
-    if not os.path.exists(outputFilePath):
-        open(outputFilePath, 'w').close()
+    if not os.path.exists(outputFile):
+        open(outputFile, 'w').close()
 
-    with open(outputFilePath, "w") as f:
+    with open(outputFile, "w") as f:
         f.write(header)
+
+    if oneTimestampPerRow:
+        if not os.path.exists(outputFileWC):
+            open(outputFileWC, 'w').close()
+
+        with open(outputFileWC, "w") as f:
+            f.write(header)
 
 
 def takeSelected(outputPoints):
@@ -66,16 +74,22 @@ def takeAll():
         outputIndices.append(index)
 
 
-def takeScreenshot(timestamp, outputFilePath):
+def takeScreenshot(timestamp, outputFile, outputFileWC):
     if oneTimestampPerRow:
-        row = str(int(timestamp))
+        rowPotential = str(int(timestamp))
+        rowWaterContent = str(int(timestamp))
         for index in outputIndices:
-            psi = (C3DCells[index].H - C3DCells[index].z) * 9.81  # water potential [kPa] equivalent to [centibar]
-            row += "," + '{:.3f}'.format(psi)
-        row += "\n"
+            psi = (C3DCells[index].H - C3DCells[index].z) * 9.81    # water potential [kPa] equivalent to [centibar]
+            theta = soil.getVolumetricWaterContent(index)           # volumetric water content [m3 m-3]
+            rowPotential += "," + '{:.3f}'.format(psi)
+            rowWaterContent += "," + '{:.4f}'.format(theta)
+        rowPotential += "\n"
+        rowWaterContent += "\n"
 
-        with open(outputFilePath, "a") as f:
-            f.write(row)
+        with open(outputFile, "a") as f:
+            f.write(rowPotential)
+        with open(outputFileWC, "a") as f:
+            f.write(rowWaterContent)
     else:
         for index in outputIndices:
             if C3DCells[index].z != 0.0 and C3DCells[index].x >= 1.0:
@@ -88,5 +102,5 @@ def takeScreenshot(timestamp, outputFilePath):
                 row += "," + '{:.3f}'.format(psi)
                 row += "\n"
 
-                with open(outputFilePath, "a") as f:
+                with open(outputFile, "a") as f:
                     f.write(row)
