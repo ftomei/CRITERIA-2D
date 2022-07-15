@@ -1,21 +1,22 @@
 import pandas as pd
 import os
+import tkinter.filedialog
+from configparser import ConfigParser
+from array import array
+
+from dataStructures import *
 import criteria3D
 import assimilation
 import waterBalance
-import tkinter.filedialog
-from dataStructures import *
 import rectangularMesh
-from array import array
-from configparser import ConfigParser
+import crop
 
 
-def setField(settingsFilename):
+def readFieldParameters(fieldSettingsFilename):
     config = ConfigParser()
-    print("Read field settings...")
-    settings = config.read(settingsFilename)
-    if len(settings) == 0:
-        print("ERROR! Missing field settings file: " + settingsFilename)
+    fieldSettings = config.read(fieldSettingsFilename)
+    if len(fieldSettings) == 0:
+        print("ERROR! Missing field settings file: " + fieldSettingsFilename)
         return False
 
     # [location]
@@ -97,7 +98,7 @@ def setField(settingsFilename):
     print("Nr. of rectangles:", C3DStructure.nrRectangles)
     print("Total area [m^2]:", C3DStructure.totalArea)
 
-    # [plant]
+    # set [plant]
     plantIndices.clear()
     try:
         xStr = config.get('plant', 'x').split(',')
@@ -107,21 +108,26 @@ def setField(settingsFilename):
         yStr = config.get('plant', 'y').split(',')
     except:
         yStr = []
-    if len(xStr) > 0 and len(yStr) > 0:
+    if len(xStr) > 1 and len(yStr) > 1:
         print("set plant positions...")
-        x = [float(each) for each in xStr]
-        y = [float(each) for each in yStr]
+        crop.x = [float(each) for each in xStr]
+        crop.y = [float(each) for each in yStr]
 
-        if len(x) != len(y):
+        if len(crop.x) != len(crop.y):
             print("ERROR! Different number of plant.x,y in field.ini")
             return False
 
-        for i in range(len(x)):
-            surfaceIndex = rectangularMesh.getSurfaceIndex(x[i], y[i])
+        for i in range(len(crop.x)):
+            surfaceIndex = rectangularMesh.getSurfaceIndex(crop.x[i], crop.y[i])
             if surfaceIndex != NODATA:
                 plantIndices.append(surfaceIndex)
+    else:
+        if C3DParameters.computeTranspiration:
+            print("ERROR! Missing plant positions in field.ini")
+            print("Set at least two plants to define the row direction.")
+            return False
 
-    # [dripper]
+    # set [dripper]
     dripperIndices.clear()
     try:
         xStr = config.get('dripper', 'x').split(',')
@@ -144,6 +150,28 @@ def setField(settingsFilename):
             surfaceIndex = rectangularMesh.getSurfaceIndex(x[i], y[i])
             if surfaceIndex != NODATA:
                 dripperIndices.append(surfaceIndex)
+
+    return True
+
+
+def readCropParameters(cropFilename):
+    config = ConfigParser()
+    cropSettings = config.read(cropFilename)
+    if len(cropSettings) == 0:
+        print("ERROR! Missing field settings file: " + cropFilename)
+        return False
+
+    # [LAI]
+    try:
+        laiStr = config.get('LAI', 'laiMonth').split(',')
+    except:
+        print("ERROR! wrong LAI.laiMonth in crop settings.")
+        return False
+    if len(laiStr) != 12:
+        print("ERROR! In crop settings: LAI.laiMonth must be 12 values.")
+        return False
+
+    crop.myCrop.laiMonth = [float(each) for each in laiStr]
 
     return True
 

@@ -1,20 +1,25 @@
 # criteria3D.py
 
 from math import fabs
+import pandas as pd
+import numpy as np
+import time
+
 from dataStructures import *
+from PenmanMonteith import computeHourlyET0
+from transmissivity import computeNormTransmissivity
 import rectangularMesh
 import waterBalance
 import visual3D
 import soil
-import time
-import numpy as np
-from PenmanMonteith import computeHourlyET0
 import crop
 
 if CYTHON:
     import solverCython as solver
 else:
     import solver as solver
+
+global weatherData, waterData
 
 
 def memoryAllocation(nrLayers, nrRectangles):
@@ -257,24 +262,39 @@ def compute(timeLength, isRedraw):
         currentTime += deltaT
 
 
-def computeOneHour(obsWeather, waterEvent, normTransmissivity, currentDateTime):
-    # waterTable
-    # for i in range(len(waterTableDepth)):
-    #    if currentDateTime > waterTableDate[i]:
-    #        C3DParameters.waterTableDepth = waterTableDepth[i]
+def computeOneHour(weatherIndex, isRedraw):
+    obsWeather = weatherData.loc[weatherIndex]
+    waterEvent = waterData.loc[weatherIndex]
+    currentDateTime = pd.to_datetime(obsWeather["timestamp"], unit='s')
+    normTransmissivity = computeNormTransmissivity(weatherData, weatherIndex, C3DStructure.latitude,
+                                                   C3DStructure.longitude)
 
     if not (np.isnan(obsWeather["air_temperature"])):
         airTemperature = obsWeather["air_temperature"]
+    else:
+        print("Missing data: airTemperature")
+
     if not (np.isnan(obsWeather["solar_radiation"])):
         globalSWRadiation = obsWeather["solar_radiation"]
+    else:
+        print("Missing data: solar_radiation")
+
     if not (np.isnan(obsWeather["air_humidity"])):
         airRelHumidity = obsWeather["air_humidity"]
+    else:
+        print("Missing data: air_humidity")
 
     if not (np.isnan(obsWeather["wind_speed"])):
         windSpeed_10m = obsWeather["wind_speed"]
     else:
         windSpeed_10m = 2.0
         print("Missing data: windspeed")
+
+    if not (np.isnan(waterEvent["precipitation"])):
+        precipitation = waterEvent["precipitation"]
+    else:
+        precipitation = 0
+        print("Missing data: precipitation")
 
     # evapotranspiration [mm m-2]
     ET0 = computeHourlyET0(C3DStructure.z, airTemperature, globalSWRadiation, airRelHumidity,
@@ -284,15 +304,18 @@ def computeOneHour(obsWeather, waterEvent, normTransmissivity, currentDateTime):
     initializeSinkSource(ALL)
     crop.setEvapotranspiration(currentDateTime, ET0)
 
-    precipitation = 0 if np.isnan(waterEvent["precipitation"]) else waterEvent["precipitation"]
-    irrigation = 0 if np.isnan(waterEvent["irrigation"]) else waterEvent["irrigation"]
-
     initializeSinkSource(ONLY_SURFACE)
-    waterBalance.currentPrec = precipitation  # [mm hour-1]
+    waterBalance.currentPrec = precipitation    # [mm hour-1]
     setRainfall(precipitation, 3600)
 
     if C3DParameters.assignIrrigation:
-        waterBalance.currentIrr = irrigation  # [l hour-1]
+        if not (np.isnan(waterEvent["irrigation"])):
+            irrigation = waterEvent["irrigation"]
+        else:
+            irrigation = 0
+            print("Missing data: irrigation")
+
+        waterBalance.currentIrr = irrigation    # [l hour-1]
         setDripIrrigation(irrigation, 3600)
 
     if (waterBalance.currentIrr > 0) or (waterBalance.currentPrec > 0):
@@ -301,5 +324,4 @@ def computeOneHour(obsWeather, waterEvent, normTransmissivity, currentDateTime):
     else:
         C3DParameters.deltaT_max = 3600
 
-    isRedraw = True
     compute(3600, isRedraw)

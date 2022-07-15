@@ -6,63 +6,45 @@ import rectangularMesh
 import numpy as np
 
 MAX_EVAPORATION_DEPTH = 0.15  # [m]
-maxRootFactor = 0.0
 
 
 class CCrop:
-    laiMin = NODATA  # [m2 m-2]
-    laiMax = NODATA  # [m2 m-2]
-    rootDepthZero = NODATA  # [m]
-    rootDepthMax = NODATA  # [m]
-    rootWidth = NODATA  # [m]
-    rootXDeformation = NODATA  # [-]
-    rootZDeformation = NODATA  # [-]
-    kcMax = NODATA  # [-]
-    fRAW = NODATA  # [-]
+    laiMonth = [float]          # [m2 m-2]
+    rootDepthZero = NODATA      # [m]
+    rootDepthMax = NODATA       # [m]
+    rootWidth = NODATA          # [m]
+    rootXDeformation = NODATA   # [-]
+    rootZDeformation = NODATA   # [-]
+    kcMax = NODATA              # [-]
+    fRAW = NODATA               # [-]
     currentLAI = NODATA
-    currentKc = NODATA
     currentRootDepth = NODATA
     currentRootLength = NODATA
 
-    def setMaxValues(self):
-        self.currentLAI = self.laiMax
-        self.currentKc = self.kcMax
+    def setMaxRootDepth(self):
         self.currentRootDepth = self.rootDepthMax
         self.currentRootLength = self.currentRootDepth - self.rootDepthZero
 
-    def setKiwifruit(self):
-        self.laiMin = 0.5  # [m2 m-2]
-        self.laiMax = 4.0  # [m2 m-2]
-        self.rootDepthZero = 0.1  # [m]
-        self.rootDepthMax = 0.7  # [m]
-        self.rootWidth = 2.2  # [m]
-        self.rootXDeformation = 0.5  # [-]
-        self.rootZDeformation = 0.5  # [-] 0:symmetric / 1:cardioid / 2:cardioid more accentuated
-        self.kcMax = 2.6  # [-]
-        self.fRAW = 0.50  # [-]
-        self.setMaxValues()
+    def setCurrentLAI(self, currentDate):
+        m = currentDate.month
+        lai0 = self.laiMonth[m - 1]
+        lai1 = self.laiMonth[m]
+        # TO DO improve for month length
+        self.currentLAI = lai0 + (lai1 - lai0) * (currentDate.day - 1) / 30
 
 
 # global variables
 myCrop = CCrop()
 rootDensity = []
 k_root = np.array([], np.float64)
+global SAT, FC, WP, HH, wsThreshold
+global maxRootFactor, x, y
 
 
-# todo improve with LAI curve
-def getCurrentLAI(crop, currentDate):
-    if 3 <= currentDate.month <= 9:
-        return crop.laiMax
-    else:
-        return crop.laiMin
-
-
-def initializeCrop(plantConfiguration):
+def initializeCrop():
     global rootDensity, k_root, maxRootFactor
     global SAT, FC, WP, HH, wsThreshold
-
-    # todo sostituire
-    myCrop.setKiwifruit()
+    global x, y
 
     SAT = soil.horizon.thetaS  # [m3 m-3] water content at saturation
     FC = soil.getFieldCapacityWC()  # [m3 m-3] water content at field capacity
@@ -75,13 +57,9 @@ def initializeCrop(plantConfiguration):
     if C3DParameters.computeTranspiration:
         # line plant
         max_distance = myCrop.rootWidth * 0.5
-        x1 = plantConfiguration.iloc[0]['plant_x']
-        y1 = plantConfiguration.iloc[0]['plant_y']
-        x2 = plantConfiguration.iloc[1]['plant_x']
-        y2 = plantConfiguration.iloc[1]['plant_y']
-        a = y2 - y1
-        b = x1 - x2
-        c = y1 * (x2 - x1) - x1 * (y2 - y1)
+        a = y[1] - y[0]
+        b = x[0] - x[1]
+        c = y[0] * (x[1] - x[0]) - x[0] * (y[1] - y[0])
         denominator = math.sqrt(a * a + b * b)
 
         for i in range(C3DStructure.nrRectangles):
@@ -98,6 +76,7 @@ def initializeCrop(plantConfiguration):
 
     # set root density
     rootDensity.clear()
+    maxRootFactor = 0
     for i in range(C3DStructure.nrRectangles):
         rootDensity.append(computeRootDensity(myCrop, C3DStructure.nrLayers, k_root[i]))
         # update max root factor
@@ -344,7 +323,7 @@ def setEvaporation(surfaceIndex, maxEvaporation):
 
 
 def setEvapotranspiration(currentDate, ET0):
-    myCrop.currentLAI = getCurrentLAI(myCrop, currentDate)
+    myCrop.setCurrentLAI(currentDate)
     if C3DParameters.computeTranspiration:
         for i in range(C3DStructure.nrRectangles):
             maxTranspiration = getMaxTranspiration(myCrop.currentLAI, myCrop.kcMax, ET0) * k_root[i]

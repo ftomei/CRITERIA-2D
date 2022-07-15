@@ -1,18 +1,15 @@
+import pandas as pd
+import os
+import time
+
 from dataStructures import *
 import soil
 import waterBalance
-import rectangularMesh
 import criteria3D
 import visual3D
-import os
-from PenmanMonteith import computeHourlyET0
-from transmissivity import computeNormTransmissivity
 import exportUtils
 import importUtils
-import pandas as pd
-import numpy as np
 import crop
-import time
 
 
 def main():
@@ -20,17 +17,18 @@ def main():
     print(os.getcwd())
     projectPath = os.path.join("data", "errano")
     settingsFolder = os.path.join(projectPath, "settings")
-    waterFolder = os.path.join(projectPath, "water")
     weatherFolder = os.path.join(projectPath, "meteo")
+    waterFolder = os.path.join(projectPath, "water")
     obsDataFolder = os.path.join(projectPath, "obs_data")
     stateFolder = os.path.join(projectPath, "state")
     outputFolder = os.path.join(projectPath, "output")
 
+    print("Read field settings...")
     fieldSettings = os.path.join(settingsFolder, "field.ini")
-    if not importUtils.setField(fieldSettings):
+    if not importUtils.readFieldParameters(fieldSettings):
         return
 
-    # Soil
+    # todo modificare
     print("Load soil...")
     soilFile = "soil.txt"
     soilPath = os.path.join(settingsFolder, soilFile)
@@ -45,41 +43,46 @@ def main():
     criteria3D.memoryAllocation(C3DStructure.nrLayers, C3DStructure.nrRectangles)
     print("Nr. of cells: ", C3DStructure.nrCells)
 
-    # todo modificare
-    plantConfiguration = pd.read_csv(os.path.join(settingsFolder, "plant.csv"))
-    crop.initializeCrop(plantConfiguration)
+    print("Read crop settings...")
+    cropSettings = os.path.join(settingsFolder, "crop.ini")
+    if not importUtils.readCropParameters(cropSettings):
+        return
+    crop.initializeCrop()
 
+    print("Initialize mesh...")
     criteria3D.initializeMesh()
+
     waterBalance.initializeBalance()
     print("Initial water storage [m^3]:", format(waterBalance.currentStep.waterStorage, ".3f"))
 
-    print("Read weather data...")
+    print("Read weather and irrigation data...")
     weatherData = importUtils.readMeteoData(weatherFolder)
-
-    print("Read precipitation and irrigation data...")
     waterData = importUtils.readWaterData(waterFolder, weatherData.iloc[0]["timestamp"],
                                           weatherData.iloc[-1]["timestamp"])
     weatherData.set_index(["timestamp"])
     waterData.set_index(["timestamp"])
-    weatherData, waterData = importUtils.transformDates(weatherData, waterData)
+    criteria3D.weatherData, criteria3D.waterData = importUtils.transformDates(weatherData, waterData)
     print("Total simulation time [hours]:", len(weatherData))
 
     # initialize export
     exportUtils.createExportFile(outputFolder)
     modelStateFileName = os.path.join(stateFolder, "modelState.bin")
 
+    if C3DParameters.isPeriodicAssimilation or C3DParameters.isFirstAssimilation:
+        print("Read observed water potential...")
+        obsWaterPotential = pd.read_csv(os.path.join(obsDataFolder, "waterPotential.csv"))
+        obsFileName = os.path.join(stateFolder, "obsState.csv")
+
     weatherIndex = 1
     if C3DParameters.isFirstAssimilation:
         print("Assimilate observed water potential...")
-        obsWaterPotential = pd.read_csv(os.path.join(obsDataFolder, "waterPotential.csv"))
-        obsFileName = os.path.join(stateFolder, "obsState.csv")
         obsWeather = weatherData.loc[weatherIndex]
         importUtils.writeObsData(obsFileName, obsWaterPotential, obsWeather["timestamp"])
         importUtils.loadObsData(obsFileName)
 
     visual3D.initialize(1200)
-    # wait for start (press 'r')
     visual3D.isPause = True
+    # wait for start (press 'r')
     while visual3D.isPause:
         time.sleep(0.00001)
 
@@ -87,13 +90,10 @@ def main():
     currentIndex = 1
     restartIndex = 1
     isFirstRun = True
+    isRedraw = True
     while weatherIndex < len(weatherData):
-        obsWeather = weatherData.loc[weatherIndex]
-        waterEvent = waterData.loc[weatherIndex]
-        currentDateTime = pd.to_datetime(obsWeather["timestamp"], unit='s')
-        normTransmissivity = computeNormTransmissivity(weatherData, weatherIndex, C3DStructure.latitude, C3DStructure.longitude)
-
-        criteria3D.computeOneHour(obsWeather, waterEvent, normTransmissivity, currentDateTime)
+        criteria3D.computeOneHour(weatherIndex, isRedraw)
+        obsWeather = criteria3D.weatherData.loc[weatherIndex]
 
         # assimilation
         if C3DParameters.isPeriodicAssimilation and not C3DParameters.isForecast:
@@ -117,7 +117,7 @@ def main():
         if C3DParameters.isForecast and currentIndex == C3DParameters.forecastPeriod:
             importUtils.loadModelState(modelStateFileName)
             # assimilation
-            obsWeather = weatherData.loc[restartIndex]
+            obsWeather = criteria3D.weatherData.loc[restartIndex]
             importUtils.writeObsData(obsFileName, obsWaterPotential, obsWeather["timestamp"])
             importUtils.loadObsData(obsFileName)
             # redraw
@@ -133,5 +133,6 @@ def main():
 
     visual3D.isPause = True
     print("\nEnd simulation.\n")
+
 
 main()
