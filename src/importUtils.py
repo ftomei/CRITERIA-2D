@@ -154,24 +154,96 @@ def readFieldParameters(fieldSettingsFilename):
     return True
 
 
-def readCropParameters(cropFilename):
+def readCropParameters(cropSettingsFilename):
     config = ConfigParser()
-    cropSettings = config.read(cropFilename)
+    cropSettings = config.read(cropSettingsFilename)
     if len(cropSettings) == 0:
-        print("ERROR! Missing field settings file: " + cropFilename)
+        print("ERROR!\nMissing crop settings file: " + cropSettingsFilename)
         return False
 
     # [LAI]
     try:
         laiStr = config.get('LAI', 'laiMonth').split(',')
     except:
-        print("ERROR! wrong LAI.laiMonth in crop settings.")
+        print("ERROR!\nMissing LAI.laiMonth in the crop settings: " + cropSettingsFilename)
         return False
     if len(laiStr) != 12:
-        print("ERROR! In crop settings: LAI.laiMonth must be 12 values.")
+        print("ERROR!\nWrong LAI.laiMonth in the crop settings: " + cropSettingsFilename)
+        print("Values must be 12")
         return False
 
-    crop.myCrop.laiMonth = [float(each) for each in laiStr]
+    try:
+        crop.currentCrop.laiMonth = [float(each) for each in laiStr]
+    except:
+        print("ERROR!\nWrong LAI.laiMonth values in the crop settings: " + cropSettingsFilename)
+        print("Values must be numeric.")
+        return False
+    
+    try:
+        crop.currentCrop.rootDepthZero = config.getfloat('root', 'rootDepthZero')
+    except:
+        crop.currentCrop.rootDepthZero = 0.05
+
+    try:
+        crop.currentCrop.rootDepthMax = config.getfloat('root', 'rootDepthMax')
+    except:
+        print("ERROR!\nWrong or missing root.rootDepthMax in the crop settings: " + cropSettingsFilename)
+        return False
+
+    if crop.currentCrop.rootDepthMax <= crop.currentCrop.rootDepthZero:
+        print("ERROR!\nWrong root.rootDepthMax in the crop settings: " + cropSettingsFilename)
+        print("rootDepthMax must be greater than rootDepthZero.")
+        return False
+
+    try:
+        crop.currentCrop.rootWidth = config.getfloat('root', 'rootWidth')
+    except:
+        print("ERROR!\nWrong or missing root.rootWidth in the crop settings: " + cropSettingsFilename)
+        return False
+    if crop.currentCrop.rootWidth <= 0:
+        print("ERROR!\nWrong root.rootWidth in the crop settings: " + cropSettingsFilename)
+        print("Value must be greater than zero.")
+        return False
+
+    try:
+        crop.currentCrop.rootXDeformation = config.getfloat('root', 'rootXDeformation')
+    except:
+        print("ERROR!\nWrong or missing root.rootXDeformation in the crop settings: " + cropSettingsFilename)
+        return False
+    if crop.currentCrop.rootXDeformation < 0 or crop.currentCrop.rootXDeformation > 1:
+        print("ERROR!\nWrong root.rootXDeformation in the crop settings: " + cropSettingsFilename)
+        print("Valid range: [0,1]")
+        return False
+
+    try:
+        crop.currentCrop.rootZDeformation = config.getfloat('root', 'rootZDeformation')
+    except:
+        print("ERROR!\nWrong or missing root.rootZDeformation in the crop settings: " + cropSettingsFilename)
+        return False
+    if crop.currentCrop.rootZDeformation < -1 or crop.currentCrop.rootZDeformation > 1:
+        print("ERROR!\nWrong root.rootZDeformation in the crop settings: " + cropSettingsFilename)
+        print("Valid range: [-1,1]")
+        return False
+
+    try:
+        crop.currentCrop.kcMax = config.getfloat('transpiration', 'kcMax')
+    except:
+        print("ERROR!\nWrong or missing transpiration.kcMax in the crop settings: " + cropSettingsFilename)
+        return False
+    if crop.currentCrop.kcMax < 0:
+        print("ERROR!\nWrong transpiration.kcMax in the crop settings: " + cropSettingsFilename)
+        print("Value must be greater than zero.")
+        return False
+
+    try:
+        crop.currentCrop.fRAW = config.getfloat('transpiration', 'fRAW')
+    except:
+        print("ERROR!\nWrong or missing transpiration.fRAW in the crop settings: " + cropSettingsFilename)
+        return False
+    if crop.currentCrop.fRAW < 0 or crop.currentCrop.fRAW > 1:
+        print("ERROR!\nWrong transpiration.kcMax in the crop settings: " + cropSettingsFilename)
+        print("Valid range: [0,1]")
+        return False
 
     return True
 

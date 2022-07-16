@@ -9,7 +9,7 @@ def main():
     settingsFolder = os.path.join(dataPath, "settings")
 
     print("Load soil...")
-    soilFile = "soil.txt"
+    soilFile = "soil.csv"
     soilPath = os.path.join(settingsFolder, soilFile)
     soil.readHorizon(soilPath)
 

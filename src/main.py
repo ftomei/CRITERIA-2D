@@ -28,12 +28,9 @@ def main():
     if not importUtils.readFieldParameters(fieldSettings):
         return
 
-    # todo modificare
-    print("Load soil...")
-    soilFile = "soil.txt"
-    soilPath = os.path.join(settingsFolder, soilFile)
-    soil.readHorizon(soilPath)
-
+    print("read soil properties...")
+    soilSettings = os.path.join(settingsFolder, "soil.csv")
+    soil.readHorizon(soilSettings)
     C3DStructure.nrLayers, soil.depth, soil.thickness = soil.setLayers(C3DStructure.gridDepth,
                                                                        C3DParameters.minThickness,
                                                                        C3DParameters.maxThickness,
@@ -80,19 +77,19 @@ def main():
         importUtils.writeObsData(obsFileName, obsWaterPotential, obsWeather["timestamp"])
         importUtils.loadObsData(obsFileName)
 
-    visual3D.initialize(1200)
-    visual3D.isPause = True
-    # wait for start (press 'r')
-    while visual3D.isPause:
-        time.sleep(0.00001)
+    if C3DParameters.isVisual:
+        visual3D.initialize(1200)
+        visual3D.isPause = True
+        # wait for start (press 'r')
+        while visual3D.isPause:
+            time.sleep(0.00001)
 
     # main cycle
     currentIndex = 1
     restartIndex = 1
     isFirstRun = True
-    isRedraw = True
     while weatherIndex < len(weatherData):
-        criteria3D.computeOneHour(weatherIndex, isRedraw)
+        criteria3D.computeOneHour(weatherIndex, C3DParameters.isVisual)
         obsWeather = criteria3D.weatherData.loc[weatherIndex]
 
         # assimilation
@@ -115,14 +112,16 @@ def main():
 
         # restart
         if C3DParameters.isForecast and currentIndex == C3DParameters.forecastPeriod:
+            print("Restart...")
             importUtils.loadModelState(modelStateFileName)
             # assimilation
             obsWeather = criteria3D.weatherData.loc[restartIndex]
             importUtils.writeObsData(obsFileName, obsWaterPotential, obsWeather["timestamp"])
             importUtils.loadObsData(obsFileName)
             # redraw
-            waterBalance.totalTime = restartIndex * 3600
-            visual3D.redraw()
+            if C3DParameters.isVisual:
+                waterBalance.totalTime = restartIndex * 3600
+                visual3D.redraw()
             # re-initialize index
             weatherIndex = restartIndex + 1
             currentIndex = 1

@@ -95,15 +95,13 @@ class C3DParameters:
 
     initialWaterPotential = -4.0  # [m]
 
-    # infiltration
-    computeInfiltration = True
-
     # soil layers thickness
     minThickness = 0.01                 # [m]
     maxThickness = 0.04                 # [m]
     maxThicknessAt = 0.2                # [m]
 
-    # sink-source
+    # processes
+    computeInfiltration = True
     assignIrrigation = True
     computeEvaporation = True
     computeTranspiration = True
@@ -115,7 +113,7 @@ class C3DParameters:
 
     # boundary
     isSurfaceRunoff = False
-    isFreeLateralDrainage = False
+    isFreeLateralDrainage = True
     isFreeDrainage = True
     isWaterTable = False
     waterTableDepth = -6.0              # [m]
@@ -130,10 +128,11 @@ class C3DParameters:
     MBRThreshold = 1E-5
 
     # simulation type
-    isFirstAssimilation = True
-    isPeriodicAssimilation = False
-    assimilationInterval = 24
     isForecast = False
+    isFirstAssimilation = True
+    isPeriodicAssimilation = True
+    isVisual = False
+    assimilationInterval = 24 * 2
     forecastPeriod = 24 * 7
 
 

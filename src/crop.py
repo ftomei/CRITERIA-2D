@@ -34,7 +34,7 @@ class CCrop:
 
 
 # global variables
-myCrop = CCrop()
+currentCrop = CCrop()
 rootDensity = []
 k_root = np.array([], np.float64)
 global SAT, FC, WP, HH, wsThreshold
@@ -42,43 +42,43 @@ global maxRootFactor, x, y
 
 
 def initializeCrop():
-    global rootDensity, k_root, maxRootFactor
+    global k_root, rootDensity, maxRootFactor
     global SAT, FC, WP, HH, wsThreshold
     global x, y
+
+    currentCrop.setMaxRootDepth()
 
     SAT = soil.horizon.thetaS  # [m3 m-3] water content at saturation
     FC = soil.getFieldCapacityWC()  # [m3 m-3] water content at field capacity
     WP = soil.getWiltingPointWC()  # [m3 m-3] water content at wilting point
     HH = soil.getHygroscopicWC()  # [m3 m-3] water content at Hygroscopic moisture
-    wsThreshold = FC - myCrop.fRAW * (FC - WP)  # [m3 m-3] water scarcity stress threshold
+    wsThreshold = FC - currentCrop.fRAW * (FC - WP)  # [m3 m-3] water scarcity stress threshold
 
     # initialize root factor
     k_root = np.zeros(C3DStructure.nrRectangles)
-    if C3DParameters.computeTranspiration:
-        # line plant
-        max_distance = myCrop.rootWidth * 0.5
-        a = y[1] - y[0]
-        b = x[0] - x[1]
-        c = y[0] * (x[1] - x[0]) - x[0] * (y[1] - y[0])
-        denominator = math.sqrt(a * a + b * b)
 
-        for i in range(C3DStructure.nrRectangles):
-            [x, y, z] = rectangularMesh.C3DRM[i].centroid
-            line_distance = math.fabs(a * x + b * y + c) / denominator
+    # distance from plant row (x axis)
+    max_distance = currentCrop.rootWidth * 0.5
+    a = y[1] - y[0]
+    b = x[0] - x[1]
+    c = y[0] * (x[1] - x[0]) - x[0] * (y[1] - y[0])
+    denominator = math.sqrt(a * a + b * b)
 
-            if line_distance < max_distance or math.fabs(line_distance - max_distance) < EPSILON:
-                factor = 1.0 - line_distance / (max_distance * 0.5)
-                k_root[i] = 1.0 + factor * myCrop.rootXDeformation
-            else:
-                k_root[i] = 0.0
-    else:
-        myCrop.currentLAI = 0
+    for i in range(C3DStructure.nrRectangles):
+        [x, y, z] = rectangularMesh.C3DRM[i].centroid
+        line_distance = math.fabs(a * x + b * y + c) / denominator
+
+        if line_distance < max_distance or math.fabs(line_distance - max_distance) < EPSILON:
+            factor = 1.0 - line_distance / (max_distance * 0.5)
+            k_root[i] = 1.0 + factor * currentCrop.rootXDeformation
+        else:
+            k_root[i] = 0.0
 
     # set root density
     rootDensity.clear()
     maxRootFactor = 0
     for i in range(C3DStructure.nrRectangles):
-        rootDensity.append(computeRootDensity(myCrop, C3DStructure.nrLayers, k_root[i]))
+        rootDensity.append(computeRootDensity(currentCrop, C3DStructure.nrLayers, k_root[i]))
         # update max root factor
         for layer in range(1, C3DStructure.nrLayers):
             root_factor = k_root[i] * rootDensity[i][layer] / soil.thickness[layer]
@@ -323,13 +323,13 @@ def setEvaporation(surfaceIndex, maxEvaporation):
 
 
 def setEvapotranspiration(currentDate, ET0):
-    myCrop.setCurrentLAI(currentDate)
+    currentCrop.setCurrentLAI(currentDate)
     if C3DParameters.computeTranspiration:
         for i in range(C3DStructure.nrRectangles):
-            maxTranspiration = getMaxTranspiration(myCrop.currentLAI, myCrop.kcMax, ET0) * k_root[i]
+            maxTranspiration = getMaxTranspiration(currentCrop.currentLAI, currentCrop.kcMax, ET0) * k_root[i]
             setTranspiration(i, rootDensity[i], maxTranspiration)
 
     if C3DParameters.computeEvaporation:
-        maxEvaporation = getMaxEvaporation(myCrop.currentLAI, ET0)
+        maxEvaporation = getMaxEvaporation(currentCrop.currentLAI, ET0)
         for i in range(C3DStructure.nrRectangles):
             setEvaporation(i, maxEvaporation)
