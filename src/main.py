@@ -23,6 +23,11 @@ def main():
     stateFolder = os.path.join(projectPath, "state")
     outputFolder = os.path.join(projectPath, "output")
 
+    print("Read model settings...")
+    modelSettings = os.path.join(settingsFolder, "settings.ini")
+    if not importUtils.readModelParameters(modelSettings):
+        return
+
     print("Read field settings...")
     fieldSettings = os.path.join(settingsFolder, "field.ini")
     if not importUtils.readFieldParameters(fieldSettings):

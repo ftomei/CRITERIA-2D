@@ -12,6 +12,38 @@ import rectangularMesh
 import crop
 
 
+def readModelParameters(settingsFilename):
+    config = ConfigParser()
+    modelSettings = config.read(settingsFilename)
+    if len(modelSettings) == 0:
+        print("ERROR!\nMissing model settings file: " + settingsFilename)
+        return False
+
+    try:
+        C3DParameters.waterRetentionCurve = config.getint('model', 'waterRetentionCurve')
+    except:
+        print("ERROR!\nWrong or missing model.waterRetentionCurve in the model settings: " + settingsFilename)
+        return False
+    if C3DParameters.waterRetentionCurve != 1 and C3DParameters.waterRetentionCurve != 2:
+        print("ERROR!\nWrong model.waterRetentionCurve in the model settings: " + settingsFilename)
+        print("Valid values:  1 Campbell  2 modified Van Genuchten")
+        return False
+
+    try:
+        C3DParameters.isVisual = config.getboolean('simulation_type', 'isVisual')
+    except:
+        C3DParameters.isVisual = True
+
+    # water retention curve  1: Campbell  2: Modified Van Genuchten
+    waterRetentionCurve = 2
+    # water conductivity averaging method  1: LOGARITHMIC 2: HARMONIC 3: GEOMETRIC
+    conductivityMean = 1
+    # water conductivity horizontal/vertical ratio
+    conductivityHVRatio = 1.0
+
+    return True
+
+
 def readFieldParameters(fieldSettingsFilename):
     config = ConfigParser()
     fieldSettings = config.read(fieldSettingsFilename)

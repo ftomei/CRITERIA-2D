@@ -147,7 +147,7 @@ def airEntryPotential(curve):
 
 def waterPotential(curve, Se):
     if curve == CAMPBELL:
-        return horizon.Campbell_he * Se ** (-horizon.Campbell_b)
+        return -horizon.Campbell_he * Se ** (-horizon.Campbell_b)
     elif curve == IPPISCH_VG:
         return -(1. / horizon.VG_alpha) * ((1. / (Se * horizon.VG_Sc))
                                            ** (1. / horizon.VG_m) - 1.) ** (1. / horizon.VG_n)
@@ -171,7 +171,7 @@ def degreeOfSaturation(curve, signPsi):
 
     Se = NODATA
     if curve == CAMPBELL:
-        Se = pow(signPsi / horizon.Campbell_he, -1. / horizon.Campbell_b)
+        Se = pow(fabs(signPsi) / horizon.Campbell_he, -1. / horizon.Campbell_b)
     elif curve == IPPISCH_VG:
         Se = (1. / horizon.VG_Sc) * pow(1. + pow(horizon.VG_alpha
                                                  * fabs(signPsi), horizon.VG_n), -horizon.VG_m)

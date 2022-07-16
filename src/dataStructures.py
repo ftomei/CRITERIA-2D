@@ -130,9 +130,9 @@ class C3DParameters:
     # simulation type
     isForecast = False
     isFirstAssimilation = True
-    isPeriodicAssimilation = True
-    isVisual = False
-    assimilationInterval = 24 * 2
+    isPeriodicAssimilation = False
+    isVisual = True
+    assimilationInterval = 24 * 3
     forecastPeriod = 24 * 7
 
 
