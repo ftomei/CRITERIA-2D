@@ -23,23 +23,80 @@ def readModelParameters(settingsFilename):
         C3DParameters.waterRetentionCurve = config.getint('model', 'waterRetentionCurve')
     except:
         print("ERROR!\nWrong or missing model.waterRetentionCurve in the model settings: " + settingsFilename)
+        print("Valid values: 1 Campbell  2 modified Van Genuchten")
         return False
     if C3DParameters.waterRetentionCurve != 1 and C3DParameters.waterRetentionCurve != 2:
         print("ERROR!\nWrong model.waterRetentionCurve in the model settings: " + settingsFilename)
-        print("Valid values:  1 Campbell  2 modified Van Genuchten")
+        print("Valid values: 1 Campbell  2 modified Van Genuchten")
         return False
+
+    try:
+        C3DParameters.conductivityMean = config.getint('model', 'conductivityMean')
+    except:
+        print("ERROR!\nWrong or missing model.conductivityMean in the model settings: " + settingsFilename)
+        print("Valid values: 1 LOGARITHMIC 2 HARMONIC 3 GEOMETRIC")
+        return False
+    if C3DParameters.conductivityMean < 1 or C3DParameters.conductivityMean > 3:
+        print("ERROR!\nWrong model.conductivityMean in the model settings: " + settingsFilename)
+        print("Valid values: 1 LOGARITHMIC 2 HARMONIC 3 GEOMETRIC")
+        return False
+
+    try:
+        C3DParameters.conductivityHVRatio = config.getfloat('model', 'conductivityHVRatio')
+    except:
+        print("ERROR!\nWrong or missing model.conductivityHVRatio in the model settings: " + settingsFilename)
+        print("Valid values: ]0,10]")
+        return False
+    if C3DParameters.conductivityHVRatio <= 0 or C3DParameters.conductivityHVRatio > 10:
+        print("ERROR!\nWrong model.conductivityHVRatio in the model settings: " + settingsFilename)
+        print("Valid values: ]0,10]")
+        return False
+
+    try:
+        C3DParameters.isForecast = config.getboolean('simulation_type', 'isForecast')
+    except:
+        print("WARNING!\nWrong simulation_type.isForecast in the model settings: " + settingsFilename)
+        print("set to isForecast = False")
+        C3DParameters.isForecast = False
+
+    try:
+        C3DParameters.isFirstAssimilation = config.getboolean('simulation_type', 'isFirstAssimilation')
+    except:
+        print("WARNING!\nWrong simulation_type.isFirstAssimilation in the model settings: " + settingsFilename)
+        print("set to isFirstAssimilation = False")
+        C3DParameters.isFirstAssimilation = False
+
+    try:
+        C3DParameters.isPeriodicAssimilation = config.getboolean('simulation_type', 'isPeriodicAssimilation')
+    except:
+        print("WARNING!\nWrong simulation_type.isPeriodicAssimilation in the model settings: " + settingsFilename)
+        print("set to isPeriodicAssimilation = False")
+        C3DParameters.isPeriodicAssimilation = False
 
     try:
         C3DParameters.isVisual = config.getboolean('simulation_type', 'isVisual')
     except:
         C3DParameters.isVisual = True
 
-    # water retention curve  1: Campbell  2: Modified Van Genuchten
-    waterRetentionCurve = 2
-    # water conductivity averaging method  1: LOGARITHMIC 2: HARMONIC 3: GEOMETRIC
-    conductivityMean = 1
-    # water conductivity horizontal/vertical ratio
-    conductivityHVRatio = 1.0
+    try:
+        C3DParameters.assimilationInterval = config.getint('simulation_type', 'assimilationInterval')
+    except:
+        C3DParameters.assimilationInterval = NODATA
+    if C3DParameters.isPeriodicAssimilation or C3DParameters.isForecast:
+        if C3DParameters.assimilationInterval == NODATA or C3DParameters.assimilationInterval < 1:
+            print("ERROR!\nWrong or missing simulation_type.assimilationInterval in the model settings: " + settingsFilename)
+            print("Valid values: greater than or equal to 1 hour")
+            return False
+
+    try:
+        C3DParameters.forecastPeriod = config.getint('simulation_type', 'forecastPeriod')
+    except:
+        C3DParameters.forecastPeriod = NODATA
+    if C3DParameters.isForecast:
+        if C3DParameters.forecastPeriod == NODATA or C3DParameters.forecastPeriod < 24:
+            print("ERROR!\nWrong or missing simulation_type.forecastPeriod in the model settings: " + settingsFilename)
+            print("Valid values: greater than or equal to 24 hours")
+            return False
 
     return True
 

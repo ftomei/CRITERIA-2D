@@ -121,7 +121,8 @@ class C3DParameters:
     # numerical solution parameters
     currentDeltaT = 60.0                # [s]
     deltaT_min = 1                      # [s]
-    deltaT_max = 600.0                  # [s]
+    deltaT_max = 3600.0                 # [s]
+    currentDeltaT_max = deltaT_max      # [s]
     maxIterationsNr = 100
     maxApproximationsNr = 10
     residualTolerance = 1E-12
@@ -132,7 +133,7 @@ class C3DParameters:
     isFirstAssimilation = True
     isPeriodicAssimilation = False
     isVisual = True
-    assimilationInterval = 24 * 3
+    assimilationInterval = 24
     forecastPeriod = 24 * 7
 
 

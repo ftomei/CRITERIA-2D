@@ -31,7 +31,7 @@ def doubleTimeStep():
         decMBRThreshold()
     else:
         C3DParameters.currentDeltaT = min(C3DParameters.currentDeltaT * 2.0,
-                                          C3DParameters.deltaT_max)
+                                          C3DParameters.currentDeltaT_max)
 
 
 def halveTimeStep():
@@ -156,7 +156,7 @@ def waterBalance(deltaT, approximation):
     if currentStep.MBR < C3DParameters.MBRThreshold:
         updateBalance(deltaT)
         if approximation < 3 and maxCourant < 0.3 and currentStep.MBR < (C3DParameters.MBRThreshold * 0.5) \
-                and C3DParameters.currentDeltaT < C3DParameters.deltaT_max:
+                and C3DParameters.currentDeltaT < C3DParameters.currentDeltaT_max:
             # print("Good MBR!")
             doubleTimeStep()
         return True

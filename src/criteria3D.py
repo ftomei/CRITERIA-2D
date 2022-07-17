@@ -318,10 +318,12 @@ def computeOneHour(weatherIndex, isRedraw):
         waterBalance.currentIrr = irrigation    # [l hour-1]
         setDripIrrigation(irrigation, 3600)
 
+    # reduce deltaT during water event
     if (waterBalance.currentIrr > 0) or (waterBalance.currentPrec > 0):
-        C3DParameters.deltaT_max = 300
-        C3DParameters.currentDeltaT = min(C3DParameters.currentDeltaT, C3DParameters.deltaT_max)
+        if C3DParameters.currentDeltaT_max > 300:
+            C3DParameters.currentDeltaT_max = 300
+            C3DParameters.currentDeltaT = min(C3DParameters.currentDeltaT, C3DParameters.currentDeltaT_max)
     else:
-        C3DParameters.deltaT_max = 3600
+        C3DParameters.currentDeltaT_max = C3DParameters.deltaT_max
 
     compute(3600, isRedraw)

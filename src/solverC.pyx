@@ -11,9 +11,9 @@
 from libc.stdlib cimport malloc, free
 from libc.math cimport fabs, sqrt, log
 
-cdef int LOGARITHMIC = 0
-cdef int HARMONIC = 1
-cdef int GEOMETRIC = 2
+cdef int LOGARITHMIC = 1
+cdef int HARMONIC = 2
+cdef int GEOMETRIC = 3
 
 cdef int NOLINK = -1
 
@@ -90,18 +90,19 @@ def set_indices(int i, short int j, int index):
     
 def set_A(int i, short int j, double value):
     A[i * nrLinks + j] = value
-    
-def meanK(int meanType, double k1, double k2):	
-    if (meanType == GEOMETRIC):
-        k = sqrt(k1 * k2)
+
+
+def meanK(int type, double k1, double k2):
+    if type == LOGARITHMIC:
+        if k1 != k2:
+            k = (k1 - k2) / log(k1 / k2)
+        else:
+            k = k1
     else:
-        if (meanType == HARMONIC): 
+        if type == GEOMETRIC:
+            k = sqrt(k1 * k2)
+        if type == HARMONIC:
             k = 2.0 / (1.0/k1 + 1.0/k2)
-        else: # LOGARITHMIC
-            if (k1 != k2):
-                k = (k1-k2) / log(k1/k2)
-            else:
-                k = k1
-	
+
     return k
 
