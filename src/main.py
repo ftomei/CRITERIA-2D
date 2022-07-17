@@ -75,10 +75,15 @@ def main():
         obsWaterPotential = pd.read_csv(os.path.join(obsDataFolder, "waterPotential.csv"))
         obsFileName = os.path.join(stateFolder, "obsState.csv")
 
+    # first assimilation
     weatherIndex = 1
     if C3DParameters.isFirstAssimilation:
-        print("Assimilate observed water potential...")
+        print("Assimilate observed water potential (first day)...")
         obsWeather = weatherData.loc[weatherIndex]
+        importUtils.writeObsData(obsFileName, obsWaterPotential, obsWeather["timestamp"])
+        importUtils.loadObsData(obsFileName)
+        for i in range(24):
+            criteria3D.computeOneHour(weatherIndex + i, False)
         importUtils.writeObsData(obsFileName, obsWaterPotential, obsWeather["timestamp"])
         importUtils.loadObsData(obsFileName)
 
@@ -90,9 +95,10 @@ def main():
             time.sleep(0.00001)
 
     # main cycle
+    print("Start...")
     currentIndex = 1
-    restartIndex = 1
     isFirstRun = True
+    restartIndex = weatherIndex
     while weatherIndex < len(weatherData):
         criteria3D.computeOneHour(weatherIndex, C3DParameters.isVisual)
         obsWeather = criteria3D.weatherData.loc[weatherIndex]
