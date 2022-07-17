@@ -78,13 +78,11 @@ def main():
     # first assimilation
     weatherIndex = 1
     if C3DParameters.isFirstAssimilation:
-        print("Assimilate observed water potential (first day)...")
+        print("Assimilate observed water potential (first hour)...")
         obsWeather = weatherData.loc[weatherIndex]
         importUtils.writeObsData(obsFileName, obsWaterPotential, obsWeather["timestamp"])
         importUtils.loadObsData(obsFileName)
-        for i in range(24):
-            criteria3D.computeOneHour(weatherIndex + i, False)
-        importUtils.writeObsData(obsFileName, obsWaterPotential, obsWeather["timestamp"])
+        criteria3D.computeOneHour(weatherIndex, False)
         importUtils.loadObsData(obsFileName)
 
     if C3DParameters.isVisual:

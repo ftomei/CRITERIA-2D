@@ -137,14 +137,14 @@ def readModelParameters(settingsFilename):
         C3DParameters.roughness = config.getfloat('surface_properties', 'roughness')
     except:
         print("WARNING!\nWrong or missing surface_properties.roughness in the model settings: " + settingsFilename)
-        print("set to roughness = 0.24 [s m-0.33]")
+        print("The default will be set: roughness = 0.24 [s m-0.33]")
         C3DParameters.roughness = 0.24
 
     try:
         C3DParameters.pond = config.getfloat('surface_properties', 'pond')
     except:
         print("WARNING!\nWrong or missing surface_properties.pond in the model settings: " + settingsFilename)
-        print("set to pond = 0.005 [m]")
+        print("The default will be set: pond = 0.005 [m]")
         C3DParameters.pond = 0.005
 
     # [simulation_type]
@@ -152,21 +152,26 @@ def readModelParameters(settingsFilename):
         C3DParameters.isForecast = config.getboolean('simulation_type', 'isForecast')
     except:
         print("WARNING!\nWrong or missing simulation_type.isForecast in the model settings: " + settingsFilename)
-        print("set to isForecast = False")
+        print("The default will be set: isForecast = False")
         C3DParameters.isForecast = False
 
     try:
         C3DParameters.isFirstAssimilation = config.getboolean('simulation_type', 'isFirstAssimilation')
     except:
         print("WARNING!\nWrong or missing simulation_type.isFirstAssimilation in the model settings: " + settingsFilename)
-        print("set to isFirstAssimilation = False")
+        print("The default will be set: isFirstAssimilation = False")
         C3DParameters.isFirstAssimilation = False
 
     try:
         C3DParameters.isPeriodicAssimilation = config.getboolean('simulation_type', 'isPeriodicAssimilation')
     except:
         print("WARNING!\nWrong or missing simulation_type.isPeriodicAssimilation in the model settings: " + settingsFilename)
-        print("set to isPeriodicAssimilation = False")
+        print("The default will be set: isPeriodicAssimilation = False")
+        C3DParameters.isPeriodicAssimilation = False
+
+    if C3DParameters.isPeriodicAssimilation and C3DParameters.isForecast:
+        print("WARNING!\nisPeriodicAssimilation and isForecast cannot both be assigned true in the model settings: " + settingsFilename)
+        print("The default will be set: isPeriodicAssimilation = False")
         C3DParameters.isPeriodicAssimilation = False
 
     try:
