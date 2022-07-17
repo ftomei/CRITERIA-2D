@@ -38,26 +38,28 @@ class CRectangle:
         self.centroid = getCentroid3D(self.v)
         self.area = getArea2D(self.v)
 
+        # initialize
+        self.isBoundary = False
+        self.boundarySide = NODATA
+        self.boundarySlope = NODATA
+
         self.neighbours, self.boundarySides, self.boundarySlopes = boundaryProperties(self.index, self.v, self.centroid)
 
         if NOLINK in self.neighbours:
-            self.isBoundary = True
             isFirst = True
             index = NOLINK
             for i in range(len(self.boundarySlopes)):
-                if self.boundarySlopes[i] != NODATA:
+                if self.boundarySlopes[i] != NODATA and self.boundarySlopes[i] > 0:
                     if isFirst:
                         index = i
                         isFirst = False
                     else:
-                        if abs(self.boundarySlopes[i]) > abs(self.boundarySlopes[index]):
+                        if self.boundarySlopes[i] > self.boundarySlopes[index]:
                             index = i
-            self.boundarySide = self.boundarySides[index]
-            self.boundarySlope = self.boundarySlopes[index]
-        else:
-            self.isBoundary = False
-            self.boundarySide = NODATA
-            self.boundarySlope = NODATA
+            if index != NOLINK:
+                self.isBoundary = True
+                self.boundarySide = self.boundarySides[index]
+                self.boundarySlope = self.boundarySlopes[index]
 
 
 def rectangularMeshCreation():

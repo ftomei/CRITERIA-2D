@@ -93,8 +93,6 @@ class C3DParameters:
     conductivityMean = LOGARITHMIC
     conductivityHVRatio = 1.0
 
-    initialWaterPotential = -4.0  # [m]
-
     # soil layers thickness
     minThickness = 0.01                 # [m]
     maxThickness = 0.04                 # [m]
@@ -116,7 +114,10 @@ class C3DParameters:
     isFreeLateralDrainage = True
     isFreeDrainage = True
     isWaterTable = False
-    waterTableDepth = -6.0              # [m]
+
+    # initial conditions
+    initialWaterPotential = -3.0        # [m]
+    waterTableDepth = -3.0              # [m]
 
     # numerical solution parameters
     currentDeltaT = 60.0                # [s]

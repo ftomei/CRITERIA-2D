@@ -52,24 +52,120 @@ def readModelParameters(settingsFilename):
         print("Valid values: ]0,10]")
         return False
 
+    # [processes]
+    try:
+        C3DParameters.computeInfiltration = config.getboolean('processes', 'computeInfiltration')
+    except:
+        print("WARNING!\nWrong or missing processes.computeInfiltration in the model settings: " + settingsFilename)
+        print("The default will be set: computeInfiltration = True")
+        C3DParameters.computeInfiltration = True
+
+    try:
+        C3DParameters.computeSurfaceFlow = config.getboolean('processes', 'computeSurfaceFlow')
+    except:
+        print("WARNING!\nWrong or missing processes.computeSurfaceFlow in the model settings: " + settingsFilename)
+        print("The default will be set: computeSurfaceFlow = False")
+        C3DParameters.computeSurfaceFlow = False
+
+    try:
+        C3DParameters.computeEvaporation = config.getboolean('processes', 'computeEvaporation')
+    except:
+        print("WARNING!\nWrong or missing processes.computeEvaporation in the model settings: " + settingsFilename)
+        print("The default will be set: computeEvaporation = True")
+        C3DParameters.computeEvaporation = True
+
+    try:
+        C3DParameters.computeTranspiration = config.getboolean('processes', 'computeTranspiration')
+    except:
+        print("WARNING!\nWrong or missing processes.computeTranspiration in the model settings: " + settingsFilename)
+        print("The default will be set: computeTranspiration = True")
+        C3DParameters.computeTranspiration = True
+
+    try:
+        C3DParameters.assignIrrigation = config.getboolean('processes', 'assignIrrigation')
+    except:
+        print("WARNING!\nWrong or missing processes.assignIrrigation in the model settings: " + settingsFilename)
+        print("The default will be set: assignIrrigation = True")
+        C3DParameters.assignIrrigation = True
+
+    # [boundary]
+    try:
+        C3DParameters.isFreeDrainage = config.getboolean('boundary', 'isFreeDrainage')
+    except:
+        print("WARNING!\nWrong or missing boundary.isFreeDrainage in the model settings: " + settingsFilename)
+        print("The default will be set: isFreeDrainage = True")
+        C3DParameters.isFreeDrainage = True
+
+    try:
+        C3DParameters.isFreeLateralDrainage = config.getboolean('boundary', 'isFreeLateralDrainage')
+    except:
+        print("WARNING!\nWrong or missing boundary.isFreeLateralDrainage in the model settings: " + settingsFilename)
+        print("The default will be set: isFreeLateralDrainage = True")
+        C3DParameters.isFreeLateralDrainage = True
+
+    try:
+        C3DParameters.isSurfaceRunoff = config.getboolean('boundary', 'isSurfaceRunoff')
+    except:
+        print("WARNING!\nWrong or missing boundary.isSurfaceRunoff in the model settings: " + settingsFilename)
+        print("The default will be set: isSurfaceRunoff = False")
+        C3DParameters.isSurfaceRunoff = False
+
+    try:
+        C3DParameters.isWaterTable = config.getboolean('boundary', 'isWaterTable')
+    except:
+        print("WARNING!\nWrong or missing boundary.isWaterTable in the model settings: " + settingsFilename)
+        print("The default will be set: isWaterTable = False")
+        C3DParameters.isWaterTable = False
+
+    # [initial_conditions]
+    try:
+        C3DParameters.initialWaterPotential = config.getfloat('initial_conditions', 'initialWaterPotential')
+    except:
+        print("WARNING!\nWrong or missing initial_conditions.initialWaterPotential in the model settings: " + settingsFilename)
+        print("The default will be set: initialWaterPotential = -3.0 [m]")
+        C3DParameters.initialWaterPotential = -3.0
+
+    try:
+        C3DParameters.waterTableDepth = config.getfloat('initial_conditions', 'waterTableDepth')
+    except:
+        print("WARNING!\nWrong or missing initial_conditions.waterTableDepth in the model settings: " + settingsFilename)
+        print("The default will be set: waterTableDepth = -3.0 [m]")
+        C3DParameters.waterTableDepth = -3.0
+
+    # [surface_properties]
+    try:
+        C3DParameters.roughness = config.getfloat('surface_properties', 'roughness')
+    except:
+        print("WARNING!\nWrong or missing surface_properties.roughness in the model settings: " + settingsFilename)
+        print("set to roughness = 0.24 [s m-0.33]")
+        C3DParameters.roughness = 0.24
+
+    try:
+        C3DParameters.pond = config.getfloat('surface_properties', 'pond')
+    except:
+        print("WARNING!\nWrong or missing surface_properties.pond in the model settings: " + settingsFilename)
+        print("set to pond = 0.005 [m]")
+        C3DParameters.pond = 0.005
+
+    # [simulation_type]
     try:
         C3DParameters.isForecast = config.getboolean('simulation_type', 'isForecast')
     except:
-        print("WARNING!\nWrong simulation_type.isForecast in the model settings: " + settingsFilename)
+        print("WARNING!\nWrong or missing simulation_type.isForecast in the model settings: " + settingsFilename)
         print("set to isForecast = False")
         C3DParameters.isForecast = False
 
     try:
         C3DParameters.isFirstAssimilation = config.getboolean('simulation_type', 'isFirstAssimilation')
     except:
-        print("WARNING!\nWrong simulation_type.isFirstAssimilation in the model settings: " + settingsFilename)
+        print("WARNING!\nWrong or missing simulation_type.isFirstAssimilation in the model settings: " + settingsFilename)
         print("set to isFirstAssimilation = False")
         C3DParameters.isFirstAssimilation = False
 
     try:
         C3DParameters.isPeriodicAssimilation = config.getboolean('simulation_type', 'isPeriodicAssimilation')
     except:
-        print("WARNING!\nWrong simulation_type.isPeriodicAssimilation in the model settings: " + settingsFilename)
+        print("WARNING!\nWrong or missing simulation_type.isPeriodicAssimilation in the model settings: " + settingsFilename)
         print("set to isPeriodicAssimilation = False")
         C3DParameters.isPeriodicAssimilation = False
 
