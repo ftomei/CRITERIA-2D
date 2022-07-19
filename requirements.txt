@@ -1,0 +1,7 @@
+numpy
+pandas
+flaml[blendsearch]
+openml
+matplotlib
+Cython
+vpython
