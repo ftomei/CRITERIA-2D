@@ -34,6 +34,7 @@ def configToDict(settingsFilename, params):
 
 def readModelParameters(settingsFilename, params):
     configDict = configToDict(settingsFilename, params)
+    print(f"model parameters: {configDict}")
 
     try:
         C3DParameters.waterRetentionCurve = configDict['model']['waterRetentionCurve']
@@ -220,6 +221,7 @@ def readModelParameters(settingsFilename, params):
 
 def readFieldParameters(fieldSettingsFilename, params):
     configDict = configToDict(fieldSettingsFilename, params)
+    print(f"field parameters: {configDict}")
 
     # [location]
     try:
@@ -342,6 +344,7 @@ def readFieldParameters(fieldSettingsFilename, params):
 
 def readCropParameters(cropSettingsFilename, params):
     configDict = configToDict(cropSettingsFilename, params)
+    print(f"crop parameters: {configDict}")
 
     # [LAI]
     if len(configDict['LAI']['laiMonth']) != 12:

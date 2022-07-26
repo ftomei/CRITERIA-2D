@@ -16,8 +16,8 @@ import argparse
 
 def main(args):
     # path
-    print(os.getcwd())
-    print(args)
+    print(f"pwd: {os.getcwd()}")
+    print(f"args: {args}")
     settingsFolder = os.path.join(args.path, "settings")
     weatherFolder = os.path.join(args.path, "meteo")
     waterFolder = os.path.join(args.path, "water")
@@ -31,6 +31,7 @@ def main(args):
         params = {}
     iterations_str = f"_{args.iteration}" if args.iteration != -1 else ""
     params["iteration"] = args.iteration
+    print(f"tuning params: {params}")
 
     print("Read model settings...")
     modelSettings = os.path.join(settingsFolder, "settings.ini")
@@ -44,7 +45,7 @@ def main(args):
 
     print("read soil properties...")
     soilSettings = os.path.join(settingsFolder, "soil.csv")
-    soil.readHorizon(soilSettings)
+    soil.readHorizon(soilSettings, params)
     C3DStructure.nrLayers, soil.depth, soil.thickness = soil.setLayers(C3DStructure.gridDepth,
                                                                        C3DParameters.minThickness,
                                                                        C3DParameters.maxThickness,
@@ -77,15 +78,15 @@ def main(args):
 
     # initialize export
     exportUtils.createExportFile(outputFolder, settingsFolder, params["iteration"])
-    modelStateFileName = os.path.join(stateFolder, f"modelState_{iterations_str}.bin")
+    modelStateFileName = os.path.join(stateFolder, f"modelState{iterations_str}.bin")
 
     if C3DParameters.isPeriodicAssimilation or C3DParameters.isFirstAssimilation:
         print("Read observed water potential...")
         obsWaterPotential = pd.read_csv(os.path.join(obsDataFolder, f"waterPotential.csv"))
-        obsFileName = os.path.join(stateFolder, f"obsState_{iterations_str}.csv")
+        obsFileName = os.path.join(stateFolder, f"obsState{iterations_str}.csv")
 
     # first assimilation
-    weatherIndex = 1
+    weatherIndex = 0
     if C3DParameters.isFirstAssimilation:
         print("Assimilate observed water potential (first hour)...")
         obsWeather = weatherData.loc[weatherIndex]
@@ -122,7 +123,7 @@ def main(args):
             restartIndex = weatherIndex
 
         # save output
-        if not C3DParameters.isForecast or isFirstRun:
+        if not C3DParameters.isForecast: #or isFirstRun:
             exportUtils.takeScreenshot(obsWeather["timestamp"])
         else:
             if currentIndex > (C3DParameters.forecastPeriod - C3DParameters.assimilationInterval):
