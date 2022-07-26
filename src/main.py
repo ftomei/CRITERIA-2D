@@ -23,7 +23,9 @@ def main(args):
     waterFolder = os.path.join(args.path, "water")
     obsDataFolder = os.path.join(args.path, "obs_data")
     stateFolder = os.path.join(args.path, "state")
+    if not os.path.exists(stateFolder): os.makedirs(stateFolder)
     outputFolder = os.path.join(args.path, "output")
+    if not os.path.exists(outputFolder): os.makedirs(outputFolder)
 
     try:
         params = json.load(open(os.path.join(outputFolder, f"input_{args.iteration}.json")))
