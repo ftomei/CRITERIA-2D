@@ -12,13 +12,14 @@ heightSlice = C3DStructure.gridHeight * 0.5
 oneTimestampPerRow = True
 
 
-def createExportFile(outputPath):
+def createExportFile(outputPath, settingsFolder, iteration):
     global outputFile, outputFileWC
-    outputFile = os.path.join(outputPath, "output.csv")
-    outputFileWC = os.path.join(outputPath, "outputWaterContent.csv")
+    iterations_str = f"_{iteration}" if iteration != -1 else ""
+    outputFile = os.path.join(outputPath, f"output{iterations_str}.csv")
+    outputFileWC = os.path.join(outputPath, f"outputWaterContent{iterations_str}.csv")
 
     if oneTimestampPerRow:
-        outputPoints = pd.read_csv(os.path.join(outputPath, "output_points.csv"))
+        outputPoints = pd.read_csv(os.path.join(settingsFolder, f"output_points.csv"))
         outputIndicesString = takeSelected(outputPoints)
         header = "timestamp," + outputIndicesString + "\n"
     else:
@@ -56,7 +57,7 @@ def takeSelected(outputPoints):
             if index != NODATA:
                 outputSurfaceIndices.append(surfaceIndex)
                 outputIndices.append(index)
-                outputIndicesStrings.append(f'z{depth}_y{y}_x{x}')
+                outputIndicesStrings.append(f'z{int(depth*100)}_y{int(y*100)}_x{int(x*100)}')
     return ",".join(outputIndicesStrings)
 
 

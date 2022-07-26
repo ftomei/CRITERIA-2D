@@ -32,10 +32,16 @@ thickness = np.array([], np.float64)
 horizon = CSoilHorizon()
 
 
-def readHorizon(soilFileName):
+def readHorizon(soilFileName, params):
     global horizon
     soilDataFrame = pd.read_csv(soilFileName)
+    # Pay attention: this works only with one horizon!
     soilData = soilDataFrame.loc[0]
+    if params["iteration"] != -1:
+        for key, value, in params.items():
+            if key in soilData:
+                soilData[key] = value
+    print(soilData)
 
     horizon.upperDepth = soilData["upper_depth"]
     horizon.lowerDepth = soilData["lower_depth"]

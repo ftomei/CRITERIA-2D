@@ -10,32 +10,42 @@ import visual3D
 import exportUtils
 import importUtils
 import crop
+import json
+import argparse
 
 
-def main():
+def main(args):
     # path
-    print(os.getcwd())
-    projectPath = os.path.join("data", "errano")
-    settingsFolder = os.path.join(projectPath, "settings")
-    weatherFolder = os.path.join(projectPath, "meteo")
-    waterFolder = os.path.join(projectPath, "water")
-    obsDataFolder = os.path.join(projectPath, "obs_data")
-    stateFolder = os.path.join(projectPath, "state")
-    outputFolder = os.path.join(projectPath, "output")
+    print(f"pwd: {os.getcwd()}")
+    print(f"args: {args}")
+    settingsFolder = os.path.join(args.path, "settings")
+    weatherFolder = os.path.join(args.path, "meteo")
+    waterFolder = os.path.join(args.path, "water")
+    obsDataFolder = os.path.join(args.path, "obs_data")
+    stateFolder = os.path.join(args.path, "state")
+    outputFolder = os.path.join(args.path, "output")
+
+    try:
+        params = json.load(open(os.path.join(outputFolder, f"input_{args.iteration}.json")))
+    except:
+        params = {}
+    iterations_str = f"_{args.iteration}" if args.iteration != -1 else ""
+    params["iteration"] = args.iteration
+    print(f"tuning params: {params}")
 
     print("Read model settings...")
     modelSettings = os.path.join(settingsFolder, "settings.ini")
-    if not importUtils.readModelParameters(modelSettings):
+    if not importUtils.readModelParameters(modelSettings, params):
         return
 
     print("Read field settings...")
     fieldSettings = os.path.join(settingsFolder, "field.ini")
-    if not importUtils.readFieldParameters(fieldSettings):
+    if not importUtils.readFieldParameters(fieldSettings, params):
         return
 
     print("read soil properties...")
     soilSettings = os.path.join(settingsFolder, "soil.csv")
-    soil.readHorizon(soilSettings)
+    soil.readHorizon(soilSettings, params)
     C3DStructure.nrLayers, soil.depth, soil.thickness = soil.setLayers(C3DStructure.gridDepth,
                                                                        C3DParameters.minThickness,
                                                                        C3DParameters.maxThickness,
@@ -47,7 +57,7 @@ def main():
 
     print("Read crop settings...")
     cropSettings = os.path.join(settingsFolder, "crop.ini")
-    if not importUtils.readCropParameters(cropSettings):
+    if not importUtils.readCropParameters(cropSettings, params):
         return
     crop.initializeCrop()
 
@@ -67,16 +77,16 @@ def main():
     print("Total simulation time [hours]:", len(weatherData))
 
     # initialize export
-    exportUtils.createExportFile(outputFolder)
-    modelStateFileName = os.path.join(stateFolder, "modelState.bin")
+    exportUtils.createExportFile(outputFolder, settingsFolder, params["iteration"])
+    modelStateFileName = os.path.join(stateFolder, f"modelState{iterations_str}.bin")
 
     if C3DParameters.isPeriodicAssimilation or C3DParameters.isFirstAssimilation:
         print("Read observed water potential...")
-        obsWaterPotential = pd.read_csv(os.path.join(obsDataFolder, "waterPotential.csv"))
-        obsFileName = os.path.join(stateFolder, "obsState.csv")
+        obsWaterPotential = pd.read_csv(os.path.join(obsDataFolder, f"waterPotential.csv"))
+        obsFileName = os.path.join(stateFolder, f"obsState{iterations_str}.csv")
 
     # first assimilation
-    weatherIndex = 1
+    weatherIndex = 0
     if C3DParameters.isFirstAssimilation:
         print("Assimilate observed water potential (first hour)...")
         obsWeather = weatherData.loc[weatherIndex]
@@ -113,7 +123,7 @@ def main():
             restartIndex = weatherIndex
 
         # save output
-        if not C3DParameters.isForecast or isFirstRun:
+        if not C3DParameters.isForecast: #or isFirstRun:
             exportUtils.takeScreenshot(obsWeather["timestamp"])
         else:
             if currentIndex > (C3DParameters.forecastPeriod - C3DParameters.assimilationInterval):
@@ -142,5 +152,29 @@ def main():
     visual3D.isPause = True
     print("\nEnd simulation.\n")
 
+def parse_args():
+    parser = argparse.ArgumentParser(description="CRITERIA")
 
-main()
+    parser.add_argument(
+        "-p",
+        "--path",
+        type=str,
+        required=False,
+        default=os.path.join("data", "errano"),
+        help="path to working directory",
+    )
+    parser.add_argument(
+        "-it",
+        "--iteration",
+        type=int,
+        required=False,
+        default=-1,
+        help="tuning iteration index",
+    )
+    args = parser.parse_args()
+    return args
+
+
+if __name__ == "__main__":
+    args = parse_args()
+    main(args)

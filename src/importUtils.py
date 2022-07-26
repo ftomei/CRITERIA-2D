@@ -2,6 +2,7 @@ import pandas as pd
 import os
 import tkinter.filedialog
 from configparser import ConfigParser
+from ast import literal_eval
 from array import array
 
 from dataStructures import *
@@ -11,16 +12,32 @@ import waterBalance
 import rectangularMesh
 import crop
 
-
-def readModelParameters(settingsFilename):
-    config = ConfigParser()
+def configToDict(settingsFilename, params):
+    config = ConfigParser(converters={"any": lambda x: literal_eval(x)})
+    config.optionxform=str
     modelSettings = config.read(settingsFilename)
     if len(modelSettings) == 0:
-        print("ERROR!\nMissing model settings file: " + settingsFilename)
+        print("ERROR!\nMissing setting file: " + settingsFilename)
         return False
 
+    dictionary = {}
+    for section in config.sections():
+        dictionary[section] = {}
+        for option in config.options(section):
+            dictionary[section][option] = (
+                params[option]
+                if params["iteration"] != -1 and option in params else
+                config.getany(section, option)
+            )
+
+    return dictionary
+
+def readModelParameters(settingsFilename, params):
+    configDict = configToDict(settingsFilename, params)
+    print(f"model parameters: {configDict}")
+
     try:
-        C3DParameters.waterRetentionCurve = config.getint('model', 'waterRetentionCurve')
+        C3DParameters.waterRetentionCurve = configDict['model']['waterRetentionCurve']
     except:
         print("ERROR!\nWrong or missing model.waterRetentionCurve in the model settings: " + settingsFilename)
         print("Valid values: 1 Campbell  2 modified Van Genuchten")
@@ -31,7 +48,7 @@ def readModelParameters(settingsFilename):
         return False
 
     try:
-        C3DParameters.conductivityMean = config.getint('model', 'conductivityMean')
+        C3DParameters.conductivityMean = configDict['model']['conductivityMean']
     except:
         print("ERROR!\nWrong or missing model.conductivityMean in the model settings: " + settingsFilename)
         print("Valid values: 1 LOGARITHMIC 2 HARMONIC 3 GEOMETRIC")
@@ -42,7 +59,7 @@ def readModelParameters(settingsFilename):
         return False
 
     try:
-        C3DParameters.conductivityHVRatio = config.getfloat('model', 'conductivityHVRatio')
+        C3DParameters.conductivityHVRatio = configDict['model']['conductivityHVRatio']
     except:
         print("ERROR!\nWrong or missing model.conductivityHVRatio in the model settings: " + settingsFilename)
         print("Valid values: ]0,10]")
@@ -54,35 +71,35 @@ def readModelParameters(settingsFilename):
 
     # [processes]
     try:
-        C3DParameters.computeInfiltration = config.getboolean('processes', 'computeInfiltration')
+        C3DParameters.computeInfiltration = configDict['processes']['computeInfiltration']
     except:
         print("WARNING!\nWrong or missing processes.computeInfiltration in the model settings: " + settingsFilename)
         print("The default will be set: computeInfiltration = True")
         C3DParameters.computeInfiltration = True
 
     try:
-        C3DParameters.computeSurfaceFlow = config.getboolean('processes', 'computeSurfaceFlow')
+        C3DParameters.computeSurfaceFlow = configDict['processes']['computeSurfaceFlow']
     except:
         print("WARNING!\nWrong or missing processes.computeSurfaceFlow in the model settings: " + settingsFilename)
         print("The default will be set: computeSurfaceFlow = False")
         C3DParameters.computeSurfaceFlow = False
 
     try:
-        C3DParameters.computeEvaporation = config.getboolean('processes', 'computeEvaporation')
+        C3DParameters.computeEvaporation = configDict['processes']['computeEvaporation']
     except:
         print("WARNING!\nWrong or missing processes.computeEvaporation in the model settings: " + settingsFilename)
         print("The default will be set: computeEvaporation = True")
         C3DParameters.computeEvaporation = True
 
     try:
-        C3DParameters.computeTranspiration = config.getboolean('processes', 'computeTranspiration')
+        C3DParameters.computeTranspiration = configDict['processes']['computeTranspiration']
     except:
         print("WARNING!\nWrong or missing processes.computeTranspiration in the model settings: " + settingsFilename)
         print("The default will be set: computeTranspiration = True")
         C3DParameters.computeTranspiration = True
 
     try:
-        C3DParameters.assignIrrigation = config.getboolean('processes', 'assignIrrigation')
+        C3DParameters.assignIrrigation = configDict['processes']['assignIrrigation']
     except:
         print("WARNING!\nWrong or missing processes.assignIrrigation in the model settings: " + settingsFilename)
         print("The default will be set: assignIrrigation = True")
@@ -90,28 +107,28 @@ def readModelParameters(settingsFilename):
 
     # [boundary]
     try:
-        C3DParameters.isFreeDrainage = config.getboolean('boundary', 'isFreeDrainage')
+        C3DParameters.isFreeDrainage = configDict['boundary']['isFreeDrainage']
     except:
         print("WARNING!\nWrong or missing boundary.isFreeDrainage in the model settings: " + settingsFilename)
         print("The default will be set: isFreeDrainage = True")
         C3DParameters.isFreeDrainage = True
 
     try:
-        C3DParameters.isFreeLateralDrainage = config.getboolean('boundary', 'isFreeLateralDrainage')
+        C3DParameters.isFreeLateralDrainage = configDict['boundary']['isFreeLateralDrainage']
     except:
         print("WARNING!\nWrong or missing boundary.isFreeLateralDrainage in the model settings: " + settingsFilename)
         print("The default will be set: isFreeLateralDrainage = True")
         C3DParameters.isFreeLateralDrainage = True
 
     try:
-        C3DParameters.isSurfaceRunoff = config.getboolean('boundary', 'isSurfaceRunoff')
+        C3DParameters.isSurfaceRunoff = configDict['boundary']['isSurfaceRunoff']
     except:
         print("WARNING!\nWrong or missing boundary.isSurfaceRunoff in the model settings: " + settingsFilename)
         print("The default will be set: isSurfaceRunoff = False")
         C3DParameters.isSurfaceRunoff = False
 
     try:
-        C3DParameters.isWaterTable = config.getboolean('boundary', 'isWaterTable')
+        C3DParameters.isWaterTable = configDict['boundary']['isWaterTable']
     except:
         print("WARNING!\nWrong or missing boundary.isWaterTable in the model settings: " + settingsFilename)
         print("The default will be set: isWaterTable = False")
@@ -119,14 +136,14 @@ def readModelParameters(settingsFilename):
 
     # [initial_conditions]
     try:
-        C3DParameters.initialWaterPotential = config.getfloat('initial_conditions', 'initialWaterPotential')
+        C3DParameters.initialWaterPotential = configDict['initial_conditions']['initialWaterPotential']
     except:
         print("WARNING!\nWrong or missing initial_conditions.initialWaterPotential in the model settings: " + settingsFilename)
         print("The default will be set: initialWaterPotential = -3.0 [m]")
         C3DParameters.initialWaterPotential = -3.0
 
     try:
-        C3DParameters.waterTableDepth = config.getfloat('initial_conditions', 'waterTableDepth')
+        C3DParameters.waterTableDepth = configDict['initial_conditions']['waterTableDepth']
     except:
         print("WARNING!\nWrong or missing initial_conditions.waterTableDepth in the model settings: " + settingsFilename)
         print("The default will be set: waterTableDepth = -3.0 [m]")
@@ -134,14 +151,14 @@ def readModelParameters(settingsFilename):
 
     # [surface_properties]
     try:
-        C3DParameters.roughness = config.getfloat('surface_properties', 'roughness')
+        C3DParameters.roughness = configDict['surface_properties']['roughness']
     except:
         print("WARNING!\nWrong or missing surface_properties.roughness in the model settings: " + settingsFilename)
         print("The default will be set: roughness = 0.24 [s m-0.33]")
         C3DParameters.roughness = 0.24
 
     try:
-        C3DParameters.pond = config.getfloat('surface_properties', 'pond')
+        C3DParameters.pond = configDict['surface_properties']['pond']
     except:
         print("WARNING!\nWrong or missing surface_properties.pond in the model settings: " + settingsFilename)
         print("The default will be set: pond = 0.005 [m]")
@@ -149,21 +166,21 @@ def readModelParameters(settingsFilename):
 
     # [simulation_type]
     try:
-        C3DParameters.isForecast = config.getboolean('simulation_type', 'isForecast')
+        C3DParameters.isForecast = configDict['simulation_type']['isForecast']
     except:
         print("WARNING!\nWrong or missing simulation_type.isForecast in the model settings: " + settingsFilename)
         print("The default will be set: isForecast = False")
         C3DParameters.isForecast = False
 
     try:
-        C3DParameters.isFirstAssimilation = config.getboolean('simulation_type', 'isFirstAssimilation')
+        C3DParameters.isFirstAssimilation = configDict['simulation_type']['isFirstAssimilation']
     except:
         print("WARNING!\nWrong or missing simulation_type.isFirstAssimilation in the model settings: " + settingsFilename)
         print("The default will be set: isFirstAssimilation = False")
         C3DParameters.isFirstAssimilation = False
 
     try:
-        C3DParameters.isPeriodicAssimilation = config.getboolean('simulation_type', 'isPeriodicAssimilation')
+        C3DParameters.isPeriodicAssimilation = configDict['simulation_type']['isPeriodicAssimilation']
     except:
         print("WARNING!\nWrong or missing simulation_type.isPeriodicAssimilation in the model settings: " + settingsFilename)
         print("The default will be set: isPeriodicAssimilation = False")
@@ -175,12 +192,12 @@ def readModelParameters(settingsFilename):
         C3DParameters.isPeriodicAssimilation = False
 
     try:
-        C3DParameters.isVisual = config.getboolean('simulation_type', 'isVisual')
+        C3DParameters.isVisual = configDict['simulation_type']['isVisual']
     except:
         C3DParameters.isVisual = True
 
     try:
-        C3DParameters.assimilationInterval = config.getint('simulation_type', 'assimilationInterval')
+        C3DParameters.assimilationInterval = configDict['simulation_type']['assimilationInterval']
     except:
         C3DParameters.assimilationInterval = NODATA
     if C3DParameters.isPeriodicAssimilation or C3DParameters.isForecast:
@@ -190,7 +207,7 @@ def readModelParameters(settingsFilename):
             return False
 
     try:
-        C3DParameters.forecastPeriod = config.getint('simulation_type', 'forecastPeriod')
+        C3DParameters.forecastPeriod = configDict['simulation_type']['forecastPeriod']
     except:
         C3DParameters.forecastPeriod = NODATA
     if C3DParameters.isForecast:
@@ -202,59 +219,56 @@ def readModelParameters(settingsFilename):
     return True
 
 
-def readFieldParameters(fieldSettingsFilename):
-    config = ConfigParser()
-    fieldSettings = config.read(fieldSettingsFilename)
-    if len(fieldSettings) == 0:
-        print("ERROR! Missing field settings file: " + fieldSettingsFilename)
-        return False
+def readFieldParameters(fieldSettingsFilename, params):
+    configDict = configToDict(fieldSettingsFilename, params)
+    print(f"field parameters: {configDict}")
 
     # [location]
     try:
-        C3DStructure.latitude = config.getfloat('location', 'lat')
+        C3DStructure.latitude = configDict['location']['lat']
     except:
         print("ERROR! Missing location.lat in field.ini")
         return False
 
     try:
-        C3DStructure.longitude = config.getfloat('location', 'lon')
+        C3DStructure.longitude = configDict['location']['lon']
     except:
         print("ERROR! Missing location.lon in field.ini")
         return False
 
     try:
-        C3DStructure.z = config.getfloat('location', 'z')
+        C3DStructure.z = configDict['location']['z']
     except:
         print("ERROR! Missing location.z in field.ini")
         return False
 
     try:
-        C3DStructure.timeZone = config.getint('location', 'timeZone')
+        C3DStructure.timeZone = configDict['location']['timeZone']
     except:
         print("ERROR! Missing location.timeZone in field.ini")
         return False
 
     # [size]
     try:
-        width = config.getfloat('size', 'width')
+        width = configDict['size']['width']
     except:
         print("ERROR! Missing size.width in field.ini")
         return False
 
     try:
-        height = config.getfloat('size', 'height')
+        height = configDict['size']['height']
     except:
         print("ERROR! Missing size.height in field.ini")
         return False
 
     try:
-        C3DStructure.gridDepth = config.getfloat('size', 'depth')
+        C3DStructure.gridDepth = configDict['size']['depth']
     except:
         print("ERROR! Missing size.depth in field.ini")
         return False
 
     try:
-        C3DStructure.cellSize = config.getfloat('size', 'cellSize')
+        C3DStructure.cellSize = configDict['size']['cellSize']
     except:
         print("ERROR! Missing size.cellSize in field.ini")
         return False
@@ -263,22 +277,22 @@ def readFieldParameters(fieldSettingsFilename):
 
     # [slope]
     try:
-        C3DStructure.slopeX = config.getfloat('slope', 'slopeX')
+        C3DStructure.slopeX = configDict['slope']['slopeX']
     except:
         C3DStructure.slopeX = 0
 
     try:
-        C3DStructure.slopeY = config.getfloat('slope', 'slopeY')
+        C3DStructure.slopeY = configDict['slope']['slopeY']
     except:
         C3DStructure.slopeY = 0
 
     try:
-        C3DStructure.plantSlope = config.getfloat('slope', 'plantSlope')
+        C3DStructure.plantSlope = configDict['slope']['plantSlope']
     except:
         C3DStructure.plantSlope = 0
 
     try:
-        C3DStructure.plantSlopeWidth = config.getfloat('slope', 'plantSlopeWidth')
+        C3DStructure.plantSlopeWidth = configDict['slope']['plantSlopeWidth']
     except:
         C3DStructure.plantSlopeWidth = 0
 
@@ -290,18 +304,10 @@ def readFieldParameters(fieldSettingsFilename):
 
     # set [plant]
     plantIndices.clear()
-    try:
-        xStr = config.get('plant', 'x').split(',')
-    except:
-        xStr = []
-    try:
-        yStr = config.get('plant', 'y').split(',')
-    except:
-        yStr = []
-    if len(xStr) > 1 and len(yStr) > 1:
+    if len(configDict['plant']['x']) > 1 and len(configDict['plant']['y']) > 1:
         print("set plant positions...")
-        crop.x = [float(each) for each in xStr]
-        crop.y = [float(each) for each in yStr]
+        crop.x = configDict['plant']['x']
+        crop.y = configDict['plant']['y']
 
         if len(crop.x) != len(crop.y):
             print("ERROR! Different number of plant.x,y in field.ini")
@@ -319,18 +325,10 @@ def readFieldParameters(fieldSettingsFilename):
 
     # set [dripper]
     dripperIndices.clear()
-    try:
-        xStr = config.get('dripper', 'x').split(',')
-    except:
-        xStr = []
-    try:
-        yStr = config.get('dripper', 'y').split(',')
-    except:
-        yStr = []
-    if len(xStr) > 0 and len(yStr) > 0:
+    if len(configDict['dripper']['x']) > 0 and len(configDict['dripper']['y']) > 0:
         print("set dripper positions...")
-        x = [float(each) for each in xStr]
-        y = [float(each) for each in yStr]
+        x = configDict['dripper']['x']
+        y = configDict['dripper']['y']
 
         if len(x) != len(y):
             print("ERROR: different number of dripper x,y positions.")
@@ -344,38 +342,30 @@ def readFieldParameters(fieldSettingsFilename):
     return True
 
 
-def readCropParameters(cropSettingsFilename):
-    config = ConfigParser()
-    cropSettings = config.read(cropSettingsFilename)
-    if len(cropSettings) == 0:
-        print("ERROR!\nMissing crop settings file: " + cropSettingsFilename)
-        return False
+def readCropParameters(cropSettingsFilename, params):
+    configDict = configToDict(cropSettingsFilename, params)
+    print(f"crop parameters: {configDict}")
 
     # [LAI]
-    try:
-        laiStr = config.get('LAI', 'laiMonth').split(',')
-    except:
-        print("ERROR!\nMissing LAI.laiMonth in the crop settings: " + cropSettingsFilename)
-        return False
-    if len(laiStr) != 12:
+    if len(configDict['LAI']['laiMonth']) != 12:
         print("ERROR!\nWrong LAI.laiMonth in the crop settings: " + cropSettingsFilename)
         print("Values must be 12")
         return False
 
     try:
-        crop.currentCrop.laiMonth = [float(each) for each in laiStr]
+        crop.currentCrop.laiMonth = configDict['LAI']['laiMonth']
     except:
         print("ERROR!\nWrong LAI.laiMonth values in the crop settings: " + cropSettingsFilename)
         print("Values must be numeric.")
         return False
-    
+
     try:
-        crop.currentCrop.rootDepthZero = config.getfloat('root', 'rootDepthZero')
+        crop.currentCrop.rootDepthZero = configDict['root']['rootDepthZero']
     except:
         crop.currentCrop.rootDepthZero = 0.05
 
     try:
-        crop.currentCrop.rootDepthMax = config.getfloat('root', 'rootDepthMax')
+        crop.currentCrop.rootDepthMax = configDict['root']['rootDepthMax']
     except:
         print("ERROR!\nWrong or missing root.rootDepthMax in the crop settings: " + cropSettingsFilename)
         return False
@@ -386,7 +376,7 @@ def readCropParameters(cropSettingsFilename):
         return False
 
     try:
-        crop.currentCrop.rootWidth = config.getfloat('root', 'rootWidth')
+        crop.currentCrop.rootWidth = configDict['root']['rootWidth']
     except:
         print("ERROR!\nWrong or missing root.rootWidth in the crop settings: " + cropSettingsFilename)
         return False
@@ -396,7 +386,7 @@ def readCropParameters(cropSettingsFilename):
         return False
 
     try:
-        crop.currentCrop.rootXDeformation = config.getfloat('root', 'rootXDeformation')
+        crop.currentCrop.rootXDeformation = configDict['root']['rootXDeformation']
     except:
         print("ERROR!\nWrong or missing root.rootXDeformation in the crop settings: " + cropSettingsFilename)
         return False
@@ -406,7 +396,7 @@ def readCropParameters(cropSettingsFilename):
         return False
 
     try:
-        crop.currentCrop.rootZDeformation = config.getfloat('root', 'rootZDeformation')
+        crop.currentCrop.rootZDeformation = configDict['root']['rootZDeformation']
     except:
         print("ERROR!\nWrong or missing root.rootZDeformation in the crop settings: " + cropSettingsFilename)
         return False
@@ -416,7 +406,7 @@ def readCropParameters(cropSettingsFilename):
         return False
 
     try:
-        crop.currentCrop.kcMax = config.getfloat('transpiration', 'kcMax')
+        crop.currentCrop.kcMax = configDict['transpiration']['kcMax']
     except:
         print("ERROR!\nWrong or missing transpiration.kcMax in the crop settings: " + cropSettingsFilename)
         return False
@@ -426,7 +416,7 @@ def readCropParameters(cropSettingsFilename):
         return False
 
     try:
-        crop.currentCrop.fRAW = config.getfloat('transpiration', 'fRAW')
+        crop.currentCrop.fRAW = configDict['transpiration']['fRAW']
     except:
         print("ERROR!\nWrong or missing transpiration.fRAW in the crop settings: " + cropSettingsFilename)
         return False
@@ -434,6 +424,7 @@ def readCropParameters(cropSettingsFilename):
         print("ERROR!\nWrong transpiration.kcMax in the crop settings: " + cropSettingsFilename)
         print("Valid range: [0,1]")
         return False
+    print(crop.currentCrop.fRAW)
 
     return True
 
