@@ -186,20 +186,15 @@ def degreeOfSaturation(curve, signPsi):
 
 def hydraulicConductivity(curve, Se, layerDepth):
     k = NODATA
-    # soil compaction
-    if abs(layerDepth) >= 0.5:
-        ks = horizon.Ks * 0.5
-    else:
-        ks = horizon.Ks
 
     if curve == CAMPBELL:
         psi = horizon.Campbell_he * Se ** (-horizon.Campbell_b)
-        k = ks * (horizon.Campbell_he / psi) ** horizon.Campbell_n
+        k = horizon.Ks * (horizon.Campbell_he / psi) ** horizon.Campbell_n
 
     if curve == IPPISCH_VG:
         num = 1. - pow(1. - pow(Se * horizon.VG_Sc, 1. / horizon.VG_m), horizon.VG_m)
         den = 1. - pow(1. - pow(horizon.VG_Sc, 1. / horizon.VG_m), horizon.VG_m)
-        k = ks * pow(Se, horizon.Mualem_L) * pow((num / den), 2.)
+        k = horizon.Ks * pow(Se, horizon.Mualem_L) * pow((num / den), 2.)
     return k
 
 
