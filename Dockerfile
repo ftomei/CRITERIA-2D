@@ -7,6 +7,3 @@ RUN pip install --upgrade pip && \
     rm requirements.txt
 COPY . /home
 WORKDIR /home
-RUN cd src && \
-    python cythonSetup.py build_ext --inplace && \
-    cd ..
