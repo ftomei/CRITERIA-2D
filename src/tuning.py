@@ -84,6 +84,7 @@ def main(args):
         num_samples=args.num_iterations,
         verbose=1,
         max_failure=args.num_iterations,
+        time_budget_s=5400
     )
     end_time = time.time()
 
