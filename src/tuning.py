@@ -2,6 +2,7 @@ import subprocess
 import time
 import os
 import json
+import psutil
 
 
 import pandas as pd
@@ -16,6 +17,13 @@ from tuning.utils import create_directory, parse_args_tuning
 from tuning.json_to_csv import json_to_csv
 
 iteration = 1
+
+
+def kill(proc_pid):
+    process = psutil.Process(proc_pid)
+    for proc in process.children(recursive=True):
+        proc.kill()
+    process.kill()
 
 def objective(dataPath, params):
     global iteration
@@ -35,11 +43,16 @@ def objective(dataPath, params):
         open(stderrFilePath, "w")
         with open(stdoutFilePath, "a") as log_out:
             with open(stderrFilePath, "a") as log_err:
-                subprocess.call(
-                    f"python src/main.py -p {dataPath} -it {iteration}",
-                    shell=True,
-                    stdout=log_out,
-                    stderr=log_err)
+                    try:
+                        process = subprocess.Popen(
+                            f"python src/main.py -p {dataPath} -it {iteration}",
+                            shell=True,
+                            stdout=log_out,
+                            stderr=log_err)
+                        process.wait(timeout=5400)
+                    except Exception as e:
+                        #print(e)
+                        kill(process.pid)
 
         simulated_data = pd.read_csv(outputFilePath)
         simulated_data = simulated_data.set_index('timestamp')
@@ -84,7 +97,6 @@ def main(args):
         num_samples=args.num_iterations,
         verbose=1,
         max_failure=args.num_iterations,
-        time_budget_s=5400
     )
     end_time = time.time()
 
