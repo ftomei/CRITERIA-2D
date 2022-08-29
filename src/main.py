@@ -88,7 +88,7 @@ def main(args):
         obsFileName = os.path.join(stateFolder, f"obsState{iterations_str}.csv")
 
     # first assimilation
-    weatherIndex = 0
+    weatherIndex = 3
     if C3DParameters.isFirstAssimilation:
         print("Assimilate observed water potential (first day)...")
         obsWeather = weatherData.loc[weatherIndex]
@@ -98,6 +98,7 @@ def main(args):
             criteria3D.computeOneHour(weatherIndex+i, False)
         importUtils.loadObsData(obsFileName)
 
+    waterBalance.initializeBalance()
     if C3DParameters.isVisual:
         visual3D.initialize(1200)
         visual3D.isPause = True
@@ -141,8 +142,8 @@ def main(args):
             importUtils.writeObsData(obsFileName, obsWaterPotential, obsWeather["timestamp"])
             importUtils.loadObsData(obsFileName)
             # redraw
+            waterBalance.totalTime = restartIndex * 3600
             if C3DParameters.isVisual:
-                waterBalance.totalTime = restartIndex * 3600
                 visual3D.redraw()
             # re-initialize index
             weatherIndex = restartIndex + 1
@@ -163,7 +164,7 @@ def parse_args():
         "--path",
         type=str,
         required=False,
-        default=os.path.join("data", "errano"),
+        default=os.path.join("data", "errano_evaluation"),
         help="path to working directory",
     )
     parser.add_argument(
