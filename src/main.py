@@ -88,7 +88,7 @@ def main(args):
         obsFileName = os.path.join(stateFolder, f"obsState{iterations_str}.csv")
 
     # first assimilation
-    weatherIndex = 3
+    weatherIndex = 0
     if C3DParameters.isFirstAssimilation:
         print("Assimilate observed water potential (first day)...")
         obsWeather = weatherData.loc[weatherIndex]
@@ -118,6 +118,8 @@ def main(args):
         # assimilation
         if C3DParameters.isPeriodicAssimilation and not C3DParameters.isForecast:
             if (currentIndex % C3DParameters.assimilationInterval) == 0:
+                currentDateTime = pd.to_datetime(obsWeather["timestamp"], unit='s')
+                print("Assimilation:", currentDateTime)
                 importUtils.writeObsData(obsFileName, obsWaterPotential, obsWeather["timestamp"])
                 importUtils.loadObsData(obsFileName)
 

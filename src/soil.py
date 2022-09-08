@@ -138,8 +138,7 @@ def getHydraulicConductivity(i):
     if C3DCells[i].isSurface:
         return NODATA
     curve = C3DParameters.waterRetentionCurve
-    layer = int(i / C3DStructure.nrRectangles)
-    return hydraulicConductivity(curve, C3DCells[i].Se, depth[layer])
+    return hydraulicConductivity(curve, C3DCells[i].Se)
 
 
 def airEntryPotential(curve):
@@ -184,7 +183,7 @@ def degreeOfSaturation(curve, signPsi):
     return Se
 
 
-def hydraulicConductivity(curve, Se, layerDepth):
+def hydraulicConductivity(curve, Se):
     k = NODATA
 
     if curve == CAMPBELL:

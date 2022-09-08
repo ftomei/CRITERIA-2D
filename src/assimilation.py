@@ -144,14 +144,20 @@ def assimilate(initialState):
     for i in range(C3DStructure.nrCells):
         x, y, depth = rectangularMesh.getXYDepth(i)
         if depth != 0:
+            currentTheta = soil.getVolumetricWaterContent(i)
+
             if i in indices:
                 value = interpolated_points[i]
             else:
                 min_index = getCloserIndex(i, indices)
                 value = interpolated_points[min_index]
-            # assign residual of volumetric water content
-            currentTheta = soil.getVolumetricWaterContent(i)
+
+            # check water content
             theta = currentTheta + value
+            theta = min(theta, soil.horizon.thetaS)
+            theta = max(theta, soil.horizon.VG_thetaR + 0.01)
+
+            # compute water potential
             curve = C3DParameters.waterRetentionCurve
             psi = soil.psiFromTheta(curve, theta)
             criteria3D.setMatricPotential(i, psi)
