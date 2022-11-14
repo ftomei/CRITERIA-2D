@@ -25,49 +25,55 @@ def kill(proc_pid):
         proc.kill()
     process.kill()
 
+
 def objective(dataPath, params):
     global iteration
-    result = {'rmse': float("inf"), "status": "fail"}
+    result = {"rmse": float("inf"), "status": "fail"}
 
     try:
+        iterations_str = f"_{iteration}" if params else ""
         outputPath = os.path.join(dataPath, "output")
-        inputFilePath = os.path.join(outputPath, f"input_{str(iteration)}.json")
-        outputFilePath = os.path.join(outputPath, f"output_{str(iteration)}.csv")
-        stdoutFilePath = os.path.join(outputPath, f"stdout_{str(iteration)}.txt")
-        stderrFilePath = os.path.join(outputPath, f"stderr_{str(iteration)}.txt")
+        inputFilePath = os.path.join(outputPath, f"input{iterations_str}.json")
+        outputFilePath = os.path.join(outputPath, f"output{iterations_str}.csv")
+        stdoutFilePath = os.path.join(outputPath, f"stdout{iterations_str}.txt")
+        stderrFilePath = os.path.join(outputPath, f"stderr{iterations_str}.txt")
         observedDataPath = os.path.join(dataPath, "obs_data", "waterPotential.csv")
 
-        json.dump(params, open(inputFilePath, 'w'))
+        if params:
+            json.dump(params, open(inputFilePath, "w"))
 
         open(stdoutFilePath, "w")
         open(stderrFilePath, "w")
         with open(stdoutFilePath, "a") as log_out:
             with open(stderrFilePath, "a") as log_err:
-                    try:
-                        process = subprocess.Popen(
-                            f"python src/main.py -p {dataPath} -it {iteration}",
-                            shell=True,
-                            stdout=log_out,
-                            stderr=log_err)
-                        process.wait(timeout=5400)
-                    except Exception as e:
-                        #print(e)
-                        kill(process.pid)
+                try:
+                    process = subprocess.Popen(
+                        f"python src/main.py -p {dataPath} -it {iteration if params else -1}",
+                        shell=True,
+                        stdout=log_out,
+                        stderr=log_err,
+                    )
+                    process.wait(timeout=5400)
+                except Exception as e:
+                    # print(e)
+                    kill(process.pid)
 
         simulated_data = pd.read_csv(outputFilePath)
-        simulated_data = simulated_data.set_index('timestamp')
+        simulated_data = simulated_data.set_index("timestamp")
         simulated_data *= -1
         simulated_data[simulated_data < 20] = 20
         simulated_data = simulated_data.apply(lambda x: np.log(x))
 
         original_data = pd.read_csv(observedDataPath)
-        original_data = original_data.set_index('timestamp')
+        original_data = original_data.set_index("timestamp")
         original_data = original_data.loc[simulated_data.index]
         original_data *= -1
         original_data[original_data < 20] = 20
         original_data = original_data.apply(lambda x: np.log(x))
 
-        result["rmse"] = mean_squared_error(simulated_data, original_data, squared=False)
+        result["rmse"] = mean_squared_error(
+            simulated_data, original_data, squared=False
+        )
         result["status"] = "success"
     except Exception as e:
         print(
@@ -80,7 +86,7 @@ def objective(dataPath, params):
 
 
 def main(args):
-    print('Start')
+    print("Start")
     np.random.seed(args.seed)
     settingsFolder = os.path.join(args.path, "settings")
     outputFolder = create_directory(args.path, "output")
@@ -89,28 +95,27 @@ def main(args):
     space = get_space(os.path.join(settingsFolder, "tuning_space.json"))
 
     start_time = time.time()
-    analysis = tune.run(
-        evaluation_function=partial(objective, args.path),
-        config=space,
-        metric='rmse',
-        mode='min',
-        num_samples=args.num_iterations,
-        verbose=1,
-        max_failure=args.num_iterations,
-    )
+    if args.num_iterations <= 0:
+        result = objective(args.path, params=None)
+    else:
+        analysis = tune.run(
+            evaluation_function=partial(objective, args.path),
+            config=space,
+            metric="rmse",
+            mode="min",
+            num_samples=args.num_iterations,
+            verbose=1,
+            max_failure=args.num_iterations,
+        )
     end_time = time.time()
 
+    outcome = [result] if args.num_iterations <= 0 else analysis.results.values()
+
     # Specify which information are needed for the output
-    filtered_keys = ['rmse', "status", "config", "time_total_s"]
+    filtered_keys = ["rmse", "status", "config", "time_total_s"]
     # Prepare the output file
     automl_output = {
         "optimization_time": end_time - start_time,
-        # Filter the information for the best config
-        "best_config": {
-            key: value
-            for key, value in analysis.best_trial.last_result.items()
-            if key in filtered_keys
-        },
         # For each visited config, filter the information
         "results": [
             {
@@ -118,9 +123,16 @@ def main(args):
                 for key, value in values.items()
                 if key in filtered_keys
             }
-            for values in analysis.results.values()
+            for values in outcome
         ],
     }
+
+    if args.num_iterations > 0:
+        automl_output["best_config"] = {
+            key: value
+            for key, value in analysis.best_trial.last_result.items()
+            if key in filtered_keys
+        }
 
     # Export the result
     with open(f"{outputFile}.json", "w") as outfile:
@@ -128,6 +140,7 @@ def main(args):
 
     # Convert the result in csv
     json_to_csv(automl_output=automl_output.copy(), outputFile=f"{outputFile}.csv")
+
 
 args = parse_args_tuning()
 main(args)

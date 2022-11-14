@@ -18,7 +18,7 @@ def parse_args_tuning():
         "--num_iterations",
         type=int,
         required=False,
-        default=5,
+        default=-1,
         help="number of tuning iterations",
     )
     parser.add_argument(
