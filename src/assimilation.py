@@ -37,18 +37,21 @@ def buildDataStructuresForInterpolation(initialState):
             for k in range(z.shape[-1]):
                 psi = initialState[(initialState["x"] == x[i]) & (initialState["y"] == y[j])
                                    & (initialState["z"] == z[k])]["value"]
-                # from kPa to meters
-                observedPsi = float(psi / 9.81)
-                curve = C3DParameters.waterRetentionCurve
-                theta = soil.thetaFromPsi(curve, observedPsi)
+                observedTheta = NODATA
+                if float(psi) != NODATA:
+                    # from kPa to meters
+                    observedPsi = float(psi / 9.81)
+                    curve = C3DParameters.waterRetentionCurve
+                    observedTheta = soil.thetaFromPsi(curve, observedPsi)
+
                 index = rectangularMesh.getCellIndex(x[i], y[j], z[k])
                 if index != NODATA:
                     currentTheta = soil.getVolumetricWaterContent(index)
                     # check validity range of sensors
-                    if (abs(theta) > 0.3) and (abs(currentTheta) > 0.3):
+                    if (observedTheta == NODATA) or (abs(observedTheta) > 0.3) and (abs(currentTheta) > 0.3):
                         value = 0
                     else:
-                        value = theta - currentTheta
+                        value = observedTheta - currentTheta
                 else:
                     value = 0
 

@@ -4,6 +4,7 @@ import tkinter.filedialog
 from configparser import ConfigParser
 from ast import literal_eval
 from array import array
+import math
 
 from dataStructures import *
 import criteria3D
@@ -526,11 +527,15 @@ def writeObsData(fileName, obsData, timeStamp):
     if not df.empty:
         for column in [column for column in list(df.columns) if column != "timestamp"]:
             splitted_column = column.split("_")
+            value = df[column].values[0]
+            if math.isnan(value):
+                value = NODATA
+
             f.write(
                 "{:.2f}".format(float(splitted_column[2][1:]) / 100) + ","  # x
                 + "{:.1f}".format(float(splitted_column[1][1:]) / 100) + ","  # y
                 + "{:.1f}".format(float(splitted_column[0][1:]) / 100) + ","  # z
-                + "{:.1f}".format(df[column].values[0]) + "\n"  # psi
+                + "{:.1f}".format(value) + "\n"  # psi
             )
     return not df.empty
 
