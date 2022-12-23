@@ -5,7 +5,7 @@ import pandas as pd
 
 def main():
     print(os.getcwd())
-    dataPath = os.path.join("data", "errano_all")
+    dataPath = os.path.join("data", "errano_tuning")
     settingsFolder = os.path.join(dataPath, "settings")
 
     print("Load soil...")
