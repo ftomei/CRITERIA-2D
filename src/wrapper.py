@@ -60,14 +60,14 @@ def objective(dataPath, params):
 
         simulated_data = pd.read_csv(outputFilePath)
         simulated_data = simulated_data.set_index("timestamp")
-        simulated_data = simulated_data.drop("z40_y0_x50")
+        simulated_data = simulated_data.drop(["z20_y0_x0", "z20_y0_x25", "z40_y0_x0", "z40_y0_x50"])
         simulated_data *= -1
         simulated_data[simulated_data < 20] = 20
         simulated_data = simulated_data.apply(lambda x: np.log(x))
 
         original_data = pd.read_csv(observedDataPath)
         original_data = original_data.set_index("timestamp")
-        original_data = original_data.drop("z40_y0_x50")
+        simulated_data = simulated_data.drop(["z20_y0_x0", "z20_y0_x25", "z40_y0_x0", "z40_y0_x50"])
         original_data = original_data.loc[simulated_data.index]
         original_data *= -1
         original_data[original_data < 20] = 20
