@@ -127,6 +127,7 @@ dmypy.json
 
 # VS code
 .vscode
+vscode
 
 # Output data
 output/
