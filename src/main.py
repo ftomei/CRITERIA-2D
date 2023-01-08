@@ -88,7 +88,7 @@ def main(args):
         obsFileName = os.path.join(stateFolder, f"obsState{iterations_str}.csv")
 
     # first assimilation
-    weatherIndex = 1
+    weatherIndex = 0
     if C3DParameters.isFirstAssimilation:
         print("Assimilate observed water potential (first day)...")
         obsWeather = weatherData.loc[weatherIndex]
@@ -129,7 +129,7 @@ def main(args):
             restartIndex = weatherIndex
 
         # save output
-        if not C3DParameters.isForecast or isFirstRun:
+        if not C3DParameters.isForecast: # or isFirstRun:
             exportUtils.takeScreenshot(obsWeather["timestamp"])
         else:
             if currentIndex > (C3DParameters.forecastPeriod - C3DParameters.assimilationInterval):
