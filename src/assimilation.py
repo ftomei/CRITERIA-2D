@@ -47,8 +47,9 @@ def buildDataStructuresForInterpolation(initialState):
                 index = rectangularMesh.getCellIndex(x[i], y[j], z[k])
                 if index != NODATA:
                     currentTheta = soil.getVolumetricWaterContent(index)
+                    currentPsi = (C3DCells[index].H - C3DCells[index].z)  # [m]
                     # check validity range of sensors
-                    if (observedTheta == NODATA) or (abs(observedTheta) > 0.3) and (abs(currentTheta) > 0.3):
+                    if (observedTheta == NODATA) or (abs(observedPsi) < 2.5 and abs(currentPsi) < 2.5):
                         value = 0
                     else:
                         value = observedTheta - currentTheta

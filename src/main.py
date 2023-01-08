@@ -129,7 +129,7 @@ def main(args):
             restartIndex = weatherIndex
 
         # save output
-        if not C3DParameters.isForecast: #or isFirstRun:
+        if not C3DParameters.isForecast or isFirstRun:
             exportUtils.takeScreenshot(obsWeather["timestamp"])
         else:
             if currentIndex > (C3DParameters.forecastPeriod - C3DParameters.assimilationInterval):

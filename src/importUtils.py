@@ -528,9 +528,8 @@ def writeObsData(fileName, obsData, timeStamp):
         for column in [column for column in list(df.columns) if column != "timestamp"]:
             splitted_column = column.split("_")
             value = df[column].values[0]
-            if math.isnan(value):
+            if math.isnan(value) or (value <= -2500):
                 value = NODATA
-
             f.write(
                 "{:.2f}".format(float(splitted_column[2][1:]) / 100) + ","  # x
                 + "{:.1f}".format(float(splitted_column[1][1:]) / 100) + ","  # y
