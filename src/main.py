@@ -88,7 +88,7 @@ def main(args):
         obsFileName = os.path.join(stateFolder, f"obsState{iterations_str}.csv")
 
     # first assimilation
-    weatherIndex = 0
+    weatherIndex = 1
     if C3DParameters.isFirstAssimilation:
         print("Assimilate observed water potential (first day)...")
         obsWeather = weatherData.loc[weatherIndex]

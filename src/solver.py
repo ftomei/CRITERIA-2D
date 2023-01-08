@@ -75,7 +75,7 @@ def computeStep(deltaT):
 
         if not solveMatrix(approximation):
             waterBalance.halveTimeStep()
-            print("System is not convergent.")
+            # print("System is not convergent.")
             return False
 
         # check surface error

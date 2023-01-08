@@ -296,13 +296,14 @@ def computeOneHour(weatherIndex, isRedraw):
         precipitation = 0
         print("Missing data: precipitation")
 
+    initializeSinkSource(ALL)
     # evapotranspiration [mm m-2]
     ET0 = computeHourlyET0(C3DStructure.z, airTemperature, globalSWRadiation, airRelHumidity,
                            windSpeed_10m, normTransmissivity)
-    print(currentDateTime, "ET0:", format(ET0, ".2f"))
 
-    initializeSinkSource(ALL)
-    crop.setEvapotranspiration(currentDateTime, ET0)
+    # actual evaporation and transpiration [mm m-2]
+    actualTranspiration, actualEvaporation = crop.setEvapotranspiration(currentDateTime, ET0)
+    print(currentDateTime, "ET0:", format(ET0, ".2f"), " T:", format(actualTranspiration, ".2f"), " E:", format(actualEvaporation, ".2f"))
 
     initializeSinkSource(ONLY_SURFACE)
     waterBalance.currentPrec = precipitation    # [mm hour-1]

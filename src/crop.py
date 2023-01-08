@@ -206,31 +206,23 @@ def setTranspiration(surfaceIndex, myRootDensity, maxTranspiration):
             # water surplus
             if theta > FC:
                 fraction = 1.0 - (theta - FC) / (SAT - FC)
-                fraction = fraction**3
+                fraction = fraction**2
                 layerTranspiration[layer] = maxTranspiration * fraction * myRootDensity[layer]
                 isLayerStressed[layer] = True
             else:
                 # water scarcity
-                if theta < wsThreshold:
+                if theta <= wsThreshold:
                     if theta <= WP:
                         layerTranspiration[layer] = 0.0
                     else:
-                        layerTranspiration[layer] = maxTranspiration * myRootDensity[layer] * (
-                                (theta - WP) / (wsThreshold - WP))
+                        fraction = (theta - WP) / (wsThreshold - WP)
+                        layerTranspiration[layer] = maxTranspiration * myRootDensity[layer] * fraction**2
                     isLayerStressed[layer] = True
                 else:
                     # normal conditions
                     layerTranspiration[layer] = maxTranspiration * myRootDensity[layer]
-
-                    # check stress
-                    theta_mm = theta * soil.thickness[layer] * 1000.
-                    WSThreshold_mm = wsThreshold * soil.thickness[layer] * 1000.
-
-                    if (theta_mm - layerTranspiration[layer]) > WSThreshold_mm:
-                        isLayerStressed[layer] = False
-                        rootDensityWithoutStress += myRootDensity[layer]
-                    else:
-                        isLayerStressed[layer] = True
+                    isLayerStressed[layer] = False
+                    rootDensityWithoutStress += myRootDensity[layer]
 
             actualTranspiration += layerTranspiration[layer]
 
@@ -241,12 +233,16 @@ def setTranspiration(surfaceIndex, myRootDensity, maxTranspiration):
     # the movement of water from moist to dry soil through plant roots
     # TODO add numerical process
     if waterStress > EPSILON and rootDensityWithoutStress > EPSILON:
-        redistribution = min(waterStress, rootDensityWithoutStress) * maxTranspiration
+        redistribution = waterStress * maxTranspiration
 
         # redistribution acts on not stressed roots
         for layer in range(nrLayers):
             if (myRootDensity[layer] > 0) and (not isLayerStressed[layer]):
                 addTranspiration = redistribution * (myRootDensity[layer] / rootDensityWithoutStress)
+                threshold = (wsThreshold + WP) * 0.5
+                maxTransp_mm = max(0, theta - threshold) * soil.thickness[layer] * 1000.
+                addTranspiration = min(addTranspiration, maxTransp_mm)
+
                 layerTranspiration[layer] += addTranspiration
                 actualTranspiration += addTranspiration
 
@@ -325,11 +321,28 @@ def setEvaporation(surfaceIndex, maxEvaporation):
 def setEvapotranspiration(currentDate, ET0):
     currentCrop.setCurrentLAI(currentDate)
     if C3DParameters.computeTranspiration:
+        sumTranspiration = 0
+        nrCells = 0
         for i in range(C3DStructure.nrRectangles):
             maxTranspiration = getMaxTranspiration(currentCrop.currentLAI, currentCrop.kcMax, ET0) * k_root[i]
-            setTranspiration(i, rootDensity[i], maxTranspiration)
+            actualTranspiration = setTranspiration(i, rootDensity[i], maxTranspiration)
+            if k_root[i] > 0:
+                sumTranspiration += actualTranspiration
+                nrCells += 1
+        actualTranspiration = sumTranspiration / nrCells
+    else:
+        actualTranspiration = 0
 
     if C3DParameters.computeEvaporation:
         maxEvaporation = getMaxEvaporation(currentCrop.currentLAI, ET0)
+        sumEvaporation = 0
+        nrCells = 0
         for i in range(C3DStructure.nrRectangles):
-            setEvaporation(i, maxEvaporation)
+            actualEvaporation = setEvaporation(i, maxEvaporation)
+            sumEvaporation += actualEvaporation
+        actualEvaporation = sumEvaporation / C3DStructure.nrRectangles
+    else:
+        actualEvaporation = 0
+
+    return actualTranspiration, actualEvaporation
+
