@@ -28,7 +28,10 @@ class CCrop:
     def setCurrentLAI(self, currentDate):
         m = currentDate.month
         lai0 = self.laiMonth[m - 1]
-        lai1 = self.laiMonth[m]
+        if m < 12:
+            lai1 = self.laiMonth[m]
+        else:
+            lai1 = lai0
         # TO DO improve for month length
         self.currentLAI = lai0 + (lai1 - lai0) * (currentDate.day - 1) / 30
 

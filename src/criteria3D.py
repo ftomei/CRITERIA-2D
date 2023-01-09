@@ -297,9 +297,6 @@ def computeOneHour(weatherIndex, isRedraw):
         print("Missing data: precipitation")
 
     initializeSinkSource(ALL)
-    #TODO variable Kcmax
-    if currentDateTime.month >= 8:
-        crop.currentCrop.kcMax = 2.4
 
     # evapotranspiration [mm m-2]
     ET0 = computeHourlyET0(C3DStructure.z, airTemperature, globalSWRadiation, airRelHumidity,
