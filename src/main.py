@@ -166,7 +166,7 @@ def parse_args():
         "--path",
         type=str,
         required=False,
-        default=os.path.join("data", "errano_evaluation_aug"),
+        default=os.path.join("data", "errano_all"),
         help="path to working directory",
     )
     parser.add_argument(
