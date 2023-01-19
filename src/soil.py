@@ -115,6 +115,7 @@ def setLayers(totalDepth, minThickness, maxThickness, maxThicknessDepth):
     return nrLayers, z, thick
 
 
+# [m3 m-3] volumetric water content
 def getVolumetricWaterContent(i):
     if C3DCells[i].isSurface:
         return NODATA
@@ -123,6 +124,7 @@ def getVolumetricWaterContent(i):
     return waterContent(curve, Se)
 
 
+# [-] degree of saturation
 def getDegreeOfSaturation(i):
     if C3DCells[i].isSurface:
         if C3DCells[i].H > C3DCells[i].z:
@@ -134,6 +136,7 @@ def getDegreeOfSaturation(i):
     return degreeOfSaturation(curve, signPsi)
 
 
+# [m s-1] hydraulic conductivity
 def getHydraulicConductivity(i):
     if C3DCells[i].isSurface:
         return NODATA
@@ -141,6 +144,7 @@ def getHydraulicConductivity(i):
     return hydraulicConductivity(curve, C3DCells[i].Se)
 
 
+# [m] air entry potential
 def airEntryPotential(curve):
     if curve == CAMPBELL:
         return horizon.Campbell_he
@@ -150,6 +154,7 @@ def airEntryPotential(curve):
         return NODATA
 
 
+# [m] water potential from degree of saturation [-]
 def waterPotential(curve, Se):
     if curve == CAMPBELL:
         return -horizon.Campbell_he * Se ** (-horizon.Campbell_b)
@@ -160,6 +165,7 @@ def waterPotential(curve, Se):
         return NODATA
 
 
+# [m3 m-3] volumetric water content from degree of saturation [-]
 def waterContent(curve, Se):
     if curve == CAMPBELL:
         return Se * horizon.thetaS
@@ -169,20 +175,7 @@ def waterContent(curve, Se):
         return NODATA
 
 
-def degreeOfSaturation(curve, signPsi):
-    airEntry = airEntryPotential(curve)
-    if signPsi >= airEntry:
-        return 1.0
-
-    Se = NODATA
-    if curve == CAMPBELL:
-        Se = pow(fabs(signPsi) / horizon.Campbell_he, -1. / horizon.Campbell_b)
-    elif curve == IPPISCH_VG:
-        Se = (1. / horizon.VG_Sc) * pow(1. + pow(horizon.VG_alpha
-                                                 * fabs(signPsi), horizon.VG_n), -horizon.VG_m)
-    return Se
-
-
+# [m s-1] hydraulic conductivity from degree of saturation [-]
 def hydraulicConductivity(curve, Se):
     k = NODATA
 
@@ -197,16 +190,22 @@ def hydraulicConductivity(curve, Se):
     return k
 
 
-def psiFromTheta(curve, theta):
-    Se = SeFromTheta(curve, theta)
-    return waterPotential(curve, Se)
+# [-] degree of saturation from water potential [m]
+def degreeOfSaturation(curve, signPsi):
+    airEntry = airEntryPotential(curve)
+    if signPsi >= airEntry:
+        return 1.0
+
+    Se = NODATA
+    if curve == CAMPBELL:
+        Se = pow(fabs(signPsi) / horizon.Campbell_he, -1. / horizon.Campbell_b)
+    elif curve == IPPISCH_VG:
+        Se = (1. / horizon.VG_Sc) * pow(1. + pow(horizon.VG_alpha
+                                                 * fabs(signPsi), horizon.VG_n), -horizon.VG_m)
+    return Se
 
 
-def thetaFromPsi(curve, signPsi):
-    Se = degreeOfSaturation(curve, signPsi)
-    return waterContent(curve, Se)
-
-
+# [-] degree of saturation from volumetric water content [m3 m-3]
 def SeFromTheta(curve, theta):
     if theta >= horizon.thetaS:
         return 1.
@@ -216,6 +215,16 @@ def SeFromTheta(curve, theta):
         return (theta - horizon.VG_thetaR) / (horizon.thetaS - horizon.VG_thetaR)
     else:
         return NODATA
+
+
+def psiFromTheta(curve, theta):
+    Se = SeFromTheta(curve, theta)
+    return waterPotential(curve, Se)
+
+
+def thetaFromPsi(curve, signPsi):
+    Se = degreeOfSaturation(curve, signPsi)
+    return waterContent(curve, Se)
 
 
 def dTheta_dPsi(curve, signPsi):
@@ -251,6 +260,7 @@ def dTheta_dH(curve, H0, H1, z):
         return (theta1 - theta0) / (psi1 - psi0)
 
 
+# [m s-1] mean value of hydraulic conductivity
 def meanK(meanType, k1, k2):
     k = NODATA
     if meanType == LOGARITHMIC:
@@ -289,7 +299,7 @@ def getFieldCapacityWC():
 def getWiltingPointWC():
     curve = C3DParameters.waterRetentionCurve
     WP = -1600.  # [kPa]
-    WP /= 9.81  # [m]
+    WP /= 9.81   # [m]
     return thetaFromPsi(curve, WP)
 
 
@@ -297,5 +307,5 @@ def getWiltingPointWC():
 def getHygroscopicWC():
     curve = C3DParameters.waterRetentionCurve
     HH = -3100.  # [kPa]
-    HH /= 9.81  # [m]
+    HH /= 9.81   # [m]
     return thetaFromPsi(curve, HH)
