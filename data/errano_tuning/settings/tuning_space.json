@@ -8,7 +8,7 @@
     "VG_n": {
         "uniform": [
             1.1,
-            1.4
+            1.6
         ]
     },
     "thetaS": {
@@ -21,18 +21,6 @@
         "loguniform": [
             0.0000001,
             0.000004
-        ]
-    },
-    "rootDepthMax": {
-        "uniform": [
-            0.5,
-            0.8
-        ]
-    },
-    "rootWidth": {
-        "uniform": [
-            1.0,
-            2.5
         ]
     },
     "rootXDeformation": {
