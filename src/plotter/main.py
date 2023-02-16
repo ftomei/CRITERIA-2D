@@ -194,8 +194,8 @@ def ground_potential(
     for idx, meteo_var in reversed(list(enumerate(df.columns))):
         ax = axes[int(idx / ncols), idx % ncols]
         df[meteo_var].plot(ax=ax, sharex=True)
-        ax.set_ylim([df.min().min(), 0])
-        # ax.set_yscale('symlog')
+        ax.set_ylim([df.min().min(), -10])
+        ax.set_yscale('symlog')
         ax.set_xlabel("")
 
         # ax.set_xticks([0,  df.shape[0] - 1])
@@ -266,8 +266,8 @@ def forecast_avg(
             new_columns += [new_column]
             df[new_column] = [
                 mean_squared_error(
-                    df[[c for c in df.columns if c.endswith("_obs")]].iloc[i],
-                    df[[c for c in df.columns if c.endswith(f"_{data_type}")]].iloc[i],
+                    df[[c for c in df.columns if c.endswith("_obs")]].iloc[:(i+1)],
+                    df[[c for c in df.columns if c.endswith(f"_{data_type}")]].iloc[:(i+1)],
                     squared=False,
                 )
                 for i in range(df.shape[0])
@@ -287,7 +287,7 @@ def forecast_avg(
         }
     )
     df.plot(ax=ax)
-    # ax.set_ylim([0, 1])
+    ax.set_ylim([0, 1])
     ax.set_xlabel("")
     ax.set_ylabel("logRMSE")
     fig.set_size_inches(13, 6)
