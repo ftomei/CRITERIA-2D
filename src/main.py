@@ -109,8 +109,7 @@ def main(args):
     # main cycle
     print("Start...")
     currentIndex = 1
-    isFirstRun = True
-    restartIndex = weatherIndex
+    restartIndex = 1
     while weatherIndex < len(weatherData):
         criteria3D.computeOneHour(weatherIndex, C3DParameters.isVisual)
         obsWeather = criteria3D.weatherData.loc[weatherIndex]
@@ -124,34 +123,32 @@ def main(args):
                 importUtils.loadObsData(obsFileName)
 
         # save model state
-        if C3DParameters.isForecast and currentIndex == C3DParameters.assimilationInterval:
+        if C3DParameters.isForecast and weatherIndex == restartIndex:
             importUtils.saveCurrentModelState(modelStateFileName)
-            restartIndex = weatherIndex
 
         # save output
-        if not C3DParameters.isForecast: # or isFirstRun:
+        if not C3DParameters.isForecast:
             exportUtils.takeScreenshot(obsWeather["timestamp"])
         else:
-            if currentIndex > (C3DParameters.forecastPeriod - C3DParameters.assimilationInterval):
+            if weatherIndex - restartIndex + 1 == C3DParameters.forecastPeriod:
                 exportUtils.takeScreenshot(obsWeather["timestamp"])
+                print("Restart...")
+                importUtils.loadModelState(modelStateFileName)
+                # assimilation
+                obsWeather = criteria3D.weatherData.loc[restartIndex]
+                importUtils.writeObsData(obsFileName, obsWaterPotential, obsWeather["timestamp"])
+                importUtils.loadObsData(obsFileName)
+                # redraw
+                waterBalance.totalTime = restartIndex * 3600
+                if C3DParameters.isVisual:
+                    visual3D.redraw()
+                # re-initialize index
+                restartIndex += 1
+                weatherIndex = restartIndex
+            else:
+                weatherIndex += 1
 
-        # restart
-        if C3DParameters.isForecast and currentIndex == C3DParameters.forecastPeriod:
-            print("Restart...")
-            importUtils.loadModelState(modelStateFileName)
-            # assimilation
-            obsWeather = criteria3D.weatherData.loc[restartIndex]
-            importUtils.writeObsData(obsFileName, obsWaterPotential, obsWeather["timestamp"])
-            importUtils.loadObsData(obsFileName)
-            # redraw
-            waterBalance.totalTime = restartIndex * 3600
-            if C3DParameters.isVisual:
-                visual3D.redraw()
-            # re-initialize index
-            weatherIndex = restartIndex + 1
-            currentIndex = 1
-            isFirstRun = False
-        else:
+        if C3DParameters.isPeriodicAssimilation and not C3DParameters.isForecast:
             weatherIndex += 1
             currentIndex += 1
 
