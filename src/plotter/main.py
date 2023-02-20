@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 from matplotlib.dates import DateFormatter
 import matplotlib.dates as mdates
 from sklearn.metrics import mean_squared_error
+import warnings
+warnings.filterwarnings("ignore")
 
 # Handle date time conversions between pandas and matplotlib
 # from pandas.plotting import register_matplotlib_converters
@@ -257,6 +259,8 @@ def forecast_avg(
             f"_{data_type}"
         )
     df = pd.concat(forecasting_dict.values(), axis=1)
+    df = df.interpolate(method="linear", limit_direction="forward", axis=0)
+    print(df)
     df = df.dropna(axis="index")
     df = df.reset_index()
     new_columns = []
@@ -264,19 +268,24 @@ def forecast_avg(
         if data_type != "obs":
             new_column = f"RMSE_{data_type}"
             new_columns += [new_column]
+            # print(df[[c for c in df.columns if c.endswith("_obs")]].iloc[0])
+            # print(df[[c for c in df.columns if c.endswith("_obs")]].iloc[:1])
+            # print(df[[c for c in df.columns if c.endswith(f"_{data_type}")]].iloc[0])
+            # print(df[[c for c in df.columns if c.endswith(f"_{data_type}")]].iloc[:1])
             df[new_column] = [
                 mean_squared_error(
-                    df[[c for c in df.columns if c.endswith("_obs")]].iloc[:(i+1)],
-                    df[[c for c in df.columns if c.endswith(f"_{data_type}")]].iloc[:(i+1)],
+                    df[[c for c in df.columns if c.endswith("_obs")]].iloc[i:(i+1)],
+                    df[[c for c in df.columns if c.endswith(f"_{data_type}")]].iloc[i:(i+1)],
                     squared=False,
                 )
                 for i in range(df.shape[0])
             ]
+    df = df.append(pd.DataFrame({"timestamp": [1655251200]}), ignore_index=True)
     df = df.set_index("timestamp")
     df = df[new_columns]
     df.index = pd.to_datetime(df.index, unit="s")
+    print(df[-400:-350])
 
-    df = df.interpolate(method="linear", limit_direction="forward", axis=0)
     # print(df)
 
     fig, ax = plt.subplots()
@@ -287,7 +296,7 @@ def forecast_avg(
         }
     )
     df.plot(ax=ax)
-    ax.set_ylim([0, 1])
+    ax.set_ylim([0, 2])
     ax.set_xlabel("")
     ax.set_ylabel("logRMSE")
     fig.set_size_inches(13, 6)
@@ -297,9 +306,9 @@ def forecast_avg(
 
 
 def main():
-    meteo()
-    water()
-    ground_potential()
+    # meteo()
+    # water()
+    # ground_potential()
     forecast_avg()
 
 
