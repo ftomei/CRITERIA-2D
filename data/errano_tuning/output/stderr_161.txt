@@ -1,0 +1,10 @@
+/home/src/soil.py:43: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  soilData[key] = value
+Error in atexit._run_exitfuncs:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.9/site-packages/vpython/vpython.py", line 22, in Exit
+    a = 1.0/zero
+ZeroDivisionError: float division by zero
