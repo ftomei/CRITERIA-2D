@@ -43,6 +43,7 @@ def main(args):
     print("Read field settings...")
     fieldSettings = os.path.join(settingsFolder, "field.ini")
     if not importUtils.readFieldParameters(fieldSettings, params):
+        print("Error in read field.ini")
         return
 
     print("read soil properties...")
@@ -61,7 +62,11 @@ def main(args):
     cropSettings = os.path.join(settingsFolder, "crop.ini")
     if not importUtils.readCropParameters(cropSettings, params):
         return
-    crop.initializeCrop()
+
+    if C3DParameters.computeTranspiration:
+        crop.initializeCrop()
+    else:
+        crop.maxRootFactor = 1.0
 
     print("Initialize mesh...")
     criteria3D.initializeMesh()
@@ -129,7 +134,7 @@ def main(args):
             restartIndex = weatherIndex
 
         # save output
-        if not C3DParameters.isForecast: # or isFirstRun:
+        if not C3DParameters.isForecast or isFirstRun:
             exportUtils.takeScreenshot(obsWeather["timestamp"])
         else:
             if currentIndex > (C3DParameters.forecastPeriod - C3DParameters.assimilationInterval):

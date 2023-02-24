@@ -36,7 +36,7 @@ def doubleTimeStep():
 
 def halveTimeStep():
     if C3DParameters.currentDeltaT == C3DParameters.deltaT_min:
-        if C3DParameters.MBRThreshold < 1E-2:
+        if C3DParameters.MBRThreshold < 1E-3:
             incMBRThreshold()
         else:
             return False

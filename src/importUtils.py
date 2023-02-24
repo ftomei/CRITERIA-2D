@@ -33,6 +33,7 @@ def configToDict(settingsFilename, params):
 
     return dictionary
 
+
 def readModelParameters(settingsFilename, params):
     configDict = configToDict(settingsFilename, params)
     print(f"model parameters: {configDict}")
@@ -305,21 +306,21 @@ def readFieldParameters(fieldSettingsFilename, params):
 
     # set [plant]
     plantIndices.clear()
-    if len(configDict['plant']['x']) > 1 and len(configDict['plant']['y']) > 1:
-        print("set plant positions...")
-        crop.x = configDict['plant']['x']
-        crop.y = configDict['plant']['y']
+    if C3DParameters.computeTranspiration:
+        if len(configDict['plant']['x']) > 1 and len(configDict['plant']['y']) > 1:
+            print("set plant positions...")
+            crop.x = configDict['plant']['x']
+            crop.y = configDict['plant']['y']
 
-        if len(crop.x) != len(crop.y):
-            print("ERROR! Different number of plant.x,y in field.ini")
-            return False
+            if len(crop.x) != len(crop.y):
+                print("ERROR! Different number of plant.x,y in field.ini")
+                return False
 
-        for i in range(len(crop.x)):
-            surfaceIndex = rectangularMesh.getSurfaceIndex(crop.x[i], crop.y[i])
-            if surfaceIndex != NODATA:
-                plantIndices.append(surfaceIndex)
-    else:
-        if C3DParameters.computeTranspiration:
+            for i in range(len(crop.x)):
+                surfaceIndex = rectangularMesh.getSurfaceIndex(crop.x[i], crop.y[i])
+                if surfaceIndex != NODATA:
+                    plantIndices.append(surfaceIndex)
+        else:
             print("ERROR! Missing plant positions in field.ini")
             print("Set at least two plants to define the row direction.")
             return False

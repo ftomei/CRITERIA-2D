@@ -22,8 +22,9 @@ def redistribution(i, link, isLateral):
 
 
 def infiltration(surf, sub, link, deltaT, isFirstApprox):
+    # unsaturated
     if C3DCells[surf].z > C3DCells[sub].H:
-        # unsaturated
+        # surface water content[m]
         avgH = (C3DCells[surf].H + C3DCells[surf].H0) * 0.5
         psi = avgH - C3DCells[surf].z
         if isFirstApprox:
@@ -31,7 +32,8 @@ def infiltration(surf, sub, link, deltaT, isFirstApprox):
             psi += rain
         if psi < EPSILON:
             return 0.0
-        
+
+        # first soil layer: mean between current conductivity and k_sat
         interfaceK = meanK(C3DParameters.conductivityMean, C3DCells[sub].k, soil.horizon.Ks)
         dH = C3DCells[surf].H - C3DCells[sub].H
         maxK = (psi / deltaT) * (link.distance / dH)
