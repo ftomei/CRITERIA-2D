@@ -545,7 +545,6 @@ def forecast_std2(
 
     df["average"].plot(ax=ax, color= 'C5', label="average")
     # ax.set_ylim([-800, 0])
-    ax.set_yscale("symlog")
     ax.fill_between(df.index, df["average"] - df["RMSE_7gg"], df["average"] + df["RMSE_7gg"], alpha=0.2, color='C2', label="RMSE on 7gg")
     ax.fill_between(df.index, df["average"] - df["RMSE_3gg"], df["average"] + df["RMSE_3gg"], alpha=0.4, color='C1', label="RMSE on 3gg")
     ax.fill_between(df.index, df["average"] - df["RMSE_1gg"], df["average"] + df["RMSE_1gg"], alpha=0.6, color='C0', label="RMSE on 1gg")
