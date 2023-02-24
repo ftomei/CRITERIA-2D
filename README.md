@@ -1,5 +1,5 @@
-# CRITERIA3D-Python
-Python version of CRITERIA-3D agro-hydrological model
+# CRITERIA-2D
+Python version of agro-hydrological model [CRITERIA-3D](https://github.com/ARPA-SIMC/CRITERIA3D)
 ![](https://github.com/ftomei/CRITERIA-2D/blob/main/doc/criteria3d.png)
 
 ## Authors
