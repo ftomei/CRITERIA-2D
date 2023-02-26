@@ -3,20 +3,24 @@ from dataStructures import *
 import rectangularMesh
 import pandas as pd
 import soil
+import waterBalance
 
 outputIndices = []
 outputSurfaceIndices = []
-outputFile = ""
+outputFileWP = ""
 outputFileWC = ""
+outputFileDailyBalance = ""
 heightSlice = C3DStructure.gridHeight * 0.5
 oneTimestampPerRow = True
 
 
 def createExportFile(outputPath, settingsFolder, iteration):
-    global outputFile, outputFileWC
+    global outputFileWP, outputFileWC, outputFileDailyBalance
+
     iterations_str = f"_{iteration}" if iteration != -1 else ""
-    outputFile = os.path.join(outputPath, f"output{iterations_str}.csv")
+    outputFileWP = os.path.join(outputPath, f"output{iterations_str}.csv")
     outputFileWC = os.path.join(outputPath, f"outputWaterContent{iterations_str}.csv")
+    outputFileDailyBalance = os.path.join(outputPath, f"dailyWaterBalance{iterations_str}.csv")
 
     if oneTimestampPerRow:
         outputPoints = pd.read_csv(os.path.join(settingsFolder, f"output_points.csv"))
@@ -29,10 +33,10 @@ def createExportFile(outputPath, settingsFolder, iteration):
             takeSlice()
         header = "timestamp,x,y,z,Se,H\n"
 
-    if not os.path.exists(outputFile):
-        open(outputFile, 'w').close()
+    if not os.path.exists(outputFileWP):
+        open(outputFileWP, 'w').close()
 
-    with open(outputFile, "w") as f:
+    with open(outputFileWP, "w") as f:
         f.write(header)
 
     if oneTimestampPerRow:
@@ -41,6 +45,13 @@ def createExportFile(outputPath, settingsFolder, iteration):
 
         with open(outputFileWC, "w") as f:
             f.write(header)
+
+    if not os.path.exists(outputFileDailyBalance):
+        open(outputFileDailyBalance, 'w').close()
+
+    with open(outputFileDailyBalance, "w") as f:
+        header = "date, precipitation, irrigation, ET0, maxTranpiration, maxEvaporation, realTranspiration, realEvaporation\n"
+        f.write(header)
 
 
 def takeSelected(outputPoints):
@@ -90,7 +101,7 @@ def takeScreenshot(timestamp):
         rowPotential += "\n"
         rowWaterContent += "\n"
 
-        with open(outputFile, "a") as f:
+        with open(outputFileWP, "a") as f:
             f.write(rowPotential)
         with open(outputFileWC, "a") as f:
             f.write(rowWaterContent)
@@ -106,5 +117,19 @@ def takeScreenshot(timestamp):
                 row += "," + '{:.3f}'.format(psi)
                 row += "\n"
 
-                with open(outputFile, "a") as f:
+                with open(outputFileWP, "a") as f:
                     f.write(row)
+
+
+def saveDailyBalance(date):
+    row = str(date)
+    row += "," + '{:.1f}'.format(waterBalance.dailyBalance.precipitation)
+    row += "," + '{:.1f}'.format(waterBalance.dailyBalance.irrigation)
+    row += "," + '{:.1f}'.format(waterBalance.dailyBalance.et0)
+    row += "," + '{:.1f}'.format(waterBalance.dailyBalance.maxTranspiration)
+    row += "," + '{:.1f}'.format(waterBalance.dailyBalance.maxEvaporation)
+    row += "," + '{:.1f}'.format(waterBalance.dailyBalance.actualTranspiration)
+    row += "," + '{:.1f}'.format(waterBalance.dailyBalance.actualEvaporation)
+    row += "\n"
+    with open(outputFileDailyBalance, "a") as f:
+        f.write(row)

@@ -301,14 +301,23 @@ def computeOneHour(weatherIndex, isRedraw):
     # evapotranspiration [mm m-2]
     ET0 = computeHourlyET0(C3DStructure.z, airTemperature, globalSWRadiation, airRelHumidity,
                            windSpeed_10m, normTransmissivity)
+    waterBalance.dailyBalance.et0 += ET0
 
     # actual evaporation and transpiration [mm m-2]
-    actualTranspiration, actualEvaporation = crop.setEvapotranspiration(currentDateTime, ET0)
-    print(currentDateTime, "ET0:", format(ET0, ".2f"), " T:", format(actualTranspiration, ".2f"), " E:", format(actualEvaporation, ".2f"))
+    maxTranspiration, maxEvaporation, actualTranspiration, actualEvaporation = crop.setEvapotranspiration(currentDateTime, ET0)
+
+    waterBalance.dailyBalance.maxTranspiration += maxTranspiration
+    waterBalance.dailyBalance.maxEvaporation += maxEvaporation
+    waterBalance.dailyBalance.actualTranspiration += actualTranspiration
+    waterBalance.dailyBalance.actualEvaporation += actualEvaporation
+
+    print(currentDateTime, "ET0:", format(ET0, ".2f"), " T:", format(actualTranspiration, ".2f"),
+                                                       " E:", format(actualEvaporation, ".2f"))
 
     initializeSinkSource(ONLY_SURFACE)
     waterBalance.currentPrec = precipitation    # [mm hour-1]
     setRainfall(precipitation, 3600)
+    waterBalance.dailyBalance.precipitation += precipitation
 
     if C3DParameters.assignIrrigation:
         if not (np.isnan(waterEvent["irrigation"])):
@@ -319,6 +328,10 @@ def computeOneHour(weatherIndex, isRedraw):
 
         waterBalance.currentIrr = irrigation    # [l hour-1]
         setDripIrrigation(irrigation, 3600)
+        irrigationMM = irrigation / C3DStructure.totalArea
+    else:
+        irrigationMM = 0
+    waterBalance.dailyBalance.irrigation += irrigationMM
 
     # reduce deltaT during water event
     if (waterBalance.currentIrr > 0) or (waterBalance.currentPrec > 0):
@@ -329,3 +342,4 @@ def computeOneHour(weatherIndex, isRedraw):
         C3DParameters.currentDeltaT_max = C3DParameters.deltaT_max
 
     compute(3600, isRedraw)
+    # TODO: save drainage (boundary flow)

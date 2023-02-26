@@ -71,9 +71,6 @@ def main(args):
     print("Initialize mesh...")
     criteria3D.initializeMesh()
 
-    waterBalance.initializeBalance()
-    print("Initial water storage [m^3]:", format(waterBalance.currentStep.waterStorage, ".3f"))
-
     print("Read weather and irrigation data...")
     weatherData = importUtils.readMeteoData(weatherFolder)
     waterData = importUtils.readWaterData(waterFolder, weatherData.iloc[0]["timestamp"],
@@ -99,11 +96,15 @@ def main(args):
         obsWeather = weatherData.loc[weatherIndex]
         importUtils.writeObsData(obsFileName, obsWaterPotential, obsWeather["timestamp"])
         importUtils.loadObsData(obsFileName)
+
+        waterBalance.initializeBalance()
         for i in range(24):
             criteria3D.computeOneHour(weatherIndex+i, False)
         importUtils.loadObsData(obsFileName)
 
     waterBalance.initializeBalance()
+    print("Initial water storage [m^3]:", format(waterBalance.currentStep.waterStorage, ".3f"))
+
     if C3DParameters.isVisual:
         visual3D.initialize(1200)
         visual3D.isPause = True
@@ -119,11 +120,11 @@ def main(args):
     while weatherIndex < len(weatherData):
         criteria3D.computeOneHour(weatherIndex, C3DParameters.isVisual)
         obsWeather = criteria3D.weatherData.loc[weatherIndex]
+        currentDateTime = pd.to_datetime(obsWeather["timestamp"], unit='s')
 
         # assimilation
         if C3DParameters.isPeriodicAssimilation and not C3DParameters.isForecast:
             if (currentIndex % C3DParameters.assimilationInterval) == 0:
-                currentDateTime = pd.to_datetime(obsWeather["timestamp"], unit='s')
                 print("Assimilation:", currentDateTime)
                 importUtils.writeObsData(obsFileName, obsWaterPotential, obsWeather["timestamp"])
                 importUtils.loadObsData(obsFileName)
@@ -134,11 +135,17 @@ def main(args):
             restartIndex = weatherIndex
 
         # save output
-        if not C3DParameters.isForecast or isFirstRun:
+        if not C3DParameters.isForecast: # or isFirstRun:
             exportUtils.takeScreenshot(obsWeather["timestamp"])
         else:
             if currentIndex > (C3DParameters.forecastPeriod - C3DParameters.assimilationInterval):
                 exportUtils.takeScreenshot(obsWeather["timestamp"])
+
+        # daily water balance
+        if currentDateTime.hour == 0:
+            if currentIndex >= 24:
+                exportUtils.saveDailyBalance(currentDateTime.date())
+            waterBalance.dailyBalance.initialize()
 
         # restart
         if C3DParameters.isForecast and currentIndex == C3DParameters.forecastPeriod:
@@ -171,7 +178,7 @@ def parse_args():
         "--path",
         type=str,
         required=False,
-        default=os.path.join("data", "errano_evaluation_aug"),
+        default=os.path.join("data", "errano_all"),
         help="path to working directory",
     )
     parser.add_argument(

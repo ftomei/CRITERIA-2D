@@ -325,21 +325,24 @@ def setEvapotranspiration(currentDate, ET0):
     currentCrop.setCurrentLAI(currentDate)
     if C3DParameters.computeTranspiration:
         sumTranspiration = 0
+        sumMaxTranspiration = 0
         nrCells = 0
         for i in range(C3DStructure.nrRectangles):
             maxTranspiration = getMaxTranspiration(currentCrop.currentLAI, currentCrop.kcMax, ET0) * k_root[i]
             actualTranspiration = setTranspiration(i, rootDensity[i], maxTranspiration)
             if k_root[i] > 0:
+                sumMaxTranspiration += maxTranspiration
                 sumTranspiration += actualTranspiration
                 nrCells += 1
         actualTranspiration = sumTranspiration / nrCells
+        maxTranspiration = sumMaxTranspiration / nrCells
     else:
         actualTranspiration = 0
+        maxTranspiration = 0
 
     if C3DParameters.computeEvaporation:
         maxEvaporation = getMaxEvaporation(currentCrop.currentLAI, ET0)
         sumEvaporation = 0
-        nrCells = 0
         for i in range(C3DStructure.nrRectangles):
             actualEvaporation = setEvaporation(i, maxEvaporation)
             sumEvaporation += actualEvaporation
@@ -347,5 +350,5 @@ def setEvapotranspiration(currentDate, ET0):
     else:
         actualEvaporation = 0
 
-    return actualTranspiration, actualEvaporation
+    return maxTranspiration, maxEvaporation, actualTranspiration, actualEvaporation
 

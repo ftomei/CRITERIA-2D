@@ -6,10 +6,40 @@ from soil import getVolumetricWaterContent
 
 
 class C3DBalance:
-    waterStorage = NODATA
-    waterFlow = NODATA
-    MBE = NODATA
-    MBR = NODATA
+    waterStorage = NODATA       # [m3]
+    waterFlow = NODATA          # [m3]
+    MBE = NODATA                # [m3] mass balance error
+    MBR = NODATA                # [-] mass balance ratio
+
+    def initialize(self):
+        self.waterStorage = 0
+        self.waterFlow = 0
+        self.MBE = 0
+        self.MBR = 0
+
+
+# all variables are in [mm]
+class C3DDailyWaterBalance:
+    precipitation = NODATA
+    irrigation = NODATA
+    et0 = NODATA
+    maxTranspiration = NODATA
+    maxEvaporation = NODATA
+    actualTranspiration = NODATA
+    actualEvaporation = NODATA
+    drainage = NODATA
+    runoff = NODATA
+
+    def initialize(self):
+        self.precipitation = 0
+        self.irrigation = 0
+        self.et0 = 0
+        self.maxTranspiration = 0
+        self.maxEvaporation = 0
+        self.actualTranspiration = 0
+        self.actualEvaporation = 0
+        self.drainage = 0
+        self.runoff = 0
 
 
 totalTime = 0.0
@@ -23,6 +53,7 @@ forceExit = False
 currentStep = C3DBalance()
 previousStep = C3DBalance()
 allSimulation = C3DBalance()
+dailyBalance = C3DDailyWaterBalance()
 
 
 def doubleTimeStep():
@@ -61,18 +92,17 @@ def decMBRThreshold():
 
 def initializeBalance():
     global totalTime
-
     totalTime = 0.0
+
     storage = getWaterStorage()
+    currentStep.initialize()
     currentStep.waterStorage = storage
+    previousStep.initialize()
     previousStep.waterStorage = storage
+    allSimulation.initialize()
     allSimulation.waterStorage = storage
-    previousStep.waterFlow = 0.0
-    currentStep.waterFlow = 0.0
-    allSimulation.waterFlow = 0.0
-    currentStep.MBR = 0.0
-    currentStep.MBE = 0.0
-    allSimulation.MBE = 0
+
+    dailyBalance.initialize()
 
 
 def updateStorage():
@@ -138,7 +168,6 @@ def computeBalanceError(deltaT):
         currentStep.MBR = fabs(currentStep.MBE) / previousStep.waterStorage
     else:
         currentStep.MBR = fabs(currentStep.MBE)
-
     # print ("Mass Balance Error [l]:", format(currentStep.MBE * 1000,".5f"))
     # print("Mass Balance Ratio:", format(currentStep.MBR, ".5f"))
 
