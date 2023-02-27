@@ -50,7 +50,8 @@ def createExportFile(outputPath, settingsFolder, iteration):
         open(outputFileDailyBalance, 'w').close()
 
     with open(outputFileDailyBalance, "w") as f:
-        header = "date, precipitation, irrigation, ET0, maxTranpiration, maxEvaporation, realTranspiration, realEvaporation\n"
+        header = "date, precipitation, irrigation, ET0, maxTranpiration, maxEvaporation, " \
+                 "realTranspiration, realEvaporation, drainage\n"
         f.write(header)
 
 
@@ -126,10 +127,11 @@ def saveDailyBalance(date):
     row += "," + '{:.1f}'.format(waterBalance.dailyBalance.precipitation)
     row += "," + '{:.1f}'.format(waterBalance.dailyBalance.irrigation)
     row += "," + '{:.1f}'.format(waterBalance.dailyBalance.et0)
-    row += "," + '{:.1f}'.format(waterBalance.dailyBalance.maxTranspiration)
-    row += "," + '{:.1f}'.format(waterBalance.dailyBalance.maxEvaporation)
-    row += "," + '{:.1f}'.format(waterBalance.dailyBalance.actualTranspiration)
-    row += "," + '{:.1f}'.format(waterBalance.dailyBalance.actualEvaporation)
+    row += "," + '{:.2f}'.format(waterBalance.dailyBalance.maxTranspiration)
+    row += "," + '{:.2f}'.format(waterBalance.dailyBalance.maxEvaporation)
+    row += "," + '{:.2f}'.format(waterBalance.dailyBalance.actualTranspiration)
+    row += "," + '{:.2f}'.format(waterBalance.dailyBalance.actualEvaporation)
+    row += "," + '{:.2f}'.format(-waterBalance.dailyBalance.drainage)
     row += "\n"
     with open(outputFileDailyBalance, "a") as f:
         f.write(row)

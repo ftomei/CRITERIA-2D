@@ -188,10 +188,10 @@ def initializeSinkSource(cellType):
 # duration        [s]            
 # -----------------------------------------------------------
 def setRainfall(rain, duration):
-    rate = (rain * 0.001) / duration  # [m s^-1]
+    rate = (rain * 0.001) / duration            # [m s-1]
     for i in range(C3DStructure.nrRectangles):
-        area = C3DCells[i].area  # [m^2]
-        C3DCells[i].sinkSource += rate * area  # [m^3 s^-1]
+        area = C3DCells[i].area                 # [m2]
+        C3DCells[i].sinkSource += rate * area   # [m3 s-1]
 
 
 # -----------------------------------------------------------
@@ -200,10 +200,9 @@ def setRainfall(rain, duration):
 # duration        [s]            
 # -----------------------------------------------------------
 def setDripIrrigation(irrigation, duration):
-    rate = irrigation / duration  # [l s^-1]
-
+    rate = irrigation / duration                    # [l s-1]
     for index in dripperIndices:
-        C3DCells[index].sinkSource += rate * 0.001  # [m^3 s^-1]
+        C3DCells[index].sinkSource += rate * 0.001  # [m3 s-1]
 
 
 def setModelState(position, psiValues):
@@ -301,6 +300,7 @@ def computeOneHour(weatherIndex, isRedraw):
     # evapotranspiration [mm m-2]
     ET0 = computeHourlyET0(C3DStructure.z, airTemperature, globalSWRadiation, airRelHumidity,
                            windSpeed_10m, normTransmissivity)
+    ET0 = min(ET0, 0.8)
     waterBalance.dailyBalance.et0 += ET0
 
     # actual evaporation and transpiration [mm m-2]
@@ -342,4 +342,3 @@ def computeOneHour(weatherIndex, isRedraw):
         C3DParameters.currentDeltaT_max = C3DParameters.deltaT_max
 
     compute(3600, isRedraw)
-    # TODO: save drainage (boundary flow)

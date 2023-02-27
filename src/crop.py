@@ -210,7 +210,7 @@ def setTranspiration(surfaceIndex, myRootDensity, maxTranspiration):
             if theta > FC:
                 fraction = 1.0 - (theta - FC) / (SAT - FC)
                 fraction = fraction**2
-                layerTranspiration[layer] = maxTranspiration * fraction * myRootDensity[layer]
+                layerTranspiration[layer] = maxTranspiration * myRootDensity[layer] * fraction
                 isLayerStressed[layer] = True
             else:
                 # water scarcity
@@ -219,7 +219,8 @@ def setTranspiration(surfaceIndex, myRootDensity, maxTranspiration):
                         layerTranspiration[layer] = 0.0
                     else:
                         fraction = (theta - WP) / (wsThreshold - WP)
-                        layerTranspiration[layer] = maxTranspiration * myRootDensity[layer] * fraction**2
+                        fraction = fraction ** 2
+                        layerTranspiration[layer] = maxTranspiration * myRootDensity[layer] * fraction
                     isLayerStressed[layer] = True
                 else:
                     # normal conditions

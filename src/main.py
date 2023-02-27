@@ -1,6 +1,7 @@
 import pandas as pd
 import os
 import time
+import datetime
 
 from dataStructures import *
 import soil
@@ -144,7 +145,8 @@ def main(args):
         # daily water balance
         if currentDateTime.hour == 0:
             if currentIndex >= 24:
-                exportUtils.saveDailyBalance(currentDateTime.date())
+                lastDate = currentDateTime.date() - datetime.timedelta(days=1)
+                exportUtils.saveDailyBalance(lastDate)
             waterBalance.dailyBalance.initialize()
 
         # restart

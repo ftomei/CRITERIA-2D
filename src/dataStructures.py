@@ -54,16 +54,16 @@ def initialize3DStructure(width, height, cellSize):
 class Clink:
     def __init__(self):
         self.index = NOLINK     # [-] index of linked cell
-        self.area = NODATA      # [m^2] area of interface
+        self.area = NODATA      # [m2] area of interface
         self.distance = NODATA  # [m]
 
 
 class Cboundary:
     def __init__(self):
         self.type = BOUNDARY_NONE
-        self.area = NODATA      # [m^2] area of interface
+        self.area = NODATA      # [m2] area of interface
         self.slope = NODATA     # [-] slope
-        self.flow = NODATA      # [m^3 s^-1] boundary water flow
+        self.flow = NODATA      # [m3 s-1] boundary water flow
 
 
 class Ccell:
@@ -121,7 +121,7 @@ class C3DParameters:
 
     # numerical solution parameters
     currentDeltaT = 60.0                # [s]
-    deltaT_min = 1                      # [s]
+    deltaT_min = 6                      # [s]
     deltaT_max = 3600.0                 # [s]
     currentDeltaT_max = deltaT_max      # [s]
     maxIterationsNr = 100
@@ -131,7 +131,7 @@ class C3DParameters:
 
     # simulation type
     isForecast = False
-    isFirstAssimilation = True
+    isFirstAssimilation = False
     isPeriodicAssimilation = False
     isVisual = True
     assimilationInterval = 24

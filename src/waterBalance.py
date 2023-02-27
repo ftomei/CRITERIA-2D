@@ -6,10 +6,10 @@ from soil import getVolumetricWaterContent
 
 
 class C3DBalance:
-    waterStorage = NODATA       # [m3]
-    waterFlow = NODATA          # [m3]
-    MBE = NODATA                # [m3] mass balance error
-    MBR = NODATA                # [-] mass balance ratio
+    waterStorage = NODATA  # [m3]
+    waterFlow = NODATA  # [m3]
+    MBE = NODATA  # [m3] mass balance error
+    MBR = NODATA  # [-] mass balance ratio
 
     def initialize(self):
         self.waterStorage = 0
@@ -115,12 +115,19 @@ def updateStorage():
 def updateBalance(deltaT):
     global totalTime
     totalTime += deltaT
+    # set previous step
     previousStep.waterStorage = currentStep.waterStorage
     previousStep.waterFlow = currentStep.waterFlow
+    # update all simulation flow
     allSimulation.waterFlow += currentStep.waterFlow
     allSimulation.MBE += currentStep.MBE
+    # update drainage in daily balance [mm]
+    drainage = 1000. * sumDrainage(deltaT) / C3DStructure.totalArea   # [mm]
+    dailyBalance.drainage += drainage
+    # TODO: update runoff
 
 
+# return water storage [m3]
 def getWaterStorage():
     waterStorage = 0.0
     for i in range(C3DStructure.nrCells):
@@ -132,6 +139,17 @@ def getWaterStorage():
     return waterStorage
 
 
+# sum of boundary water flows (only drainage) during the time step [m3]
+def sumDrainage(deltaT):
+    mySum = 0.0
+    for i in range(C3DStructure.nrCells):
+        if C3DCells[i].boundary.type == BOUNDARY_FREEDRAINAGE or C3DCells[i].boundary.type == BOUNDARY_FREELATERALDRAINAGE:
+            if C3DCells[i].boundary.flow != NODATA:
+                mySum += C3DCells[i].boundary.flow * deltaT
+    return mySum
+
+
+# sum of boundary water flows (all types) during the time step [m3]
 def sumBoundaryFlow(deltaT):
     mySum = 0.0
     for i in range(C3DStructure.nrCells):
@@ -141,6 +159,7 @@ def sumBoundaryFlow(deltaT):
     return mySum
 
 
+# sum of all water sink/source during the time step [m3]
 def sumSinkSource(deltaT):
     mySum = 0.0
     for i in range(C3DStructure.nrCells):
@@ -149,6 +168,7 @@ def sumSinkSource(deltaT):
     return mySum
 
 
+# sum of all water flows (it includes sink/source and boundary flows) during the time step [m3]
 def sumWaterFlow(deltaT, isAbsoluteValue):
     mySum = 0.0
     for i in range(C3DStructure.nrCells):
