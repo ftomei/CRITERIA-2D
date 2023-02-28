@@ -67,7 +67,7 @@ def doubleTimeStep():
 
 def halveTimeStep():
     if C3DParameters.currentDeltaT == C3DParameters.deltaT_min:
-        if C3DParameters.MBRThreshold < 1E-3:
+        if C3DParameters.MBRThreshold < 1E-5:
             incMBRThreshold()
         else:
             return False
@@ -132,7 +132,7 @@ def getWaterStorage():
     waterStorage = 0.0
     for i in range(C3DStructure.nrCells):
         if C3DCells[i].isSurface:
-            if abs(C3DCells[i].H - C3DCells[i].z) > EPSILON:
+            if abs(C3DCells[i].H - C3DCells[i].z) > 0:
                 waterStorage += (C3DCells[i].H - C3DCells[i].z) * C3DCells[i].area
         else:
             waterStorage += (getVolumetricWaterContent(i) * C3DCells[i].volume)

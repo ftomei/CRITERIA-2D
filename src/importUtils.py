@@ -166,6 +166,54 @@ def readModelParameters(settingsFilename, params):
         print("The default will be set: pond = 0.005 [m]")
         C3DParameters.pond = 0.005
 
+    # [numerical_solution]
+    try:
+        C3DParameters.maxIterationsNr = configDict['numerical_solution']['maxIterationsNr']
+    except:
+        print("WARNING!\nWrong or missing numerical_solution.maxIterationsNr in the model settings: " + settingsFilename)
+        print("The default will be set: maxIterationsNr = 100")
+        C3DParameters.maxIterationsNr = 100
+
+    try:
+        C3DParameters.maxApproximationsNr = configDict['numerical_solution']['maxApproximationsNr']
+    except:
+        print(
+            "WARNING!\nWrong or missing numerical_solution.maxIterationsNr in the model settings: " + settingsFilename)
+        print("The default will be set: maxApproximationsNr = 10")
+        C3DParameters.maxApproximationsNr = 10
+
+    try:
+        C3DParameters.residualTolerance = configDict['numerical_solution']['residualTolerance']
+    except:
+        print(
+            "WARNING!\nWrong or missing numerical_solution.residualTolerance in the model settings: " + settingsFilename)
+        print("The default will be set: residualTolerance = 1E-12")
+        C3DParameters.residualTolerance = 1E-12
+
+    try:
+        C3DParameters.MBRThreshold = configDict['numerical_solution']['MBRThreshold']
+    except:
+        print(
+            "WARNING!\nWrong or missing numerical_solution.MBRThreshold in the model settings: " + settingsFilename)
+        print("The default will be set: MBRThreshold = 1E-5")
+        C3DParameters.MBRThreshold = 1E-5
+
+    try:
+        C3DParameters.deltaT_min = configDict['numerical_solution']['minDeltaT']
+    except:
+        print(
+            "WARNING!\nWrong or missing numerical_solution.minDeltaT in the model settings: " + settingsFilename)
+        print("The default will be set: minDeltaT = 6")
+        C3DParameters.deltaT_min = 6
+
+    try:
+        C3DParameters.deltaT_max = configDict['numerical_solution']['maxDeltaT']
+    except:
+        print(
+            "WARNING!\nWrong or missing numerical_solution.maxDeltaT in the model settings: " + settingsFilename)
+        print("The default will be set: maxDeltaT = 3600")
+        C3DParameters.deltaT_max = 6
+
     # [simulation_type]
     try:
         C3DParameters.isForecast = configDict['simulation_type']['isForecast']
@@ -500,8 +548,9 @@ def readWaterData(waterPath, meteo_start, meteo_end):
     mergedDf = irrigation.merge(precipitations, how='outer', left_index=True, right_index=True)
     mergedDf = mergedDf.reset_index()
 
-    if meteo_start != mergedDf.iloc[0]["timestamp"] or meteo_end != mergedDf.iloc[-1]["timestamp"]:
-        raise Exception("Irrigation file has a different time span")
+    if meteo_start != NODATA and meteo_end != NODATA:
+        if meteo_start != mergedDf.iloc[0]["timestamp"] or meteo_end != mergedDf.iloc[-1]["timestamp"]:
+            raise Exception("Irrigation file has a different time span")
 
     return mergedDf
 

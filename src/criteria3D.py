@@ -102,24 +102,23 @@ def initializeMesh():
 
                 setMatricPotential(index, 0.0)
 
-            elif layer == (C3DStructure.nrLayers - 1):
-                # last layer
-                if C3DParameters.isWaterTable:
-                    setCellProperties(index, False, BOUNDARY_PRESCRIBEDTOTALPOTENTIAL)
-                elif C3DParameters.isFreeDrainage:
-                    setCellProperties(index, False, BOUNDARY_FREEDRAINAGE)
-                else:
-                    setCellProperties(index, False, BOUNDARY_NONE)
-
-                setMatricPotential(index, C3DParameters.initialWaterPotential)
-
             else:
-                if rectangularMesh.C3DRM[i].isBoundary and C3DParameters.isFreeLateralDrainage:
-                    setCellProperties(index, False, BOUNDARY_FREELATERALDRAINAGE)
-                    setBoundaryProperties(index, rectangularMesh.C3DRM[i].boundarySide * soil.thickness[layer],
-                                          rectangularMesh.C3DRM[i].boundarySlope)
+                if layer == (C3DStructure.nrLayers - 1):
+                    # bottom layer
+                    if C3DParameters.isWaterTable:
+                        setCellProperties(index, False, BOUNDARY_PRESCRIBEDTOTALPOTENTIAL)
+                    elif C3DParameters.isFreeDrainage:
+                        setCellProperties(index, False, BOUNDARY_FREEDRAINAGE)
+                    else:
+                        setCellProperties(index, False, BOUNDARY_NONE)
                 else:
-                    setCellProperties(index, False, BOUNDARY_NONE)
+                    # normal layer
+                    if rectangularMesh.C3DRM[i].isBoundary and C3DParameters.isFreeLateralDrainage:
+                        setCellProperties(index, False, BOUNDARY_FREELATERALDRAINAGE)
+                        setBoundaryProperties(index, rectangularMesh.C3DRM[i].boundarySide * soil.thickness[layer],
+                                              rectangularMesh.C3DRM[i].boundarySlope)
+                    else:
+                        setCellProperties(index, False, BOUNDARY_NONE)
 
                 setMatricPotential(index, C3DParameters.initialWaterPotential)
 
@@ -262,46 +261,53 @@ def compute(timeLength, isRedraw):
 
 
 def computeOneHour(weatherIndex, isRedraw):
-    obsWeather = weatherData.loc[weatherIndex]
-    waterEvent = waterData.loc[weatherIndex]
-    currentDateTime = pd.to_datetime(obsWeather["timestamp"], unit='s')
-    normTransmissivity = computeNormTransmissivity(weatherData, weatherIndex, C3DStructure.latitude,
-                                                   C3DStructure.longitude)
+    if C3DParameters.computeTranspiration or C3DParameters.computeEvaporation:
+        obsWeather = weatherData.loc[weatherIndex]
 
-    if not (np.isnan(obsWeather["air_temperature"])):
-        airTemperature = obsWeather["air_temperature"]
+        normTransmissivity = computeNormTransmissivity(weatherData, weatherIndex, C3DStructure.latitude,
+                                                       C3DStructure.longitude)
+
+        if not (np.isnan(obsWeather["air_temperature"])):
+            airTemperature = obsWeather["air_temperature"]
+        else:
+            print("Missing data: airTemperature")
+
+        if not (np.isnan(obsWeather["solar_radiation"])):
+            globalSWRadiation = obsWeather["solar_radiation"]
+        else:
+            print("Missing data: solar_radiation")
+
+        if not (np.isnan(obsWeather["air_humidity"])):
+            airRelHumidity = obsWeather["air_humidity"]
+        else:
+            print("Missing data: air_humidity")
+
+        if not (np.isnan(obsWeather["wind_speed"])):
+            windSpeed_10m = obsWeather["wind_speed"]
+        else:
+            windSpeed_10m = 2.0
+            print("Missing data: windspeed")
+
+        # evapotranspiration [mm m-2]
+        ET0 = computeHourlyET0(C3DStructure.z, airTemperature, globalSWRadiation, airRelHumidity,
+                               windSpeed_10m, normTransmissivity)
+        ET0 = min(ET0, 1.0)
     else:
-        print("Missing data: airTemperature")
+        ET0 = 0.0
 
-    if not (np.isnan(obsWeather["solar_radiation"])):
-        globalSWRadiation = obsWeather["solar_radiation"]
-    else:
-        print("Missing data: solar_radiation")
+    waterBalance.dailyBalance.et0 += ET0
 
-    if not (np.isnan(obsWeather["air_humidity"])):
-        airRelHumidity = obsWeather["air_humidity"]
-    else:
-        print("Missing data: air_humidity")
+    obsWater = waterData.loc[weatherIndex]
 
-    if not (np.isnan(obsWeather["wind_speed"])):
-        windSpeed_10m = obsWeather["wind_speed"]
-    else:
-        windSpeed_10m = 2.0
-        print("Missing data: windspeed")
-
-    if not (np.isnan(waterEvent["precipitation"])):
-        precipitation = waterEvent["precipitation"]
+    if not (np.isnan(obsWater["precipitation"])):
+        precipitation = obsWater["precipitation"]
     else:
         precipitation = 0
         print("Missing data: precipitation")
 
     initializeSinkSource(ALL)
 
-    # evapotranspiration [mm m-2]
-    ET0 = computeHourlyET0(C3DStructure.z, airTemperature, globalSWRadiation, airRelHumidity,
-                           windSpeed_10m, normTransmissivity)
-    ET0 = min(ET0, 0.8)
-    waterBalance.dailyBalance.et0 += ET0
+    currentDateTime = pd.to_datetime(obsWater["timestamp"], unit='s')
 
     # actual evaporation and transpiration [mm m-2]
     maxTranspiration, maxEvaporation, actualTranspiration, actualEvaporation = crop.setEvapotranspiration(currentDateTime, ET0)
@@ -320,8 +326,8 @@ def computeOneHour(weatherIndex, isRedraw):
     waterBalance.dailyBalance.precipitation += precipitation
 
     if C3DParameters.assignIrrigation:
-        if not (np.isnan(waterEvent["irrigation"])):
-            irrigation = waterEvent["irrigation"]
+        if not (np.isnan(obsWater["irrigation"])):
+            irrigation = obsWater["irrigation"]
         else:
             irrigation = 0
             print("Missing data: irrigation")

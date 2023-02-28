@@ -23,10 +23,14 @@ def main(args):
     weatherFolder = os.path.join(args.path, "meteo")
     waterFolder = os.path.join(args.path, "water")
     obsDataFolder = os.path.join(args.path, "obs_data")
+
     stateFolder = os.path.join(args.path, "state")
-    if not os.path.exists(stateFolder): os.makedirs(stateFolder)
+    if not os.path.exists(stateFolder):
+        os.makedirs(stateFolder)
+
     outputFolder = os.path.join(args.path, "output")
-    if not os.path.exists(outputFolder): os.makedirs(outputFolder)
+    if not os.path.exists(outputFolder):
+        os.makedirs(outputFolder)
 
     try:
         params = json.load(open(os.path.join(outputFolder, f"input_{args.iteration}.json")))
@@ -59,6 +63,9 @@ def main(args):
     criteria3D.memoryAllocation(C3DStructure.nrLayers, C3DStructure.nrRectangles)
     print("Nr. of cells: ", C3DStructure.nrCells)
 
+    print("Initialize mesh...")
+    criteria3D.initializeMesh()
+
     print("Read crop settings...")
     cropSettings = os.path.join(settingsFolder, "crop.ini")
     if not importUtils.readCropParameters(cropSettings, params):
@@ -69,39 +76,41 @@ def main(args):
     else:
         crop.maxRootFactor = 1.0
 
-    print("Initialize mesh...")
-    criteria3D.initializeMesh()
+    if C3DParameters.computeTranspiration or C3DParameters.computeEvaporation:
+        print("Read weather and irrigation data...")
+        criteria3D.weatherData = importUtils.readMeteoData(weatherFolder)
+        criteria3D.weatherData.set_index(["timestamp"])
+        criteria3D.waterData = importUtils.readWaterData(waterFolder, criteria3D.weatherData.iloc[0]["timestamp"],
+                                              criteria3D.weatherData.iloc[-1]["timestamp"])
+    else:
+        print("Read water data...")
+        criteria3D.waterData = importUtils.readWaterData(waterFolder, NODATA, NODATA)
 
-    print("Read weather and irrigation data...")
-    weatherData = importUtils.readMeteoData(weatherFolder)
-    waterData = importUtils.readWaterData(waterFolder, weatherData.iloc[0]["timestamp"],
-                                          weatherData.iloc[-1]["timestamp"])
-    weatherData.set_index(["timestamp"])
-    waterData.set_index(["timestamp"])
-    criteria3D.weatherData, criteria3D.waterData = importUtils.transformDates(weatherData, waterData)
-    print("Total simulation time [hours]:", len(weatherData))
+    criteria3D.waterData.set_index(["timestamp"])
+    # criteria3D.weatherData, criteria3D.waterData = importUtils.transformDates(weatherData, waterData)
+    print("Total simulation time [hours]:", len(criteria3D.waterData))
 
-    # initialize export
+    # initialize export and state
     exportUtils.createExportFile(outputFolder, settingsFolder, params["iteration"])
-    modelStateFileName = os.path.join(stateFolder, f"modelState{iterations_str}.bin")
+    modelState = os.path.join(stateFolder, f"modelState{iterations_str}.bin")
+    obsState = os.path.join(stateFolder, f"obsState{iterations_str}.csv")
 
     if C3DParameters.isPeriodicAssimilation or C3DParameters.isFirstAssimilation:
         print("Read observed water potential...")
         obsWaterPotential = pd.read_csv(os.path.join(obsDataFolder, f"waterPotential.csv"))
-        obsFileName = os.path.join(stateFolder, f"obsState{iterations_str}.csv")
 
     # first assimilation
     weatherIndex = 0
     if C3DParameters.isFirstAssimilation:
         print("Assimilate observed water potential (first day)...")
-        obsWeather = weatherData.loc[weatherIndex]
-        importUtils.writeObsData(obsFileName, obsWaterPotential, obsWeather["timestamp"])
-        importUtils.loadObsData(obsFileName)
+        timeStamp = criteria3D.waterData.loc[weatherIndex]["timestamp"]
+        importUtils.writeObsData(obsState, obsWaterPotential, timeStamp)
+        importUtils.loadObsData(obsState)
 
         waterBalance.initializeBalance()
         for i in range(24):
             criteria3D.computeOneHour(weatherIndex+i, False)
-        importUtils.loadObsData(obsFileName)
+        importUtils.loadObsData(obsState)
 
     waterBalance.initializeBalance()
     print("Initial water storage [m^3]:", format(waterBalance.currentStep.waterStorage, ".3f"))
@@ -118,29 +127,30 @@ def main(args):
     currentIndex = 1
     isFirstRun = True
     restartIndex = weatherIndex
-    while weatherIndex < len(weatherData):
+    while weatherIndex < len(criteria3D.waterData):
         criteria3D.computeOneHour(weatherIndex, C3DParameters.isVisual)
-        obsWeather = criteria3D.weatherData.loc[weatherIndex]
-        currentDateTime = pd.to_datetime(obsWeather["timestamp"], unit='s')
+
+        currentTimeStamp = criteria3D.waterData.loc[weatherIndex]["timestamp"]
+        currentDateTime = pd.to_datetime(currentTimeStamp, unit='s')
 
         # assimilation
         if C3DParameters.isPeriodicAssimilation and not C3DParameters.isForecast:
             if (currentIndex % C3DParameters.assimilationInterval) == 0:
                 print("Assimilation:", currentDateTime)
-                importUtils.writeObsData(obsFileName, obsWaterPotential, obsWeather["timestamp"])
-                importUtils.loadObsData(obsFileName)
+                importUtils.writeObsData(obsState, obsWaterPotential, currentTimeStamp)
+                importUtils.loadObsData(obsState)
 
         # save model state
         if C3DParameters.isForecast and currentIndex == C3DParameters.assimilationInterval:
-            importUtils.saveCurrentModelState(modelStateFileName)
+            importUtils.saveCurrentModelState(modelState)
             restartIndex = weatherIndex
 
         # save output
         if not C3DParameters.isForecast: # or isFirstRun:
-            exportUtils.takeScreenshot(obsWeather["timestamp"])
+            exportUtils.takeScreenshot(currentTimeStamp)
         else:
             if currentIndex > (C3DParameters.forecastPeriod - C3DParameters.assimilationInterval):
-                exportUtils.takeScreenshot(obsWeather["timestamp"])
+                exportUtils.takeScreenshot(currentTimeStamp)
 
         # daily water balance
         if currentDateTime.hour == 0:
@@ -152,11 +162,11 @@ def main(args):
         # restart
         if C3DParameters.isForecast and currentIndex == C3DParameters.forecastPeriod:
             print("Restart...")
-            importUtils.loadModelState(modelStateFileName)
+            importUtils.loadModelState(modelState)
             # assimilation
             obsWeather = criteria3D.weatherData.loc[restartIndex]
-            importUtils.writeObsData(obsFileName, obsWaterPotential, obsWeather["timestamp"])
-            importUtils.loadObsData(obsFileName)
+            importUtils.writeObsData(obsState, obsWaterPotential, obsWeather["timestamp"])
+            importUtils.loadObsData(obsState)
             # redraw
             waterBalance.totalTime = restartIndex * 3600
             if C3DParameters.isVisual:
@@ -171,6 +181,7 @@ def main(args):
 
     visual3D.isPause = True
     print("\nEnd simulation.\n")
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description="CRITERIA")

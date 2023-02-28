@@ -144,12 +144,12 @@ def getHydraulicConductivity(i):
     return hydraulicConductivity(curve, C3DCells[i].Se)
 
 
-# [m] air entry potential
+# [m] air entry potential (with sign)
 def airEntryPotential(curve):
     if curve == CAMPBELL:
-        return horizon.Campbell_he
+        return -horizon.Campbell_he
     elif curve == IPPISCH_VG:
-        return horizon.VG_he
+        return -horizon.VG_he
     else:
         return NODATA
 

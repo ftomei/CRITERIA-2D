@@ -349,6 +349,7 @@ def setEvapotranspiration(currentDate, ET0):
             sumEvaporation += actualEvaporation
         actualEvaporation = sumEvaporation / C3DStructure.nrRectangles
     else:
+        maxEvaporation = 0
         actualEvaporation = 0
 
     return maxTranspiration, maxEvaporation, actualTranspiration, actualEvaporation
