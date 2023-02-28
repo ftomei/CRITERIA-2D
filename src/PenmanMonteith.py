@@ -64,13 +64,13 @@ def computeHourlyET0(height, airTemperature, globalSWRadiation, airRelHumidity,
     emissivity = 0.34 - 0.14 * math.sqrt(vaporPressure)
     # cloudiness factor for long wave radiation [-]
     cloudFactor = max(0, 1.35 * min(normTransmissivity, 1) - 0.35)
-    # net long wave radiation [J m-2 s-1]
-    netLWRadiation = cloudFactor * emissivity * STEFAN_BOLTZMANN * math.pow(airTempKelvin, 4.)
-    # net radiation [J m-2 s-1] 
-    netRadiation = (1. - ALBEDO_CROP_REFERENCE) * globalSWRadiation - netLWRadiation
+    # net long wave irradiance [J m-2 s-1]
+    netLWIrradiance = cloudFactor * emissivity * STEFAN_BOLTZMANN * math.pow(airTempKelvin, 4.)
+    # net irradiance [J m-2 s-1]
+    netIrradiance = (1. - ALBEDO_CROP_REFERENCE) * globalSWRadiation - netLWIrradiance
 
-    # from [W m-2] to [J m-2 h-1]
-    netRadiation = netRadiation * 3600.
+    # net radiation [W m-2]
+    netRadiation = netIrradiance * 3600.
 
     # values for grass
     # g   soil heat flux density [J m-2 h-1]  
@@ -93,4 +93,5 @@ def computeHourlyET0(height, airTemperature, globalSWRadiation, airRelHumidity,
     firstTerm = slope * (netRadiation - g) / (latentHeatVap * denominator)
     secondTerm = (psychro * (37. / airTempKelvin) * windSpeed_2m * (satVapPressure - vaporPressure)) / denominator
 
-    return max(firstTerm + secondTerm, 0.)
+    ET0 = firstTerm + secondTerm
+    return max(ET0, 0.)
