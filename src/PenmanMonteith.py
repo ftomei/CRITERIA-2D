@@ -54,6 +54,7 @@ def computeHourlyET0(height, airTemperature, globalSWRadiation, airRelHumidity,
     airTempKelvin = airTemperature + ZERO_CELSIUS
     # wind speed at 2 meters [m s-1]
     windSpeed_2m = windSpeed_10m * 0.748
+    windSpeed_2m = max(1.0, windSpeed_2m)
     # barometric pressure [kPa]
     pressure = pressureFromAltitude(height) / 1000.
     # saturation vapor pressure [kPa] 

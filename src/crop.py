@@ -190,9 +190,9 @@ def computeRootDensity(crop, nrLayers, rootFactor):
 
 
 # assign hourly transpiration
-def setTranspiration(surfaceIndex, myRootDensity, maxTranspiration):
+def setTranspiration(surfaceIndex, maxTranspiration, myRootDensity):
     if maxTranspiration < EPSILON:
-        return 0.0
+        return 0, 0
 
     # Initialize
     rootDensityWithoutStress = 0.0  # [-]
@@ -206,15 +206,16 @@ def setTranspiration(surfaceIndex, myRootDensity, maxTranspiration):
         if myRootDensity[layer] > 0:
             i = surfaceIndex + C3DStructure.nrRectangles * layer
             theta = soil.getVolumetricWaterContent(i)
-            # water surplus
+
             if theta > FC:
+                # water surplus
                 fraction = 1.0 - (theta - FC) / (SAT - FC)
                 fraction = fraction**2
                 layerTranspiration[layer] = maxTranspiration * myRootDensity[layer] * fraction
                 isLayerStressed[layer] = True
             else:
-                # water scarcity
                 if theta <= wsThreshold:
+                    # water scarcity
                     if theta <= WP:
                         layerTranspiration[layer] = 0.0
                     else:
@@ -230,34 +231,56 @@ def setTranspiration(surfaceIndex, myRootDensity, maxTranspiration):
 
             actualTranspiration += layerTranspiration[layer]
 
-    # WATER STRESS [-]
-    waterStress = 1. - (actualTranspiration / maxTranspiration)
-
-    # Hydraulic redistribution
-    # the movement of water from moist to dry soil through plant roots
-    # TODO add numerical process
-    if waterStress > EPSILON and rootDensityWithoutStress > EPSILON:
-        redistribution = waterStress * maxTranspiration
-
-        # redistribution acts on not stressed roots
-        for layer in range(nrLayers):
-            if (myRootDensity[layer] > 0) and (not isLayerStressed[layer]):
-                addTranspiration = redistribution * (myRootDensity[layer] / rootDensityWithoutStress)
-                threshold = (wsThreshold + WP) * 0.5
-                maxTransp_mm = max(0, theta - threshold) * soil.thickness[layer] * 1000.
-                addTranspiration = min(addTranspiration, maxTransp_mm)
-
-                layerTranspiration[layer] += addTranspiration
-                actualTranspiration += addTranspiration
-
     # Assign transpiration flux [m3 s-1]
     for layer in range(nrLayers):
         if layerTranspiration[layer] > 0:
             i = surfaceIndex + C3DStructure.nrRectangles * layer
-            rate = (layerTranspiration[layer] * 0.001) / 3600.0  # [m s-1]
-            C3DCells[i].sinkSource -= rate * C3DCells[i].area  # [m3 s-1]
+            rate = (layerTranspiration[layer] * 0.001) / 3600.0     # [m s-1]
+            C3DCells[i].sinkSource -= rate * C3DCells[i].area       # [m3 s-1]
 
-    return actualTranspiration
+    return actualTranspiration, rootDensityWithoutStress
+
+
+# water uptake compensation: redistribution in the moist zone
+def setTranspRedistribution(surfaceIndex, redistribution, myRootDensity):
+    # initialize
+    nrLayers = len(myRootDensity)
+    isLayerStressed = np.zeros(nrLayers, dtype=bool)
+    rootDensityWithoutStress = 0.0                          # [-]
+    actualRedistribution = 0.0                              # [mm]
+
+    for layer in range(nrLayers):
+        if myRootDensity[layer] > 0:
+            i = surfaceIndex + C3DStructure.nrRectangles * layer
+            theta = soil.getVolumetricWaterContent(i)
+
+            if theta > FC:
+                # water surplus
+                isLayerStressed[layer] = True
+            else:
+                if theta <= wsThreshold:
+                    # water scarcity
+                    isLayerStressed[layer] = True
+                else:
+                    # normal conditions
+                    isLayerStressed[layer] = False
+                    rootDensityWithoutStress += myRootDensity[layer]
+
+    if rootDensityWithoutStress > EPSILON:
+        # assign redistribution flux [m3 s-1]
+        for layer in range(nrLayers):
+            if (myRootDensity[layer] > 0) and (not isLayerStressed[layer]):
+                transp = redistribution * (myRootDensity[layer] / rootDensityWithoutStress)   # [mm]
+                i = surfaceIndex + C3DStructure.nrRectangles * layer
+                theta = soil.getVolumetricWaterContent(i)
+                transpMax = max(0, theta - wsThreshold) * soil.thickness[layer] * 1000.       # [mm]
+                layerTranspiration = min(transp, transpMax)                 # [mm]
+                rate = (layerTranspiration * 0.001) / 3600.0                # [m s-1]
+                C3DCells[i].sinkSource -= rate * C3DCells[i].area           # [m3 s-1]
+
+                actualRedistribution += layerTranspiration                  # [mm]
+
+    return actualRedistribution
 
 
 def setEvaporation(surfaceIndex, maxEvaporation):
@@ -328,15 +351,30 @@ def setEvapotranspiration(currentDate, ET0):
         sumTranspiration = 0
         sumMaxTranspiration = 0
         nrCells = 0
+        sumRoot = 0
+        rootDensityWithoutStress = np.zeros(C3DStructure.nrRectangles, np.float64)
         for i in range(C3DStructure.nrRectangles):
-            maxTranspiration = getMaxTranspiration(currentCrop.currentLAI, currentCrop.kcMax, ET0) * k_root[i]
-            actualTranspiration = setTranspiration(i, rootDensity[i], maxTranspiration)
             if k_root[i] > 0:
+                maxTranspiration = getMaxTranspiration(currentCrop.currentLAI, currentCrop.kcMax, ET0) * k_root[i]
                 sumMaxTranspiration += maxTranspiration
+                actualTranspiration, availableRootDensity = setTranspiration(i, maxTranspiration, rootDensity[i])
+                rootDensityWithoutStress[i] = availableRootDensity
                 sumTranspiration += actualTranspiration
+                sumRoot += availableRootDensity * k_root[i]
                 nrCells += 1
-        actualTranspiration = sumTranspiration / nrCells
+
         maxTranspiration = sumMaxTranspiration / nrCells
+        if sumRoot > 0:
+            # water uptake compensation: redistribution in the moist zone
+            missingTranspiration = (sumMaxTranspiration - sumTranspiration) / sumRoot
+            if missingTranspiration > 0.01:
+                for i in range(C3DStructure.nrRectangles):
+                    if rootDensityWithoutStress[i] > 0.1:
+                        redistribution = missingTranspiration * rootDensityWithoutStress[i] * k_root[i]
+                        actualRedistribution = setTranspRedistribution(i, redistribution, rootDensity[i])
+                        sumTranspiration += actualRedistribution
+
+        actualTranspiration = sumTranspiration / nrCells
     else:
         actualTranspiration = 0
         maxTranspiration = 0
