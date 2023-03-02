@@ -1,4 +1,6 @@
 # crop.py
+from typing import Any
+
 from dataStructures import *
 import math
 import soil
@@ -349,13 +351,13 @@ def setEvapotranspiration(currentDate, ET0):
     currentCrop.setCurrentLAI(currentDate)
     if C3DParameters.computeTranspiration:
         maxTranspiration = getMaxTranspiration(currentCrop.currentLAI, currentCrop.kcMax, ET0)
-        sumTranspiration = 0
-        sumMaxTranspiration = 0
+        sumTranspiration = 0.0
+        sumMaxTranspiration = 0.0
         nrCells = 0
-        sumMoistRoot = 0
+        sumMoistRoot = 0.0
         rootDensityWithoutStress = np.zeros(C3DStructure.nrRectangles, np.float64)
         for i in range(C3DStructure.nrRectangles):
-            if k_root[i] > 0:
+            if k_root[i] > 0.0:
                 maxTranspirationLayer = maxTranspiration * k_root[i]
                 sumMaxTranspiration += maxTranspirationLayer
                 actualTranspiration, availableRootDensity = setTranspiration(i, maxTranspirationLayer, rootDensity[i])
@@ -364,7 +366,7 @@ def setEvapotranspiration(currentDate, ET0):
                 sumMoistRoot += availableRootDensity * k_root[i]
                 nrCells += 1
 
-        if sumMoistRoot > 0:
+        if sumMoistRoot > 0.0:
             # water uptake compensation: redistribution in the moist zone
             missingTranspiration = (sumMaxTranspiration - sumTranspiration) / sumMoistRoot
             if missingTranspiration > 0.01:
@@ -373,8 +375,8 @@ def setEvapotranspiration(currentDate, ET0):
                         maxTranspirationLayer = maxTranspiration * k_root[i]
                         redistribution = missingTranspiration * rootDensityWithoutStress[i] * k_root[i]
                         redistribution = min(redistribution, maxTranspirationLayer)
-                        actualRedistribution = setTranspRedistribution(i, redistribution, rootDensity[i])
-                        sumTranspiration += actualRedistribution
+                        layerRedistribution = setTranspRedistribution(i, redistribution, rootDensity[i])
+                        sumTranspiration += layerRedistribution
 
         maxTranspiration = sumMaxTranspiration / nrCells
         actualTranspiration = sumTranspiration / nrCells
