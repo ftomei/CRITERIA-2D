@@ -1,11 +1,9 @@
 # crop.py
-from typing import Any
-
-from dataStructures import *
 import math
-import soil
-import rectangularMesh
 import numpy as np
+import rectangularMesh
+import soil
+from dataStructures import *
 
 MAX_EVAPORATION_DEPTH = 0.15  # [m]
 
@@ -29,11 +27,11 @@ class CCrop:
 
     def setCurrentLAI(self, currentDate):
         m = currentDate.month
-        lai0 = self.laiMonth[m - 1]
+        lai0 = float(self.laiMonth[m - 1])
+        lai1 = lai0
         if m < 12:
             lai1 = self.laiMonth[m]
-        else:
-            lai1 = lai0
+
         # TO DO improve for month length
         self.currentLAI = lai0 + (lai1 - lai0) * (currentDate.day - 1) / 30
 
@@ -62,7 +60,7 @@ def initializeCrop():
     # initialize root factor
     k_root = np.zeros(C3DStructure.nrRectangles)
 
-    # distance from plant row (x axis)
+    # distance from plant row (x-axis)
     max_distance = currentCrop.rootWidth * 0.5
     a = y[1] - y[0]
     b = x[0] - x[1]
@@ -396,4 +394,3 @@ def setEvapotranspiration(currentDate, ET0):
         actualEvaporation = 0
 
     return maxTranspiration, maxEvaporation, actualTranspiration, actualEvaporation
-
