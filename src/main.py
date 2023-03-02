@@ -23,11 +23,9 @@ def main(args):
     weatherFolder = os.path.join(args.path, "meteo")
     waterFolder = os.path.join(args.path, "water")
     obsDataFolder = os.path.join(args.path, "obs_data")
-
     stateFolder = os.path.join(args.path, "state")
     if not os.path.exists(stateFolder):
         os.makedirs(stateFolder)
-
     outputFolder = os.path.join(args.path, "output")
     if not os.path.exists(outputFolder):
         os.makedirs(outputFolder)
@@ -125,9 +123,8 @@ def main(args):
     # main cycle
     print("Start...")
     currentIndex = 1
-    isFirstRun = True
-    restartIndex = weatherIndex
-    while weatherIndex < len(criteria3D.waterData):
+    restartIndex = 1
+    while weatherIndex < len(criteria3D.weatherData):
         criteria3D.computeOneHour(weatherIndex, C3DParameters.isVisual)
 
         currentTimeStamp = criteria3D.waterData.loc[weatherIndex]["timestamp"]
@@ -141,43 +138,40 @@ def main(args):
                 importUtils.loadObsData(obsState)
 
         # save model state
-        if C3DParameters.isForecast and currentIndex == C3DParameters.assimilationInterval:
+        if C3DParameters.isForecast and weatherIndex == restartIndex:
             importUtils.saveCurrentModelState(modelState)
-            restartIndex = weatherIndex
 
         # save output
-        if not C3DParameters.isForecast: # or isFirstRun:
+        if not C3DParameters.isForecast:
             exportUtils.takeScreenshot(currentTimeStamp)
-        else:
-            if currentIndex > (C3DParameters.forecastPeriod - C3DParameters.assimilationInterval):
-                exportUtils.takeScreenshot(currentTimeStamp)
 
-        # daily water balance
-        if currentDateTime.hour == 0:
-            if currentIndex >= 24:
-                lastDate = currentDateTime.date() - datetime.timedelta(days=1)
-                exportUtils.saveDailyBalance(lastDate)
-            waterBalance.dailyBalance.initialize()
+            # daily water balance
+            if currentDateTime.hour == 0:
+                if currentIndex >= 24:
+                    lastDate = currentDateTime.date() - datetime.timedelta(days=1)
+                    exportUtils.saveDailyBalance(lastDate)
+                waterBalance.dailyBalance.initialize()
 
-        # restart
-        if C3DParameters.isForecast and currentIndex == C3DParameters.forecastPeriod:
-            print("Restart...")
-            importUtils.loadModelState(modelState)
-            # assimilation
-            obsWeather = criteria3D.weatherData.loc[restartIndex]
-            importUtils.writeObsData(obsState, obsWaterPotential, obsWeather["timestamp"])
-            importUtils.loadObsData(obsState)
-            # redraw
-            waterBalance.totalTime = restartIndex * 3600
-            if C3DParameters.isVisual:
-                visual3D.redraw()
-            # re-initialize index
-            weatherIndex = restartIndex + 1
-            currentIndex = 1
-            isFirstRun = False
-        else:
             weatherIndex += 1
             currentIndex += 1
+        else:
+            if weatherIndex - restartIndex + 1 == C3DParameters.forecastPeriod:
+                exportUtils.takeScreenshot(currentTimeStamp)
+                print("Restart...")
+                importUtils.loadModelState(modelState)
+                # assimilation
+                currentTimeStamp = criteria3D.weatherData.loc[restartIndex]["timestamp"]
+                importUtils.writeObsData(obsState, obsWaterPotential, currentTimeStamp)
+                importUtils.loadObsData(obsState)
+                # redraw
+                waterBalance.totalTime = restartIndex * 3600
+                if C3DParameters.isVisual:
+                    visual3D.redraw()
+                # re-initialize index
+                restartIndex += 1
+                weatherIndex = restartIndex
+            else:
+                weatherIndex += 1
 
     visual3D.isPause = True
     print("\nEnd simulation.\n")
