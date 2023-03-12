@@ -1,3 +1,4 @@
+import datetime
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -54,7 +55,9 @@ def meteo(
     # add DataFrames to subplots
 
     for idx, meteo_var in reversed(list(enumerate(meteo_vars.keys()))):
-        df[meteo_var].plot(ax=axes[int(idx / nrows), idx % nrows], sharex=True, color='C7')
+        df[meteo_var].plot(
+            ax=axes[int(idx / nrows), idx % nrows], sharex=True, color="C7"
+        )
         # axes[int(idx / nrows), idx % nrows].set_xlim(
         #     [0, df.shape[0]]
         # )
@@ -136,7 +139,7 @@ def water(
     df = df.groupby("timestamp").sum()
 
     fig, ax = plt.subplots()
-    df.plot(ax=ax, kind="bar", color=['C9', 'C3'])
+    df.plot(ax=ax, kind="bar", color=["C9", "C3"])
     ax.set_xlabel("")
     ax.set_xticks([0, 15, 29, 46, 60, df.shape[0] - 1])
     # ax.set_title("Precipitation and irrigation", fontdict={"fontsize": 18})
@@ -193,7 +196,7 @@ def ground_potential(
 
     for idx, meteo_var in reversed(list(enumerate(df.columns))):
         ax = axes[int(idx / ncols), idx % ncols]
-        df[meteo_var].plot(ax=ax, sharex=True, color= 'C5')
+        df[meteo_var].plot(ax=ax, sharex=True, color="C5")
         ax.set_ylim([df.min().min(), -10])
         ax.set_yscale("symlog")
         ax.set_xlabel("")
@@ -211,7 +214,8 @@ def ground_potential(
             meteo_var.replace("y0_", "")
             .replace("_", " cm, ")
             .replace("z", "Depth = ")
-            .replace("x", "Distance = ") + " cm"
+            .replace("x", "Distance = ")
+            + " cm"
         )
 
     # _ = plt.xticks(rotation=0)
@@ -308,7 +312,6 @@ def forecast_avg(
     fig.savefig(
         os.path.join(output_folder, f"forecasting_avg{is_forbidden_sensors_string}.png")
     )
-    print(df)
 
 
 def forecast_sensor(
@@ -458,7 +461,12 @@ def forecast_std(
     fig, ax = plt.subplots()
 
     df["average"].plot(ax=ax)
-    ax.fill_between(df.index, df["average"] - (np.e ** rmse_df["forecasting horizon = 1gg"]), df["average"] + (np.e ** rmse_df["forecasting horizon = 1gg"]), alpha=0.35)
+    ax.fill_between(
+        df.index,
+        df["average"] - (np.e ** rmse_df["forecasting horizon = 1gg"]),
+        df["average"] + (np.e ** rmse_df["forecasting horizon = 1gg"]),
+        alpha=0.35,
+    )
     ax.set_xlabel("")
     ax.set_ylabel("cbar")
     fig.set_size_inches(13, 6)
@@ -543,11 +551,32 @@ def forecast_std2(
     #     }
     # )
 
-    df["average"].plot(ax=ax, color= 'C5', label="average")
+    df["average"].plot(ax=ax, color="C5", label="average")
     # ax.set_ylim([-800, 0])
-    ax.fill_between(df.index, df["average"] - df["RMSE_7gg"], df["average"] + df["RMSE_7gg"], alpha=0.2, color='C2', label="RMSE on 7gg")
-    ax.fill_between(df.index, df["average"] - df["RMSE_3gg"], df["average"] + df["RMSE_3gg"], alpha=0.4, color='C1', label="RMSE on 3gg")
-    ax.fill_between(df.index, df["average"] - df["RMSE_1gg"], df["average"] + df["RMSE_1gg"], alpha=0.6, color='C0', label="RMSE on 1gg")
+    ax.fill_between(
+        df.index,
+        df["average"] - df["RMSE_7gg"],
+        df["average"] + df["RMSE_7gg"],
+        alpha=0.2,
+        color="C2",
+        label="RMSE on 7gg",
+    )
+    ax.fill_between(
+        df.index,
+        df["average"] - df["RMSE_3gg"],
+        df["average"] + df["RMSE_3gg"],
+        alpha=0.4,
+        color="C1",
+        label="RMSE on 3gg",
+    )
+    ax.fill_between(
+        df.index,
+        df["average"] - df["RMSE_1gg"],
+        df["average"] + df["RMSE_1gg"],
+        alpha=0.6,
+        color="C0",
+        label="RMSE on 1gg",
+    )
     ax.legend()
     ax.set_xlabel("")
     ax.set_ylabel("cbar")
@@ -565,17 +594,77 @@ def forecast_std2(
     return df
 
 
+def water_balance(
+    input_folder=os.path.join("data", "errano_all"),
+    output_folder=os.path.join("plots"),
+):
+    df = pd.read_csv(os.path.join(input_folder, "output", "dailyWaterBalance.csv"))
+    df["date"] = pd.to_datetime(df["date"], infer_datetime_format=True)
+    # df["date"] = df["date"].apply(
+    #     lambda x: int(datetime.datetime.strptime(x, "%Y-%m-%d").timestamp())
+    # )
+    df = df.set_index("date")
+    # df.index = pd.to_datetime(df.index, unit="s")
+    df = df[df.index.to_series().between('2022-06-15', '2022-09-1')]
+    df.index = df.index.astype(str)
+    print(df)
+
+    fig, ax = plt.subplots()
+    # ax2 = ax.twinx()
+    df = df.rename(
+        columns={
+            "maxTranpiration": "max tranpirat.",
+            "ET0": "actual transpirat.",
+            "realvaporation": "evaporation",
+        }
+    )
+    df[["precipitation", "irrigation", "drainage"]].plot(ax=ax, kind="bar", color=["C9", "C3", "C6"])  # , color=['C9', 'C3'])
+    df[["max tranpirat.", "actual transpirat.", "evaporation"]].plot(ax=ax, kind='line', color=["black", "C8", "b"])  # , color=['C9', 'C3'])
+    plt.text(64,20,35, ha = 'center', bbox = dict(facecolor = 'white', edgecolor="white"))
+    # ax.bar(df.index, df["precipitation"], label='precipitation')
+    # ax.bar(df.index, df["irrigation"], label='irrigation')
+    # ax.bar(df.index, df["drainage"], label='drainage')
+    # ax.plot(df[["maxTranpiration"]], label='maximum transpiration', sw=1, ls='-')
+    # ax.plot(df.index, df["ET0"], label='evaporation')
+    # ax.plot(df.index, df["realvaporation"], label='transpiration')
+    ax.set_xlabel("")
+    ax.set_xticks([0, 16, 30, 47, 61, df.shape[0] - 1])
+
+    # ax.set_xticks([
+    #     datetime.date(2022, 6, 15),
+    #     datetime.date(2022, 7, 1),
+    #     datetime.date(2022, 7, 15),
+    #     datetime.date(2022, 8, 1),
+    #     datetime.date(2022, 8, 15),
+    #     datetime.date(2022, 9, 1)
+    # ])
+    # ax.set_xlim(datetime.date(2022, 6, 15), datetime.date(2022, 9, 1))
+    # ax.set_xticks([0, 15, 29, 46, 60, df.shape[0] - 1])
+    # ax.set_title("Precipitation and irrigation", fontdict={"fontsize": 18})
+    # ax2 = ax.twinx()
+    # ax.set_ylabel("L", rotation=0, labelpad=20, fontsize=15)
+    ax.set_ylabel("mm", rotation=0, labelpad=10, fontsize=12)
+    # ax2.set_ylim(0, 30)
+    ax.set_ylim(0, 21)
+    ax.tick_params(axis='x', rotation=45)
+
+
+    # fig = ax.get_figure()
+    # fig.autofmt_xdate()
+
+    plt.tight_layout()
+    fig.set_size_inches(13, 6)
+    fig.savefig(os.path.join(output_folder, "water_balance.pdf"))
+    fig.savefig(os.path.join(output_folder, "water_balance.png"))
+
+
 def main():
-    meteo()
-    water()
-    ground_potential()
-    forecast_avg()
-    # forecast_std(rmse_df)
-    # rmse_df = forecast_avg(with_forbidden_sensors=False)
-    # forecast_std(rmse_df, with_forbidden_sensors=False)
-    # forecast_sensor()
-    # forecast_sensor(with_predicted=False)
-    forecast_std2()
+    # meteo()
+    # water()
+    # ground_potential()
+    # forecast_avg()
+    # forecast_std2()
+    water_balance()
 
 
 if __name__ == "__main__":
