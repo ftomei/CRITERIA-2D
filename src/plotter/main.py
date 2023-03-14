@@ -653,31 +653,34 @@ def correlation_wc(
     df.index = pd.to_datetime(df.index, unit="s")
     print(df)
 
-    for data_type in support_dict.keys():
-        if data_type != "obs":
-            fig, ax = plt.subplots()
 
-            ax.scatter(df["mean_obs"], df[f"mean_{data_type}"])
-            # ax.set_ylim([0, 1.5])
-            ax.set_xlabel("WC obs")
-            ax.set_ylabel(f"WC {data_type}")
-            fig.set_size_inches(6, 6)
-            plt.tight_layout()
-            is_forbidden_sensors_string = (
-                "_with_forbidden_sensors" if with_forbidden_sensors else ""
-            )
-            fig.savefig(
-                os.path.join(
-                    output_folder,
-                    f"correlation_wc_{data_type}{is_forbidden_sensors_string}.pdf",
-                )
-            )
-            fig.savefig(
-                os.path.join(
-                    output_folder,
-                    f"correlation_wc_{data_type}{is_forbidden_sensors_string}.png",
-                )
-            )
+    fig, ax = plt.subplots(1, 3)
+    for idx, data_type in enumerate([elem for elem in support_dict.keys() if elem != "obs"]):
+        ax[idx].scatter(df["mean_obs"], df[f"mean_{data_type}"])
+        ax[idx].plot([0, 1], [0, 1], transform=ax[idx].transAxes)
+        ax[idx].grid()
+        ax[idx].set_ylim([0.05, 0.25 if with_forbidden_sensors else 0.2])
+        ax[idx].set_xlim([0.05, 0.25 if with_forbidden_sensors else 0.2])
+        ax[idx].set_title(f"forecasting horizon = {data_type}")
+        ax[idx].set_xlabel("observed WC")
+        ax[idx].set_ylabel("simulated WC")
+    fig.set_size_inches(20, 6)
+    plt.tight_layout()
+    is_forbidden_sensors_string = (
+        "_with_forbidden_sensors" if with_forbidden_sensors else ""
+    )
+    fig.savefig(
+        os.path.join(
+            output_folder,
+            f"correlation_wc{is_forbidden_sensors_string}.pdf",
+        )
+    )
+    fig.savefig(
+        os.path.join(
+            output_folder,
+            f"correlation_wc{is_forbidden_sensors_string}.png",
+        )
+    )
 
 
 def main():
