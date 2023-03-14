@@ -435,54 +435,6 @@ def forecast_sensor(
 
 
 def forecast_std(
-    rmse_df,
-    obs_folder=os.path.join("data", "errano_evaluation_1gg"),
-    output_folder=os.path.join("plots"),
-    with_forbidden_sensors=True,
-):
-    df = (
-        pd.DataFrame({"timestamp": [1655251200]})
-        .append(
-            pd.read_csv(os.path.join(obs_folder, "obs_data", "waterPotential.csv")),
-            ignore_index=True,
-        )
-        .set_index("timestamp")
-        .drop(columns=[] if with_forbidden_sensors else forbidden_sensors)
-    )
-    df = df.interpolate(method="linear", limit_direction="forward", axis=0)
-    df = df.dropna(axis="index")
-    df["average"] = df.mean(axis=1)
-    df = df.reset_index()
-    df = df.append(pd.DataFrame({"timestamp": [1655251200]}), ignore_index=True)
-    df = df.set_index("timestamp")
-    # df = df[new_columns]
-    df.index = pd.to_datetime(df.index, unit="s")
-
-    fig, ax = plt.subplots()
-
-    df["average"].plot(ax=ax)
-    ax.fill_between(
-        df.index,
-        df["average"] - (np.e ** rmse_df["forecasting horizon = 1gg"]),
-        df["average"] + (np.e ** rmse_df["forecasting horizon = 1gg"]),
-        alpha=0.35,
-    )
-    ax.set_xlabel("")
-    ax.set_ylabel("cbar")
-    fig.set_size_inches(13, 6)
-    plt.tight_layout()
-    is_forbidden_sensors_string = (
-        "_with_forbidden_sensors" if with_forbidden_sensors else ""
-    )
-    fig.savefig(
-        os.path.join(output_folder, f"forecasting_std{is_forbidden_sensors_string}.pdf")
-    )
-    fig.savefig(
-        os.path.join(output_folder, f"forecasting_std{is_forbidden_sensors_string}.png")
-    )
-
-
-def forecast_std2(
     obs_folder=os.path.join("data", "errano_evaluation_1gg"),
     forecast_folder=os.path.join("data", "errano_evaluation"),
     output_folder=os.path.join("plots"),
@@ -605,7 +557,7 @@ def water_balance(
     # )
     df = df.set_index("date")
     # df.index = pd.to_datetime(df.index, unit="s")
-    df = df[df.index.to_series().between('2022-06-15', '2022-09-1')]
+    df = df[df.index.to_series().between("2022-06-15", "2022-09-1")]
     df.index = df.index.astype(str)
     print(df)
 
@@ -618,9 +570,13 @@ def water_balance(
             "realvaporation": "evaporation",
         }
     )
-    df[["precipitation", "irrigation", "drainage"]].plot(ax=ax, kind="bar", color=["C9", "C3", "C6"])  # , color=['C9', 'C3'])
-    df[["max tranpirat.", "actual transpirat.", "evaporation"]].plot(ax=ax, kind='line', color=["black", "C8", "b"])  # , color=['C9', 'C3'])
-    plt.text(64,20,35, ha = 'center', bbox = dict(facecolor = 'white', edgecolor="white"))
+    df[["precipitation", "irrigation", "drainage"]].plot(
+        ax=ax, kind="bar", color=["C9", "C3", "C6"]
+    )  # , color=['C9', 'C3'])
+    df[["max tranpirat.", "actual transpirat.", "evaporation"]].plot(
+        ax=ax, kind="line", color=["black", "C8", "b"]
+    )  # , color=['C9', 'C3'])
+    plt.text(64, 20, 35, ha="center", bbox=dict(facecolor="white", edgecolor="white"))
     # ax.bar(df.index, df["precipitation"], label='precipitation')
     # ax.bar(df.index, df["irrigation"], label='irrigation')
     # ax.bar(df.index, df["drainage"], label='drainage')
@@ -646,8 +602,7 @@ def water_balance(
     ax.set_ylabel("mm", rotation=0, labelpad=10, fontsize=12)
     # ax2.set_ylim(0, 30)
     ax.set_ylim(0, 21)
-    ax.tick_params(axis='x', rotation=45)
-
+    ax.tick_params(axis="x", rotation=45)
 
     # fig = ax.get_figure()
     # fig.autofmt_xdate()
@@ -658,13 +613,82 @@ def water_balance(
     fig.savefig(os.path.join(output_folder, "water_balance.png"))
 
 
+def correlation_wc(
+    obs_folder=os.path.join("data", "errano_evaluation_1gg"),
+    forecast_folder=os.path.join("data", "errano_evaluation"),
+    output_folder=os.path.join("plots"),
+    with_forbidden_sensors=True,
+):
+    support_dict = {
+        "obs": os.path.join(obs_folder, "obs_data", "waterContent.csv"),
+    }
+    for forecasting_day in ["1gg", "3gg", "7gg"]:
+        support_dict[forecasting_day] = os.path.join(
+            f"{forecast_folder}_{forecasting_day}", "output", "outputWaterContent.csv"
+        )
+
+    forecasting_dict = {}
+    for data_type, input_path in support_dict.items():
+        forecasting_dict[data_type] = (
+            pd.read_csv(input_path)
+            .set_index("timestamp")
+            .drop(columns=[] if with_forbidden_sensors else forbidden_sensors)
+        )
+        forecasting_dict[data_type] = forecasting_dict[data_type].reindex(
+            sorted(forecasting_dict[data_type].columns), axis=1
+        )
+        forecasting_dict[data_type] = forecasting_dict[data_type].add_suffix(
+            f"_{data_type}"
+        )
+    df = pd.concat(forecasting_dict.values(), axis=1)
+    df = df.interpolate(method="linear", limit_direction="forward", axis=0)
+    df = df.dropna(axis="index")
+    df = df.reset_index()
+    for data_type in support_dict.keys():
+        df[f"mean_{data_type}"] = df[
+            [c for c in df.columns if c.endswith(f"_{data_type}")]
+        ].mean(axis=1)
+    df = df.set_index("timestamp")
+    df = df[[f"mean_{data_type}" for data_type in support_dict.keys()]]
+    df.index = pd.to_datetime(df.index, unit="s")
+    print(df)
+
+    for data_type in support_dict.keys():
+        if data_type != "obs":
+            fig, ax = plt.subplots()
+
+            ax.scatter(df["mean_obs"], df[f"mean_{data_type}"])
+            # ax.set_ylim([0, 1.5])
+            ax.set_xlabel("WC obs")
+            ax.set_ylabel(f"WC {data_type}")
+            fig.set_size_inches(6, 6)
+            plt.tight_layout()
+            is_forbidden_sensors_string = (
+                "_with_forbidden_sensors" if with_forbidden_sensors else ""
+            )
+            fig.savefig(
+                os.path.join(
+                    output_folder,
+                    f"correlation_wc_{data_type}{is_forbidden_sensors_string}.pdf",
+                )
+            )
+            fig.savefig(
+                os.path.join(
+                    output_folder,
+                    f"correlation_wc_{data_type}{is_forbidden_sensors_string}.png",
+                )
+            )
+
+
 def main():
     # meteo()
     # water()
     # ground_potential()
-    # forecast_avg()
-    # forecast_std2()
-    water_balance()
+    # forecast_avg()S
+    # forecast_std()
+    # water_balance()
+    correlation_wc()
+    correlation_wc(with_forbidden_sensors=False)
 
 
 if __name__ == "__main__":
