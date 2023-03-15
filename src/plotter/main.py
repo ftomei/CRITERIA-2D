@@ -692,7 +692,9 @@ def forecast_avg_tuning_errors(
     budget_type="t",
 ):
     fig, ax = plt.subplots(1, 3)
-    for idx, budget in enumerate([25, 50, 75]):
+    budget_labels = [25, 50, 75]
+    budget_thresholds = [25, 50, 75] if budget_type == "t" else [125, 250, 375]
+    for idx, budget in enumerate(budget_thresholds):
         support_dict = {
             "obs": os.path.join(obs_folder, "obs_data", "waterPotential.csv"),
         }
@@ -758,20 +760,258 @@ def forecast_avg_tuning_errors(
         )
 
         df.plot(ax=ax[idx])
-        ax[idx].set_title(f"budget = {budget}%")
+        ax[idx].set_title(f"budget = {budget_labels[idx]}%")
         ax[idx].set_ylim([0, 1.5])
         ax[idx].set_xlabel("")
         ax[idx].set_ylabel("logRMSE")
+    fig.set_size_inches(26, 6)
+    plt.tight_layout()
+    is_forbidden_sensors_string = (
+        "_with_forbidden_sensors" if with_forbidden_sensors else ""
+    )
+    fig.savefig(
+        os.path.join(
+            output_folder,
+            f"forecasting_avg{is_forbidden_sensors_string}_errors_{budget_type}.pdf",
+        )
+    )
+    fig.savefig(
+        os.path.join(
+            output_folder,
+            f"forecasting_avg{is_forbidden_sensors_string}_errors_{budget_type}.png",
+        )
+    )
+
+
+def forecast_std_tuning_errors(
+    obs_folder=os.path.join("data", "errano_evaluation_1gg"),
+    forecast_folder=os.path.join("data", "errano_evaluation"),
+    output_folder=os.path.join("plots"),
+    with_forbidden_sensors=True,
+    budget_type="t",
+):
+    fig, ax = plt.subplots(1, 3)
+    budget_labels = [25, 50, 75]
+    budget_thresholds = [25, 50, 75] if budget_type == "t" else [125, 250, 375]
+    for idx, budget in enumerate(budget_thresholds):
+        support_dict = {
+            "obs": os.path.join(obs_folder, "obs_data", "waterPotential.csv"),
+        }
+        for forecasting_day in ["1gg", "3gg", "7gg"]:
+            support_dict[forecasting_day] = os.path.join(
+                f"{forecast_folder}_{forecasting_day}_{budget}_{budget_type}",
+                "output",
+                "output.csv",
+            )
+
+        forecasting_dict = {}
+        for data_type, input_path in support_dict.items():
+            forecasting_dict[data_type] = (
+                pd.DataFrame({"timestamp": [1655251200]})
+                .append(
+                    pd.read_csv(input_path),
+                    ignore_index=True,
+                )
+                .set_index("timestamp")
+                .drop(columns=[] if with_forbidden_sensors else forbidden_sensors)
+            )
+            forecasting_dict[data_type][forecasting_dict[data_type] > -20] = -20
+            forecasting_dict[data_type] = forecasting_dict[data_type].reindex(
+                sorted(forecasting_dict[data_type].columns), axis=1
+            )
+            forecasting_dict[data_type] = forecasting_dict[data_type].add_suffix(
+                f"_{data_type}"
+            )
+        df = pd.concat(forecasting_dict.values(), axis=1)
+        df = df.interpolate(method="linear", limit_direction="forward", axis=0)
+        df = df.dropna(axis="index")
+        df = df.reset_index()
+        new_columns = []
+        for data_type in support_dict.keys():
+            if data_type != "obs":
+                new_column = f"RMSE_{data_type}"
+                new_columns += [new_column]
+                # print(df[[c for c in df.columns if c.endswith("_obs")]].iloc[0])
+                # print(df[[c for c in df.columns if c.endswith("_obs")]].iloc[:1])
+                # print(df[[c for c in df.columns if c.endswith(f"_{data_type}")]].iloc[0])
+                # print(df[[c for c in df.columns if c.endswith(f"_{data_type}")]].iloc[:1])
+                df[new_column] = [
+                    mean_squared_error(
+                        df[[c for c in df.columns if c.endswith("_obs")]].iloc[
+                            i : (i + 1)
+                        ],
+                        df[[c for c in df.columns if c.endswith(f"_{data_type}")]].iloc[
+                            i : (i + 1)
+                        ],
+                        squared=False,
+                    )
+                    for i in range(df.shape[0])
+                ]
+        df["average"] = df[[c for c in df.columns if c.endswith("_obs")]].mean(axis=1)
+        df = df.append(pd.DataFrame({"timestamp": [1655251200]}), ignore_index=True)
+        df = df.set_index("timestamp")
+        # df = df[new_columns]
+        df.index = pd.to_datetime(df.index, unit="s")
+
+        # df = df.rename(
+        #     columns={
+        #         column: column.replace("RMSE_", "forecasting horizon = ")
+        #         for column in df.columns
+        #     }
+        # )
+
+        df["average"].plot(ax=ax[idx], color="C5", label="average")
+        ax[idx].set_title(f"budget = {budget_labels[idx]}%")
+        # ax.set_ylim([-800, 0])
+        ax[idx].fill_between(
+            df.index,
+            df["average"] - df["RMSE_7gg"],
+            df["average"] + df["RMSE_7gg"],
+            alpha=0.2,
+            color="C2",
+            label="RMSE on 7gg",
+        )
+        ax[idx].fill_between(
+            df.index,
+            df["average"] - df["RMSE_3gg"],
+            df["average"] + df["RMSE_3gg"],
+            alpha=0.4,
+            color="C1",
+            label="RMSE on 3gg",
+        )
+        ax[idx].fill_between(
+            df.index,
+            df["average"] - df["RMSE_1gg"],
+            df["average"] + df["RMSE_1gg"],
+            alpha=0.6,
+            color="C0",
+            label="RMSE on 1gg",
+        )
+        ax[idx].legend()
+        ax[idx].set_xlabel("")
+        ax[idx].set_ylabel("cbar")
+    fig.set_size_inches(26, 6)
+    plt.tight_layout()
+    is_forbidden_sensors_string = (
+        "_with_forbidden_sensors" if with_forbidden_sensors else ""
+    )
+    fig.savefig(
+        os.path.join(
+            output_folder,
+            f"forecasting_std{is_forbidden_sensors_string}_errors_{budget_type}.pdf",
+        )
+    )
+    fig.savefig(
+        os.path.join(
+            output_folder,
+            f"forecasting_std{is_forbidden_sensors_string}_errors_{budget_type}.png",
+        )
+    )
+
+
+def summary_tuning_budget(
+    obs_folder=os.path.join("data", "errano_evaluation_1gg"),
+    forecast_folder=os.path.join("data", "errano_evaluation"),
+    output_folder=os.path.join("plots"),
+    with_forbidden_sensors=True,
+):
+    result = pd.DataFrame()
+    fig, ax = plt.subplots(1, 2)
+    budget_labels = [25, 50, 75, 100]
+    for axidx, budget_type in enumerate(["t", "b"]):
+        budget_thresholds = (
+            [25, 50, 75, 100] if budget_type == "t" else [125, 250, 375, 500]
+        )
+        for idx, budget in enumerate(budget_thresholds):
+            support_dict = {
+                "obs": os.path.join(obs_folder, "obs_data", "waterPotential.csv"),
+            }
+            for forecasting_day in ["1gg", "3gg", "7gg"]:
+                loading_path = (
+                    f"{forecast_folder}_{forecasting_day}"
+                    if budget == 100 or budget == 500
+                    else f"{forecast_folder}_{forecasting_day}_{budget}_{budget_type}"
+                )
+                support_dict[forecasting_day] = os.path.join(
+                    loading_path,
+                    "output",
+                    "output.csv",
+                )
+
+            forecasting_dict = {}
+            for data_type, input_path in support_dict.items():
+                forecasting_dict[data_type] = (
+                    pd.DataFrame({"timestamp": [1655251200]})
+                    .append(
+                        pd.read_csv(input_path),
+                        ignore_index=True,
+                    )
+                    .set_index("timestamp")
+                    .drop(columns=[] if with_forbidden_sensors else forbidden_sensors)
+                )
+                forecasting_dict[data_type] *= -1
+                forecasting_dict[data_type][forecasting_dict[data_type] < 20] = 20
+                forecasting_dict[data_type] = forecasting_dict[data_type].apply(
+                    lambda x: np.log(x)
+                )
+                forecasting_dict[data_type] = forecasting_dict[data_type].reindex(
+                    sorted(forecasting_dict[data_type].columns), axis=1
+                )
+                forecasting_dict[data_type] = forecasting_dict[data_type].add_suffix(
+                    f"_{data_type}"
+                )
+            df = pd.concat(forecasting_dict.values(), axis=1)
+            df = df.interpolate(method="linear", limit_direction="forward", axis=0)
+            df = df.dropna(axis="index")
+            df = df.reset_index()
+            for data_type in support_dict.keys():
+                if data_type != "obs":
+                    result = result.append(
+                        {
+                            "budget": int(budget_labels[idx]),
+                            f"{data_type}_{budget_type}": 
+                                mean_squared_error(
+                                    df[[c for c in df.columns if c.endswith("_obs")]],
+                                    df[
+                                        [
+                                            c
+                                            for c in df.columns
+                                            if c.endswith(f"_{data_type}")
+                                        ]
+                                    ],
+                                    squared=False,
+                                )
+                            ,
+                        },
+                        ignore_index=True,
+                    )
+
+    result = result.set_index("budget")
+    result = result.groupby(level=0).sum(min_count=1)
+    print(result)
+    for axidx, budget_type in enumerate(["t", "b"]):
+        for data_type in support_dict.keys():
+            if data_type != "obs":
+                result[f"{data_type}_{budget_type}"].plot.bar(ax=ax[axidx])
+        ax[axidx].set_xlabel("Percentage of budget")
+        ax[axidx].set_ylabel("LogRMSE")
+        budget_string = "n. iterarations" if budget_type == "b" else "time period"
+        ax[axidx].set_title(f"budget = {budget_string}")
+        ax[axidx].tick_params(axis="x", rotation=45)
     fig.set_size_inches(13, 6)
     plt.tight_layout()
     is_forbidden_sensors_string = (
         "_with_forbidden_sensors" if with_forbidden_sensors else ""
     )
     fig.savefig(
-        os.path.join(output_folder, f"forecasting_avg{is_forbidden_sensors_string}_errors_{budget_type}.pdf")
+        os.path.join(
+            output_folder, f"summary_tuning_erros{is_forbidden_sensors_string}.pdf"
+        )
     )
     fig.savefig(
-        os.path.join(output_folder, f"forecasting_avg{is_forbidden_sensors_string}_errors_{budget_type}.png")
+        os.path.join(
+            output_folder, f"summary_tuning_erros{is_forbidden_sensors_string}.png"
+        )
     )
 
 
@@ -782,8 +1022,12 @@ def main():
     # forecast_avg()
     # forecast_std()
     # water_balance()
-    correlation_wc()
+    # correlation_wc()
     # forecast_avg_tuning_errors()
+    # forecast_avg_tuning_errors(budget_type="b")
+    # forecast_std_tuning_errors()
+    # forecast_std_tuning_errors(budget_type="b")
+    summary_tuning_budget()
 
 
 if __name__ == "__main__":
