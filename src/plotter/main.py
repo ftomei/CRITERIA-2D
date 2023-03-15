@@ -653,17 +653,18 @@ def correlation_wc(
     df.index = pd.to_datetime(df.index, unit="s")
     print(df)
 
-
     fig, ax = plt.subplots(1, 3)
-    for idx, data_type in enumerate([elem for elem in support_dict.keys() if elem != "obs"]):
+    for idx, data_type in enumerate(
+        [elem for elem in support_dict.keys() if elem != "obs"]
+    ):
         ax[idx].scatter(df["mean_obs"], df[f"mean_{data_type}"])
         ax[idx].plot([0, 1], [0, 1], transform=ax[idx].transAxes)
         ax[idx].grid()
         ax[idx].set_ylim([0.05, 0.25 if with_forbidden_sensors else 0.2])
         ax[idx].set_xlim([0.05, 0.25 if with_forbidden_sensors else 0.2])
-        ax[idx].set_title(f"forecasting horizon = {data_type}")
-        ax[idx].set_xlabel("observed WC")
-        ax[idx].set_ylabel("simulated WC")
+        ax[idx].set_title(f"forecasting horizon = {data_type}", fontsize=15)
+        ax[idx].set_xlabel("observed WC", labelpad=20, fontsize=15)
+        ax[idx].set_ylabel("simulated WC", labelpad=10, fontsize=15)
     fig.set_size_inches(20, 6)
     plt.tight_layout()
     is_forbidden_sensors_string = (
@@ -683,15 +684,106 @@ def correlation_wc(
     )
 
 
+def forecast_avg_tuning_errors(
+    obs_folder=os.path.join("data", "errano_evaluation_1gg"),
+    forecast_folder=os.path.join("data", "errano_evaluation"),
+    output_folder=os.path.join("plots"),
+    with_forbidden_sensors=True,
+    budget_type="t",
+):
+    fig, ax = plt.subplots(1, 3)
+    for idx, budget in enumerate([25, 50, 75]):
+        support_dict = {
+            "obs": os.path.join(obs_folder, "obs_data", "waterPotential.csv"),
+        }
+        for forecasting_day in ["1gg", "3gg", "7gg"]:
+            support_dict[forecasting_day] = os.path.join(
+                f"{forecast_folder}_{forecasting_day}_{budget}_{budget_type}",
+                "output",
+                "output.csv",
+            )
+
+        forecasting_dict = {}
+        for data_type, input_path in support_dict.items():
+            forecasting_dict[data_type] = (
+                pd.DataFrame({"timestamp": [1655251200]})
+                .append(
+                    pd.read_csv(input_path),
+                    ignore_index=True,
+                )
+                .set_index("timestamp")
+                .drop(columns=[] if with_forbidden_sensors else forbidden_sensors)
+            )
+            forecasting_dict[data_type] *= -1
+            forecasting_dict[data_type][forecasting_dict[data_type] < 20] = 20
+            forecasting_dict[data_type] = forecasting_dict[data_type].apply(
+                lambda x: np.log(x)
+            )
+            forecasting_dict[data_type] = forecasting_dict[data_type].reindex(
+                sorted(forecasting_dict[data_type].columns), axis=1
+            )
+            forecasting_dict[data_type] = forecasting_dict[data_type].add_suffix(
+                f"_{data_type}"
+            )
+        df = pd.concat(forecasting_dict.values(), axis=1)
+        df = df.interpolate(method="linear", limit_direction="forward", axis=0)
+        df = df.dropna(axis="index")
+        df = df.reset_index()
+        new_columns = []
+        for data_type in support_dict.keys():
+            if data_type != "obs":
+                new_column = f"RMSE_{data_type}"
+                new_columns += [new_column]
+                df[new_column] = [
+                    mean_squared_error(
+                        df[[c for c in df.columns if c.endswith("_obs")]].iloc[
+                            i : (i + 1)
+                        ],
+                        df[[c for c in df.columns if c.endswith(f"_{data_type}")]].iloc[
+                            i : (i + 1)
+                        ],
+                        squared=False,
+                    )
+                    for i in range(df.shape[0])
+                ]
+        df = df.append(pd.DataFrame({"timestamp": [1655251200]}), ignore_index=True)
+        df = df.set_index("timestamp")
+        df = df[new_columns]
+        df.index = pd.to_datetime(df.index, unit="s")
+        df = df.rename(
+            columns={
+                column: column.replace("RMSE_", "forecasting horizon = ")
+                for column in df.columns
+            }
+        )
+
+        df.plot(ax=ax[idx])
+        ax[idx].set_title(f"budget = {budget}%")
+        ax[idx].set_ylim([0, 1.5])
+        ax[idx].set_xlabel("")
+        ax[idx].set_ylabel("logRMSE")
+    fig.set_size_inches(13, 6)
+    plt.tight_layout()
+    is_forbidden_sensors_string = (
+        "_with_forbidden_sensors" if with_forbidden_sensors else ""
+    )
+    fig.savefig(
+        os.path.join(output_folder, f"forecasting_avg{is_forbidden_sensors_string}_errors_{budget_type}.pdf")
+    )
+    fig.savefig(
+        os.path.join(output_folder, f"forecasting_avg{is_forbidden_sensors_string}_errors_{budget_type}.png")
+    )
+
+
 def main():
     # meteo()
     # water()
     # ground_potential()
-    # forecast_avg()S
+    # forecast_avg()
     # forecast_std()
     # water_balance()
     correlation_wc()
-    correlation_wc(with_forbidden_sensors=False)
+    # forecast_avg_tuning_errors()
 
 
 if __name__ == "__main__":
