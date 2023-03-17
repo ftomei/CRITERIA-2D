@@ -915,10 +915,13 @@ def summary_tuning_budget(
     output_folder=os.path.join("plots"),
     with_forbidden_sensors=True,
 ):
-    result = pd.DataFrame()
-    fig, ax = plt.subplots(1, 2)
     budget_labels = [25, 50, 75, 100]
+    fig, ax = plt.subplots(1, 2)
+    is_forbidden_sensors_string = (
+        "_with_forbidden_sensors" if with_forbidden_sensors else ""
+    )
     for axidx, budget_type in enumerate(["t", "b"]):
+        result = pd.DataFrame()
         budget_thresholds = (
             [25, 50, 75, 100] if budget_type == "t" else [125, 250, 375, 500]
         )
@@ -969,40 +972,63 @@ def summary_tuning_budget(
                     result = result.append(
                         {
                             "budget": int(budget_labels[idx]),
-                            f"{data_type}_{budget_type}": 
-                                mean_squared_error(
-                                    df[[c for c in df.columns if c.endswith("_obs")]],
-                                    df[
-                                        [
-                                            c
-                                            for c in df.columns
-                                            if c.endswith(f"_{data_type}")
-                                        ]
-                                    ],
-                                    squared=False,
-                                )
-                            ,
+                            f"{data_type}": mean_squared_error(
+                                df[[c for c in df.columns if c.endswith("_obs")]],
+                                df[
+                                    [
+                                        c
+                                        for c in df.columns
+                                        if c.endswith(f"_{data_type}")
+                                    ]
+                                ],
+                                squared=False,
+                            ),
+                            f"std_{data_type}": np.std(
+                                [
+                                    mean_squared_error(
+                                        df[
+                                            [
+                                                c
+                                                for c in df.columns
+                                                if c.endswith("_obs")
+                                            ]
+                                        ].iloc[i : (i + 1)],
+                                        df[
+                                            [
+                                                c
+                                                for c in df.columns
+                                                if c.endswith(f"_{data_type}")
+                                            ]
+                                        ].iloc[i : (i + 1)],
+                                        squared=False,
+                                    )
+                                    for i in range(df.shape[0])
+                                ],
+                                axis=0,
+                            ),
                         },
                         ignore_index=True,
                     )
 
-    result = result.set_index("budget")
-    result = result.groupby(level=0).sum(min_count=1)
-    print(result)
-    for axidx, budget_type in enumerate(["t", "b"]):
-        for data_type in support_dict.keys():
-            if data_type != "obs":
-                result[f"{data_type}_{budget_type}"].plot.bar(ax=ax[axidx])
+        result = result.set_index("budget")
+        result = result.groupby(level=0).sum(min_count=1)
+        result[[c for c in result.columns if not c.startswith(f"std")]].plot.bar(
+            ax=ax[axidx]
+        )
         ax[axidx].set_xlabel("Percentage of budget")
         ax[axidx].set_ylabel("LogRMSE")
         budget_string = "n. iterarations" if budget_type == "b" else "time period"
         ax[axidx].set_title(f"budget = {budget_string}")
         ax[axidx].tick_params(axis="x", rotation=45)
+        result.round(2).to_csv(
+            os.path.join(
+                output_folder,
+                f"summary_tuning_erros{is_forbidden_sensors_string}_{budget_type}.csv",
+            )
+        )
+        print(result.round(2))
     fig.set_size_inches(13, 6)
     plt.tight_layout()
-    is_forbidden_sensors_string = (
-        "_with_forbidden_sensors" if with_forbidden_sensors else ""
-    )
     fig.savefig(
         os.path.join(
             output_folder, f"summary_tuning_erros{is_forbidden_sensors_string}.pdf"
