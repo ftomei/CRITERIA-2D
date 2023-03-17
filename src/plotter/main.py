@@ -4,7 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.dates import DateFormatter
 import matplotlib.dates as mdates
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_squared_error, r2_score
 import warnings
 
 warnings.filterwarnings("ignore")
@@ -651,24 +651,48 @@ def correlation_wc(
     df = df.set_index("timestamp")
     df = df[[f"mean_{data_type}" for data_type in support_dict.keys()]]
     df.index = pd.to_datetime(df.index, unit="s")
-    print(df)
 
-    fig, ax = plt.subplots(1, 3)
+    scores = {}
+    fig, ax = plt.subplots(1, 3, sharey="row")
     for idx, data_type in enumerate(
         [elem for elem in support_dict.keys() if elem != "obs"]
     ):
-        ax[idx].scatter(df["mean_obs"], df[f"mean_{data_type}"])
-        ax[idx].plot([0, 1], [0, 1], transform=ax[idx].transAxes)
+        ax[idx].scatter(df["mean_obs"], df[f"mean_{data_type}"], color=f"C{idx}")
+        slope, intercept = np.polyfit(df["mean_obs"], df[f"mean_{data_type}"], 1)
+        # print(slope, intercept)
+        # Create a list of values in the best fit line
+        abline_values = [slope * i + intercept for i in [0, 1]]
+        # Plot the best fit line over the actual values
+        ax[idx].plot([0, 1], abline_values, color="black")
+        scores[data_type] = [
+            r2_score(np.array(df["mean_obs"]), np.array(df[f"mean_{data_type}"]))
+        ]
+        # ax[idx].plot([0, 1], [0, 1], transform=ax[idx].transAxes, color="black")
         ax[idx].grid()
         ax[idx].set_ylim([0.05, 0.25 if with_forbidden_sensors else 0.2])
         ax[idx].set_xlim([0.05, 0.25 if with_forbidden_sensors else 0.2])
-        ax[idx].set_title(f"forecasting horizon = {data_type}", fontsize=15)
-        ax[idx].set_xlabel("observed WC", labelpad=20, fontsize=15)
-        ax[idx].set_ylabel("simulated WC", labelpad=10, fontsize=15)
+        ax[idx].set_title(f"Forecasting horizon = {data_type}", fontsize=22)
+        ax[idx].set_xlabel("Observed WC", labelpad=20, fontsize=22)
+        if idx == 0:
+            ax[idx].set_ylabel("Forecasted WC", labelpad=10, fontsize=22)
     fig.set_size_inches(20, 6)
     plt.tight_layout()
     is_forbidden_sensors_string = (
         "_with_forbidden_sensors" if with_forbidden_sensors else ""
+    )
+    # df[["mean_obs", "mean_1gg", "mean_3gg", "mean_7gg"]].to_csv(
+    #     os.path.join(
+    #         output_folder,
+    #         f"temp.csv",
+    #     ),
+    #     index=False,
+    # )
+    pd.DataFrame(scores).to_csv(
+        os.path.join(
+            output_folder,
+            f"correlation_wc{is_forbidden_sensors_string}.csv",
+        ),
+        index=False,
     )
     fig.savefig(
         os.path.join(
@@ -1048,12 +1072,12 @@ def main():
     # forecast_avg()
     # forecast_std()
     # water_balance()
-    # correlation_wc()
+    correlation_wc()
     # forecast_avg_tuning_errors()
     # forecast_avg_tuning_errors(budget_type="b")
     # forecast_std_tuning_errors()
     # forecast_std_tuning_errors(budget_type="b")
-    summary_tuning_budget()
+    # summary_tuning_budget()
 
 
 if __name__ == "__main__":
