@@ -1008,26 +1008,18 @@ def summary_tuning_budget(
                                 squared=False,
                             ),
                             f"std_{data_type}": np.std(
-                                [
-                                    mean_squared_error(
-                                        df[
-                                            [
-                                                c
-                                                for c in df.columns
-                                                if c.endswith("_obs")
-                                            ]
-                                        ].iloc[i : (i + 1)],
-                                        df[
-                                            [
-                                                c
-                                                for c in df.columns
-                                                if c.endswith(f"_{data_type}")
-                                            ]
-                                        ].iloc[i : (i + 1)],
-                                        squared=False,
-                                    )
-                                    for i in range(df.shape[0])
-                                ],
+                                mean_squared_error(
+                                    df[[c for c in df.columns if c.endswith("_obs")]],
+                                    df[
+                                        [
+                                            c
+                                            for c in df.columns
+                                            if c.endswith(f"_{data_type}")
+                                        ]
+                                    ],
+                                    multioutput="raw_values",
+                                    squared=False,
+                                ),
                                 axis=0,
                             ),
                         },
@@ -1077,7 +1069,7 @@ def main():
     # forecast_avg_tuning_errors(budget_type="b")
     # forecast_std_tuning_errors()
     # forecast_std_tuning_errors(budget_type="b")
-    # summary_tuning_budget()
+    summary_tuning_budget()
 
 
 if __name__ == "__main__":
