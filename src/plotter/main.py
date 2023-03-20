@@ -79,11 +79,12 @@ def meteo(
         if idx < 2:
             axes[int(idx / nrows), idx % nrows].tick_params(length=0)
         axes[int(idx / nrows), idx % nrows].set_ylabel(
-            meteo_vars[meteo_var], rotation=0, labelpad=13
+            meteo_vars[meteo_var], labelpad=20, fontsize=12
         )
         axes[int(idx / nrows), idx % nrows].set_title(
-            meteo_var.replace("_", " ").capitalize()
+            meteo_var.replace("_", " ").capitalize(), fontsize=15
         )
+        axes[int(idx / nrows), idx % nrows].tick_params(axis="both", labelsize=12)
 
     # _ = plt.xticks(rotation=0)
     plt.tight_layout()
@@ -144,8 +145,8 @@ def water(
     ax.set_xticks([0, 15, 29, 46, 60, df.shape[0] - 1])
     # ax.set_title("Precipitation and irrigation", fontdict={"fontsize": 18})
     ax2 = ax.twinx()
-    ax.set_ylabel("L", rotation=0, labelpad=20, fontsize=15)
-    ax2.set_ylabel("mm", rotation=0, labelpad=20, fontsize=15)
+    ax.set_ylabel("L", labelpad=20, fontsize=15)
+    ax2.set_ylabel("mm", labelpad=20, fontsize=15)
     ax2.set_ylim(0, 30)
     ax.set_ylim(0, 30)
 
@@ -196,7 +197,7 @@ def ground_potential(
 
     for idx, meteo_var in reversed(list(enumerate(df.columns))):
         ax = axes[int(idx / ncols), idx % ncols]
-        df[meteo_var].plot(ax=ax, sharex=True, color="C5")
+        df[meteo_var].plot(ax=ax, sharex=True, sharey=True, color="C5")
         ax.set_ylim([df.min().min(), -10])
         ax.set_yscale("symlog")
         ax.set_xlabel("")
@@ -209,13 +210,15 @@ def ground_potential(
         # ax.set_xticks([0, df.shape[0]])
         if idx < 8:
             ax.tick_params(length=0)
-        ax.set_ylabel("cbar")
+        ax.set_ylabel("cbar", labelpad=20, fontsize=12)
+        ax.tick_params(axis="both", labelsize=12)
         ax.set_title(
             meteo_var.replace("y0_", "")
             .replace("_", " cm, ")
             .replace("z", "Depth = ")
             .replace("x", "Distance = ")
-            + " cm"
+            + " cm",
+            fontsize=15,
         )
 
     # _ = plt.xticks(rotation=0)
@@ -292,7 +295,9 @@ def forecast_avg(
     fig, ax = plt.subplots()
     df = df.rename(
         columns={
-            column: column.replace("RMSE_", "forecasting horizon = ")
+            column: column.replace("RMSE_", "").replace("gg", "-day")
+            + ("s" if column != "RMSE_1gg" else "")
+            + " horizon"
             for column in df.columns
         }
     )
@@ -300,8 +305,10 @@ def forecast_avg(
     df.plot(ax=ax)
     ax.set_ylim([0, 1.5])
     ax.set_xlabel("")
-    ax.set_ylabel("logRMSE")
+    ax.set_ylabel("Error", labelpad=20, fontsize=12)
+    ax.tick_params(axis="both", labelsize=12)
     fig.set_size_inches(13, 6)
+    plt.legend(fontsize=12)
     plt.tight_layout()
     is_forbidden_sensors_string = (
         "_with_forbidden_sensors" if with_forbidden_sensors else ""
@@ -503,7 +510,7 @@ def forecast_std(
     #     }
     # )
 
-    df["average"].plot(ax=ax, color="C5", label="average")
+    df["average"].plot(ax=ax, color="C5", label="observed")
     # ax.set_ylim([-800, 0])
     ax.fill_between(
         df.index,
@@ -511,7 +518,7 @@ def forecast_std(
         df["average"] + df["RMSE_7gg"],
         alpha=0.2,
         color="C2",
-        label="RMSE on 7gg",
+        label="7-days horizon",
     )
     ax.fill_between(
         df.index,
@@ -519,7 +526,7 @@ def forecast_std(
         df["average"] + df["RMSE_3gg"],
         alpha=0.4,
         color="C1",
-        label="RMSE on 3gg",
+        label="3-days horizon",
     )
     ax.fill_between(
         df.index,
@@ -527,12 +534,14 @@ def forecast_std(
         df["average"] + df["RMSE_1gg"],
         alpha=0.6,
         color="C0",
-        label="RMSE on 1gg",
+        label="1-day horizon",
     )
     ax.legend()
     ax.set_xlabel("")
-    ax.set_ylabel("cbar")
+    ax.set_ylabel("cbar", labelpad=20, fontsize=12)
+    ax.tick_params(axis="both", labelsize=12)
     fig.set_size_inches(13, 6)
+    plt.legend(fontsize=12)
     plt.tight_layout()
     is_forbidden_sensors_string = (
         "_with_forbidden_sensors" if with_forbidden_sensors else ""
@@ -598,11 +607,12 @@ def water_balance(
     # ax.set_xticks([0, 15, 29, 46, 60, df.shape[0] - 1])
     # ax.set_title("Precipitation and irrigation", fontdict={"fontsize": 18})
     # ax2 = ax.twinx()
-    # ax.set_ylabel("L", rotation=0, labelpad=20, fontsize=15)
-    ax.set_ylabel("mm", rotation=0, labelpad=10, fontsize=12)
+    # ax.set_ylabel("L", labelpad=20, fontsize=15)
+    ax.set_ylabel("mm", labelpad=20, fontsize=12)
     # ax2.set_ylim(0, 30)
     ax.set_ylim(0, 21)
     ax.tick_params(axis="x", rotation=45)
+    ax.tick_params(axis="both", labelsize=12)
 
     # fig = ax.get_figure()
     # fig.autofmt_xdate()
@@ -671,10 +681,11 @@ def correlation_wc(
         ax[idx].grid()
         ax[idx].set_ylim([0.05, 0.25 if with_forbidden_sensors else 0.2])
         ax[idx].set_xlim([0.05, 0.25 if with_forbidden_sensors else 0.2])
-        ax[idx].set_title(f"Forecasting horizon = {data_type}", fontsize=22)
-        ax[idx].set_xlabel("Observed WC", labelpad=20, fontsize=22)
+        ax[idx].set_title(data_type.replace("gg", "-day") + ("s" if data_type != "1gg" else "") + "horizon", fontsize=22)
+        ax[idx].set_xlabel("Observed WC", labelpad=20, fontsize=18)
+        ax[idx].tick_params(axis="both", labelsize=18)
         if idx == 0:
-            ax[idx].set_ylabel("Forecasted WC", labelpad=10, fontsize=22)
+            ax[idx].set_ylabel("Forecasted WC", labelpad=20, fontsize=18)
     fig.set_size_inches(20, 6)
     plt.tight_layout()
     is_forbidden_sensors_string = (
@@ -1046,13 +1057,13 @@ def summary_tuning_budget(
 
 
 def main():
-    meteo()
-    water_balance()
-    ground_potential()
-    forecast_avg()
-    forecast_std()
+    # meteo()
+    # water_balance()
+    # ground_potential()
+    # forecast_avg()
+    # forecast_std()
     correlation_wc()
-    summary_tuning_budget()
+    # summary_tuning_budget()
 
 
 if __name__ == "__main__":
