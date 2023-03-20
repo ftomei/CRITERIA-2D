@@ -1043,18 +1043,18 @@ def summary_tuning_budget(
                 f"summary_tuning_erros{is_forbidden_sensors_string}_{budget_type}.csv",
             )
         )
-    fig.set_size_inches(13, 6)
-    plt.tight_layout()
-    fig.savefig(
-        os.path.join(
-            output_folder, f"summary_tuning_erros{is_forbidden_sensors_string}.pdf"
-        )
-    )
-    fig.savefig(
-        os.path.join(
-            output_folder, f"summary_tuning_erros{is_forbidden_sensors_string}.png"
-        )
-    )
+    # fig.set_size_inches(13, 6)
+    # plt.tight_layout()
+    # fig.savefig(
+    #     os.path.join(
+    #         output_folder, f"summary_tuning_erros{is_forbidden_sensors_string}.pdf"
+    #     )
+    # )
+    # fig.savefig(
+    #     os.path.join(
+    #         output_folder, f"summary_tuning_erros{is_forbidden_sensors_string}.png"
+    #     )
+    # )
 
 
 def main():
@@ -1064,7 +1064,7 @@ def main():
     forecast_avg()
     forecast_std()
     correlation_wc()
-    # summary_tuning_budget()
+    summary_tuning_budget()
 
 
 if __name__ == "__main__":
