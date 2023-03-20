@@ -79,7 +79,7 @@ def meteo(
         if idx < 2:
             axes[int(idx / nrows), idx % nrows].tick_params(length=0)
         axes[int(idx / nrows), idx % nrows].set_ylabel(
-            meteo_vars[meteo_var], labelpad=20, fontsize=12
+            meteo_vars[meteo_var], fontsize=12
         )
         axes[int(idx / nrows), idx % nrows].set_title(
             meteo_var.replace("_", " ").capitalize(), fontsize=15
@@ -145,8 +145,8 @@ def water(
     ax.set_xticks([0, 15, 29, 46, 60, df.shape[0] - 1])
     # ax.set_title("Precipitation and irrigation", fontdict={"fontsize": 18})
     ax2 = ax.twinx()
-    ax.set_ylabel("L", labelpad=20, fontsize=15)
-    ax2.set_ylabel("mm", labelpad=20, fontsize=15)
+    ax.set_ylabel("L",  fontsize=15)
+    ax2.set_ylabel("mm",  fontsize=15)
     ax2.set_ylim(0, 30)
     ax.set_ylim(0, 30)
 
@@ -210,7 +210,7 @@ def ground_potential(
         # ax.set_xticks([0, df.shape[0]])
         if idx < 8:
             ax.tick_params(length=0)
-        ax.set_ylabel("cbar", labelpad=20, fontsize=12)
+        ax.set_ylabel("cbar",  fontsize=12)
         ax.tick_params(axis="both", labelsize=12)
         ax.set_title(
             meteo_var.replace("y0_", "")
@@ -305,7 +305,7 @@ def forecast_avg(
     df.plot(ax=ax)
     ax.set_ylim([0, 1.5])
     ax.set_xlabel("")
-    ax.set_ylabel("Error", labelpad=20, fontsize=12)
+    ax.set_ylabel("Error",  fontsize=12)
     ax.tick_params(axis="both", labelsize=12)
     fig.set_size_inches(13, 6)
     plt.legend(fontsize=12)
@@ -538,10 +538,13 @@ def forecast_std(
     )
     ax.legend()
     ax.set_xlabel("")
-    ax.set_ylabel("cbar", labelpad=20, fontsize=12)
+    ax.set_ylabel("cbar",  fontsize=12)
     ax.tick_params(axis="both", labelsize=12)
     fig.set_size_inches(13, 6)
     plt.legend(fontsize=12)
+    handles, labels = plt.gca().get_legend_handles_labels()
+    order = [0,3,2,1]
+    plt.legend([handles[idx] for idx in order],[labels[idx] for idx in order])
     plt.tight_layout()
     is_forbidden_sensors_string = (
         "_with_forbidden_sensors" if with_forbidden_sensors else ""
@@ -568,7 +571,6 @@ def water_balance(
     # df.index = pd.to_datetime(df.index, unit="s")
     df = df[df.index.to_series().between("2022-06-15", "2022-09-1")]
     df.index = df.index.astype(str)
-    print(df)
 
     fig, ax = plt.subplots()
     # ax2 = ax.twinx()
@@ -607,8 +609,8 @@ def water_balance(
     # ax.set_xticks([0, 15, 29, 46, 60, df.shape[0] - 1])
     # ax.set_title("Precipitation and irrigation", fontdict={"fontsize": 18})
     # ax2 = ax.twinx()
-    # ax.set_ylabel("L", labelpad=20, fontsize=15)
-    ax.set_ylabel("mm", labelpad=20, fontsize=12)
+    # ax.set_ylabel("L",  fontsize=15)
+    ax.set_ylabel("mm", fontsize=12)
     # ax2.set_ylim(0, 30)
     ax.set_ylim(0, 21)
     ax.tick_params(axis="x", rotation=45)
@@ -681,11 +683,11 @@ def correlation_wc(
         ax[idx].grid()
         ax[idx].set_ylim([0.05, 0.25 if with_forbidden_sensors else 0.2])
         ax[idx].set_xlim([0.05, 0.25 if with_forbidden_sensors else 0.2])
-        ax[idx].set_title(data_type.replace("gg", "-day") + ("s" if data_type != "1gg" else "") + "horizon", fontsize=22)
-        ax[idx].set_xlabel("Observed WC", labelpad=20, fontsize=18)
+        ax[idx].set_title(data_type.replace("gg", "-day") + ("s" if data_type != "1gg" else "") + " horizon", fontsize=22)
+        ax[idx].set_xlabel("Observed WC", fontsize=18)
         ax[idx].tick_params(axis="both", labelsize=18)
         if idx == 0:
-            ax[idx].set_ylabel("Forecasted WC", labelpad=20, fontsize=18)
+            ax[idx].set_ylabel("Forecasted WC", fontsize=18)
     fig.set_size_inches(20, 6)
     plt.tight_layout()
     is_forbidden_sensors_string = (
@@ -1041,7 +1043,6 @@ def summary_tuning_budget(
                 f"summary_tuning_erros{is_forbidden_sensors_string}_{budget_type}.csv",
             )
         )
-        print(result.round(2))
     fig.set_size_inches(13, 6)
     plt.tight_layout()
     fig.savefig(
@@ -1057,11 +1058,11 @@ def summary_tuning_budget(
 
 
 def main():
-    # meteo()
-    # water_balance()
-    # ground_potential()
-    # forecast_avg()
-    # forecast_std()
+    meteo()
+    water_balance()
+    ground_potential()
+    forecast_avg()
+    forecast_std()
     correlation_wc()
     # summary_tuning_budget()
 
