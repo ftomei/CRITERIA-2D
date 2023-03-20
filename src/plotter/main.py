@@ -993,35 +993,23 @@ def summary_tuning_budget(
             df = df.reset_index()
             for data_type in support_dict.keys():
                 if data_type != "obs":
+                    raw = [
+                        mean_squared_error(
+                            df[[c for c in df.columns if c.endswith("_obs")]].iloc[
+                                i : (i + 1)
+                            ],
+                            df[
+                                [c for c in df.columns if c.endswith(f"_{data_type}")]
+                            ].iloc[i : (i + 1)],
+                            squared=False,
+                        )
+                        for i in range(df.shape[0])
+                    ]
                     result = result.append(
                         {
                             "budget": int(budget_labels[idx]),
-                            f"{data_type}": mean_squared_error(
-                                df[[c for c in df.columns if c.endswith("_obs")]],
-                                df[
-                                    [
-                                        c
-                                        for c in df.columns
-                                        if c.endswith(f"_{data_type}")
-                                    ]
-                                ],
-                                squared=False,
-                            ),
-                            f"std_{data_type}": np.std(
-                                mean_squared_error(
-                                    df[[c for c in df.columns if c.endswith("_obs")]],
-                                    df[
-                                        [
-                                            c
-                                            for c in df.columns
-                                            if c.endswith(f"_{data_type}")
-                                        ]
-                                    ],
-                                    multioutput="raw_values",
-                                    squared=False,
-                                ),
-                                axis=0,
-                            ),
+                            f"{data_type}": np.mean(raw),
+                            f"std_{data_type}": np.std(raw),
                         },
                         ignore_index=True,
                     )
@@ -1058,17 +1046,12 @@ def summary_tuning_budget(
 
 
 def main():
-    # meteo()
-    # water()
-    # ground_potential()
-    # forecast_avg()
-    # forecast_std()
-    # water_balance()
+    meteo()
+    water_balance()
+    ground_potential()
+    forecast_avg()
+    forecast_std()
     correlation_wc()
-    # forecast_avg_tuning_errors()
-    # forecast_avg_tuning_errors(budget_type="b")
-    # forecast_std_tuning_errors()
-    # forecast_std_tuning_errors(budget_type="b")
     summary_tuning_budget()
 
 
