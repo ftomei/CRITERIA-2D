@@ -348,3 +348,4 @@ def computeOneHour(weatherIndex, isRedraw):
         C3DParameters.currentDeltaT_max = C3DParameters.deltaT_max
 
     compute(3600, isRedraw)
+    return ET0

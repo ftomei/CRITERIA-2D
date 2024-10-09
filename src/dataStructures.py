@@ -136,6 +136,7 @@ class C3DParameters:
     isVisual = True
     assimilationInterval = 24
     forecastPeriod = 24 * 7
+    computeIrrigation = False
 
 
 # global

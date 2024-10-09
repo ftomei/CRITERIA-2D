@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 import os
 import tkinter.filedialog
@@ -266,6 +267,14 @@ def readModelParameters(settingsFilename, params):
             print("Valid values: greater than or equal to 24 hours")
             return False
 
+    try:
+        C3DParameters.computeIrrigation = configDict['simulation_type']['computeIrrigation']
+    except:
+        C3DParameters.computeIrrigation = False
+    if C3DParameters.computeIrrigation and (C3DParameters.isPeriodicAssimilation or C3DParameters.isForecast):
+        print("ERROR!\nCannot compute irrigations neither in forecasting nor assimilating modes")
+        return False
+
     return True
 
 
@@ -530,22 +539,29 @@ def readMeteoData(meteoPath):
 
 
 def readWaterData(waterPath, meteo_start, meteo_end):
-    irrigationFile = "irrigation.csv"
-    irrigation = pd.read_csv(os.path.join(waterPath, irrigationFile))
 
     precipitationsFile = "precipitation.csv"
     precipitations = pd.read_csv(os.path.join(waterPath, precipitationsFile))
 
-    if irrigation.iloc[0]["timestamp"] != precipitations.iloc[0]["timestamp"]:
-        raise Exception("Water files have different time spans")
+    irrigationFile = "irrigation.csv"
 
-    if irrigation.iloc[-1]["timestamp"] != precipitations.iloc[-1]["timestamp"]:
-        raise Exception("Water files have different time spans")
+    if not C3DParameters.computeIrrigation:
+        irrigation = pd.read_csv(os.path.join(waterPath, irrigationFile))
+
+        if irrigation.iloc[0]["timestamp"] != precipitations.iloc[0]["timestamp"]:
+            raise Exception("Water files have different time spans")
+
+        if irrigation.iloc[-1]["timestamp"] != precipitations.iloc[-1]["timestamp"]:
+            raise Exception("Water files have different time spans")
+    else:
+        irrigation = pd.DataFrame(columns=["timestamp", "irrigation"])
+        irrigation.to_csv(os.path.join(waterPath, irrigationFile), index=False)
 
     irrigation = irrigation.set_index(['timestamp'])
     precipitations = precipitations.set_index(['timestamp'])
 
-    mergedDf = irrigation.merge(precipitations, how='outer', left_index=True, right_index=True)
+    how = "left" if C3DParameters.computeIrrigation else "outer"
+    mergedDf = precipitations.merge(irrigation, how=how, left_index=True, right_index=True)
     mergedDf = mergedDf.reset_index()
 
     if meteo_start != NODATA and meteo_end != NODATA:

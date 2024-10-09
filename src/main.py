@@ -13,6 +13,7 @@ import importUtils
 import crop
 import json
 import argparse
+import irrigationScheduler
 
 
 def main(args):
@@ -31,7 +32,9 @@ def main(args):
         os.makedirs(outputFolder)
 
     try:
-        params = json.load(open(os.path.join(outputFolder, f"input_{args.iteration}.json")))
+        params = json.load(
+            open(os.path.join(outputFolder, f"input_{args.iteration}.json"))
+        )
     except:
         params = {}
     iterations_str = f"_{args.iteration}" if args.iteration != -1 else ""
@@ -52,10 +55,12 @@ def main(args):
     print("read soil properties...")
     soilSettings = os.path.join(settingsFolder, "soil.csv")
     soil.readHorizon(soilSettings, params)
-    C3DStructure.nrLayers, soil.depth, soil.thickness = soil.setLayers(C3DStructure.gridDepth,
-                                                                       C3DParameters.minThickness,
-                                                                       C3DParameters.maxThickness,
-                                                                       C3DParameters.maxThicknessAt)
+    C3DStructure.nrLayers, soil.depth, soil.thickness = soil.setLayers(
+        C3DStructure.gridDepth,
+        C3DParameters.minThickness,
+        C3DParameters.maxThickness,
+        C3DParameters.maxThicknessAt,
+    )
     print("Nr. of layers:", C3DStructure.nrLayers)
 
     criteria3D.memoryAllocation(C3DStructure.nrLayers, C3DStructure.nrRectangles)
@@ -78,8 +83,11 @@ def main(args):
         print("Read weather and irrigation data...")
         criteria3D.weatherData = importUtils.readMeteoData(weatherFolder)
         criteria3D.weatherData.set_index(["timestamp"])
-        criteria3D.waterData = importUtils.readWaterData(waterFolder, criteria3D.weatherData.iloc[0]["timestamp"],
-                                              criteria3D.weatherData.iloc[-1]["timestamp"])
+        criteria3D.waterData = importUtils.readWaterData(
+            waterFolder,
+            criteria3D.weatherData.iloc[0]["timestamp"],
+            criteria3D.weatherData.iloc[-1]["timestamp"],
+        )
     else:
         print("Read water data...")
         criteria3D.waterData = importUtils.readWaterData(waterFolder, NODATA, NODATA)
@@ -95,7 +103,9 @@ def main(args):
 
     if C3DParameters.isPeriodicAssimilation or C3DParameters.isFirstAssimilation:
         print("Read observed water potential...")
-        obsWaterPotential = pd.read_csv(os.path.join(obsDataFolder, f"waterPotential.csv"))
+        obsWaterPotential = pd.read_csv(
+            os.path.join(obsDataFolder, f"waterPotential.csv")
+        )
 
     # first assimilation
     weatherIndex = 0
@@ -107,11 +117,14 @@ def main(args):
 
         waterBalance.initializeBalance()
         for i in range(24):
-            criteria3D.computeOneHour(weatherIndex+i, False)
+            criteria3D.computeOneHour(weatherIndex + i, False)
         importUtils.loadObsData(obsState)
 
     waterBalance.initializeBalance()
-    print("Initial water storage [m^3]:", format(waterBalance.currentStep.waterStorage, ".3f"))
+    print(
+        "Initial water storage [m^3]:",
+        format(waterBalance.currentStep.waterStorage, ".3f"),
+    )
 
     if C3DParameters.isVisual:
         visual3D.initialize(1200)
@@ -124,11 +137,21 @@ def main(args):
     print("Start...")
     currentIndex = 1
     restartIndex = 1
+    cumulative_et0 = 0
     while weatherIndex < len(criteria3D.weatherData):
-        criteria3D.computeOneHour(weatherIndex, C3DParameters.isVisual)
+        if C3DParameters.computeIrrigation:
+            if irrigationScheduler.scheduleIrrigation(
+                cumulative_et0,
+                weatherIndex,
+                C3DCells,
+                waterFolder,
+                settingsFolder
+            ):
+                cumulative_et0 = 0
+        cumulative_et0 += criteria3D.computeOneHour(weatherIndex, C3DParameters.isVisual)
 
-        currentTimeStamp = criteria3D.waterData.loc[weatherIndex]["timestamp"]
-        currentDateTime = pd.to_datetime(currentTimeStamp, unit='s')
+        currentTimeStamp = criteria3D.weatherData.loc[weatherIndex]["timestamp"]
+        currentDateTime = pd.to_datetime(currentTimeStamp, unit="s")
 
         # assimilation
         if C3DParameters.isPeriodicAssimilation and not C3DParameters.isForecast:

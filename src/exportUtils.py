@@ -55,6 +55,19 @@ def createExportFile(outputPath, settingsFolder, iteration):
         f.write(header)
 
 
+def takeInterpolatedSlice(settingsFolder):
+    outputPoints = pd.read_csv(os.path.join(settingsFolder, "fine_grained_output_points.csv"))
+    outputIndices.clear()
+    for _, position in outputPoints.iterrows():
+        x = position['x']
+        y = position['y']
+        depth = position['z']
+        index = rectangularMesh.getCellIndex(x, y, depth)
+        if index != NODATA:
+            outputIndices.append(index)
+    return outputIndices
+
+
 def takeSelected(outputPoints):
     outputIndicesStrings = []
     outputSurfaceIndices.clear()
